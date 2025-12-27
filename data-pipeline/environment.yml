@@ -1,0 +1,17 @@
+name: hmd-pipeline
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - polars>=0.20
+  - pandas>=2.0
+  - numpy>=1.24
+  - matplotlib>=3.7
+  - pandera>=0.18
+  - jupyter
+  - jupyterlab
+  - pip
+  - pip:
+    - aquarel
+    - orjson

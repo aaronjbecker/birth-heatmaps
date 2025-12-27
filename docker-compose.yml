@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  # Data pipeline - generates JSON files for frontend
+  pipeline:
+    build: ./data-pipeline
+    volumes:
+      - ./data-pipeline/raw_data:/app/raw_data:ro
+      - ./frontend/public/data:/app/output
+      - ./hmd_data:/app/hmd_data:ro
+      - ./data:/app/data:ro
+    command: python scripts/run_pipeline.py
+
+  # Jupyter notebook server for development
+  jupyter:
+    build: ./data-pipeline
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./data-pipeline:/app
+      - ./hmd_data:/app/hmd_data:ro
+      - ./data:/app/data:ro
+    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+
+  # Astro frontend development server
+  frontend-dev:
+    build: ./frontend
+    ports:
+      - "4321:4321"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev -- --host

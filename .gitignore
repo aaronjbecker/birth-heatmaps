@@ -2,7 +2,36 @@ ajb_blog/
 **/.DS_Store
 backups/
 
+# Raw data directories (must be downloaded manually per license terms)
 data/
+hmd_data/
+data-pipeline/raw_data/
+
+# Generated output
+output/
+
+# ============================================
+# Data Pipeline (Python/Conda)
+# ============================================
+
+# Conda environments (local)
+data-pipeline/.conda/
+
+# ============================================
+# Frontend (Astro/Node.js)
+# ============================================
+
+# Dependencies
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/.astro/
+
+# Generated data files (can regenerate from pipeline)
+frontend/public/data/*.json
+frontend/public/data/fertility/*.json
+frontend/public/data/seasonality/*.json
 
 # PyCharm project files
 .idea/
