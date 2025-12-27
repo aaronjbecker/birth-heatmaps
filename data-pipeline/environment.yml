@@ -11,6 +11,9 @@ dependencies:
   - pandera>=0.18
   - jupyter
   - jupyterlab
+  # Testing
+  - pytest>=7.4
+  - pytest-cov>=4.1
   - pip
   - pip:
     - aquarel

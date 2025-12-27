@@ -118,3 +118,45 @@ python data-pipeline/scripts/run_pipeline.py --csv
 # Custom data directories
 python data-pipeline/scripts/run_pipeline.py --hmd-dir /path/to/hmd --un-dir /path/to/un
 ```
+
+## Testing
+
+### Data Pipeline Tests (Python)
+
+```bash
+cd data-pipeline
+
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=src
+
+# Run specific test file
+pytest tests/test_config.py
+```
+
+Test modules:
+- `tests/test_config.py` - Configuration and country definitions
+- `tests/test_processors.py` - Data interpolation, fertility, seasonality
+- `tests/test_exporters.py` - JSON export validation
+
+### Frontend Tests (TypeScript)
+
+```bash
+cd frontend
+
+# Run all tests
+npm test
+
+# Run in watch mode
+npm run test:watch
+```
+
+Test modules:
+- `src/lib/types.test.ts` - TypeScript interface validation
+- `src/lib/data.test.ts` - Data loading utilities
+
+## Documentation
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed progress at each development stage.
