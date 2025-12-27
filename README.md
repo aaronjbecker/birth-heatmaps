@@ -7,7 +7,12 @@ Interactive visualization of birth seasonality patterns using data from the Huma
 ```
 hmd-births-heatmaps/
 ├── data-pipeline/          # Python data preparation
-│   ├── src/                # Source modules
+│   ├── src/
+│   │   ├── config/         # Settings and country definitions
+│   │   ├── loaders/        # HMD, UN, Japan data loaders
+│   │   ├── processors/     # Interpolation, fertility, seasonality
+│   │   ├── exporters/      # JSON and CSV export
+│   │   └── schemas/        # Pandera data validation
 │   ├── scripts/            # Entry point scripts
 │   ├── notebooks/          # Jupyter notebooks for exploration
 │   ├── environment.yml     # Conda environment
@@ -93,7 +98,23 @@ The pipeline computes several fertility and seasonality metrics:
 ## Development Status
 
 - [x] Stage A: Repository infrastructure
-- [ ] Stage B: Python pipeline refactoring
+- [x] Stage B: Python pipeline refactoring
 - [ ] Stage C: Astro frontend initialization
 - [ ] Stage D: D3 heatmap components
 - [ ] Stage E: Integration and testing
+
+## Pipeline Usage
+
+```bash
+# Run full pipeline (CSV + JSON export)
+python data-pipeline/scripts/run_pipeline.py
+
+# Export only JSON (for frontend)
+python data-pipeline/scripts/run_pipeline.py --json
+
+# Export only CSV (legacy format)
+python data-pipeline/scripts/run_pipeline.py --csv
+
+# Custom data directories
+python data-pipeline/scripts/run_pipeline.py --hmd-dir /path/to/hmd --un-dir /path/to/un
+```
