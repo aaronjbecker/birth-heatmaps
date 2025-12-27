@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import type { CountriesIndex } from '../lib/types';
+
+// Load countries data at build time
+const countriesData: CountriesIndex = await Astro.glob('../../../public/data/countries.json').then(
+  (files) => files[0] as unknown as CountriesIndex
+).catch(() => ({
+  countries: [],
+  dataSources: {},
+  generatedAt: ''
+}));
+
+// Fallback: try to import directly
+let countries = countriesData.countries || [];
+if (countries.length === 0) {
+  try {
+    const data = await import('../../public/data/countries.json');
+    countries = data.countries || [];
+  } catch (e) {
+    // No data available yet
+  }
+}
+
+function formatYearRange(range: [number, number]): string {
+  return `${range[0]}–${range[1]}`;
+}
+---
+
+<BaseLayout title="Countries">
+  <h1>Birth Seasonality Heatmaps</h1>
+  <p style="margin-bottom: var(--space-xl); color: var(--color-text-muted);">
+    Explore fertility rates and birth seasonality patterns across {countries.length} countries.
+    Data from the Human Mortality Database and UN Population Division.
+  </p>
+
+  {countries.length > 0 ? (
+    <div class="country-grid">
+      {countries.map((country) => (
+        <a href={`/fertility/${country.code}`} class="country-card">
+          <h3>{country.name}</h3>
+          <p class="sources">
+            Sources: {country.sources.join(', ')}
+          </p>
+          <p class="year-range">
+            {formatYearRange(country.fertility.yearRange)}
+          </p>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <div class="card">
+      <h2>No Data Available</h2>
+      <p>
+        Run the data pipeline to generate country data:
+      </p>
+      <pre style="background: var(--color-bg); padding: var(--space-md); border-radius: 4px; overflow-x: auto;">
+python data-pipeline/scripts/run_pipeline.py --json
+      </pre>
+    </div>
+  )}
+</BaseLayout>
+
+<style>
+  h1 {
+    margin-bottom: var(--space-sm);
+  }
+</style>

@@ -1,0 +1,155 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import type { CountriesIndex, CountryMeta } from '../../lib/types';
+
+export async function getStaticPaths() {
+  // Load countries index
+  let countries: CountryMeta[] = [];
+  try {
+    const data = await import('../../../public/data/countries.json');
+    countries = data.countries || [];
+  } catch (e) {
+    // Fallback for when data doesn't exist yet
+    countries = [
+      { code: 'france', name: 'France', sources: ['HMD'], fertility: { yearRange: [1946, 2023], hasData: true }, seasonality: { yearRange: [1946, 2023], hasData: true } }
+    ];
+  }
+
+  return countries.map((country) => ({
+    params: { country: country.code },
+    props: { countryMeta: country },
+  }));
+}
+
+interface Props {
+  countryMeta: CountryMeta;
+}
+
+const { country } = Astro.params;
+const { countryMeta } = Astro.props;
+
+function formatYearRange(range: [number, number]): string {
+  return `${range[0]}–${range[1]}`;
+}
+---
+
+<BaseLayout title={`${countryMeta.name} - Fertility`}>
+  <nav class="breadcrumb">
+    <a href="/">Countries</a> / <span>{countryMeta.name}</span>
+  </nav>
+
+  <h1>{countryMeta.name}</h1>
+  <p class="subtitle">Daily Fertility Rate (births per 100k women age 15-44)</p>
+
+  <div class="meta">
+    <span class="year-range">{formatYearRange(countryMeta.fertility.yearRange)}</span>
+    <span class="sources">Sources: {countryMeta.sources.join(', ')}</span>
+  </div>
+
+  <div class="tabs">
+    <a href={`/fertility/${country}`} class="tab active">Fertility</a>
+    <a href={`/seasonality/${country}`} class="tab">Seasonality</a>
+  </div>
+
+  <div id="heatmap-container" class="heatmap-container" data-country={country}>
+    <p class="loading">Loading heatmap data...</p>
+  </div>
+
+  <div id="tooltip" class="tooltip" style="display: none;"></div>
+</BaseLayout>
+
+<style>
+  .breadcrumb {
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumb a {
+    color: var(--color-text-muted);
+  }
+
+  .breadcrumb a:hover {
+    color: var(--color-primary);
+  }
+
+  h1 {
+    margin-bottom: var(--space-xs);
+  }
+
+  .subtitle {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .meta {
+    display: flex;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .tabs {
+    display: flex;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .tab {
+    padding: var(--space-sm) var(--space-lg);
+    border-bottom: 2px solid transparent;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab:hover {
+    color: var(--color-text);
+    text-decoration: none;
+  }
+
+  .tab.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+  }
+
+  .loading {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script>
+  // Client-side script to load and render the heatmap
+  const container = document.getElementById('heatmap-container');
+  const country = container?.dataset.country;
+
+  if (country) {
+    fetch(`/data/fertility/${country}.json`)
+      .then(res => {
+        if (!res.ok) throw new Error('Data not found');
+        return res.json();
+      })
+      .then(data => {
+        container!.innerHTML = `
+          <p style="text-align: center; padding: var(--space-xl);">
+            Heatmap component will be rendered here.<br>
+            <small style="color: var(--color-text-muted);">
+              Data loaded: ${data.data.length} cells, ${data.years.length} years
+            </small>
+          </p>
+        `;
+      })
+      .catch(err => {
+        container!.innerHTML = `
+          <p style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
+            No data available for this country yet.<br>
+            <small>Run the data pipeline to generate JSON files.</small>
+          </p>
+        `;
+      });
+  }
+</script>

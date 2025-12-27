@@ -99,7 +99,7 @@ The pipeline computes several fertility and seasonality metrics:
 
 - [x] Stage A: Repository infrastructure
 - [x] Stage B: Python pipeline refactoring
-- [ ] Stage C: Astro frontend initialization
+- [x] Stage C: Astro frontend initialization
 - [ ] Stage D: D3 heatmap components
 - [ ] Stage E: Integration and testing
 

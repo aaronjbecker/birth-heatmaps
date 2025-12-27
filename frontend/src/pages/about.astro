@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="About">
+  <h1>About This Project</h1>
+
+  <section class="card" style="margin-bottom: var(--space-xl);">
+    <h2>Overview</h2>
+    <p>
+      This project visualizes birth seasonality patterns across countries using data from
+      the Human Mortality Database and UN Population Division. The interactive heatmaps
+      show how birth rates vary by month across different years.
+    </p>
+  </section>
+
+  <section class="card" style="margin-bottom: var(--space-xl);">
+    <h2>Metrics</h2>
+
+    <h3 style="margin-top: var(--space-lg);">Daily Fertility Rate</h3>
+    <p>
+      The number of births per day per 100,000 women of childbearing age (15-44).
+      This normalizes for varying month lengths and population sizes.
+    </p>
+
+    <h3 style="margin-top: var(--space-lg);">Seasonality Percentage</h3>
+    <p>
+      The percentage of annual births occurring in each month, normalized to 30-day
+      months and 360-day years. A perfectly uniform distribution would show 8.33%
+      for each month.
+    </p>
+  </section>
+
+  <section class="card" style="margin-bottom: var(--space-xl);">
+    <h2>Data Sources</h2>
+
+    <h3 style="margin-top: var(--space-lg);">
+      <a href="https://www.mortality.org/" target="_blank" rel="noopener">
+        Human Mortality Database (HMD)
+      </a>
+    </h3>
+    <p>
+      Primary source for monthly births and population data. Covers 40+ countries
+      with varying time ranges. Data must be manually downloaded due to license terms.
+    </p>
+
+    <h3 style="margin-top: var(--space-lg);">
+      <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">
+        UN World Population Prospects
+      </a>
+    </h3>
+    <p>
+      Supplementary population data used to fill gaps where HMD data is unavailable.
+      Provides estimates from 1950 to present.
+    </p>
+
+    <h3 style="margin-top: var(--space-lg);">Japan Population Data</h3>
+    <p>
+      Historical population data from the Statistics Bureau, Ministry of Internal Affairs
+      and Communications, via the fmsb R package by Minato Nakazawa.
+    </p>
+  </section>
+
+  <section class="card">
+    <h2>Technical Details</h2>
+    <p>
+      Built with:
+    </p>
+    <ul style="margin-left: var(--space-lg); margin-top: var(--space-sm);">
+      <li>Python (Polars, Pandera) for data processing</li>
+      <li>Astro for static site generation</li>
+      <li>D3.js for interactive visualizations</li>
+      <li>Docker for containerized deployment</li>
+    </ul>
+  </section>
+</BaseLayout>
