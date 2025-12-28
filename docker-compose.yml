@@ -64,10 +64,11 @@ services:
       # Mount output for development; in production, data is built into image
       - ./data-pipeline/output:/usr/share/nginx/html/data:ro
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 5s
 
   # Nginx with data built into image (production)
   nginx-prod:
@@ -77,10 +78,11 @@ services:
     ports:
       - "8080:80"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
       timeout: 3s
       retries: 3
+      start_period: 5s
 
   # Smoke test runner
   smoke-test:

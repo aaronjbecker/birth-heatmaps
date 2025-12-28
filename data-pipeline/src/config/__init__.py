@@ -1,5 +1,6 @@
 """Configuration module for HMD births heatmap pipeline."""
 from .settings import (
+    DATA_PIPELINE_ROOT,
     HMD_DATA_DIR,
     UN_DATA_DIR,
     OUTPUT_DIR,
@@ -26,6 +27,7 @@ from .countries import (
 )
 
 __all__ = [
+    'DATA_PIPELINE_ROOT',
     'HMD_DATA_DIR',
     'UN_DATA_DIR',
     'OUTPUT_DIR',

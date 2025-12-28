@@ -8,7 +8,7 @@ import polars as pl
 from pathlib import Path
 from typing import Optional
 
-from ..config import HMD_DATA_DIR, HMD_COUNTRIES
+from config import HMD_DATA_DIR, HMD_COUNTRIES
 
 
 def load_births_file(country_code: str, data_dir: Optional[Path] = None) -> pl.DataFrame:

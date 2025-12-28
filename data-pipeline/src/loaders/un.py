@@ -9,7 +9,7 @@ import polars as pl
 from pathlib import Path
 from typing import Optional, List
 
-from ..config import UN_DATA_DIR, MONTH_NAMES_FULL, MONTH_NAME_TO_NUMBER
+from config import UN_DATA_DIR, MONTH_NAMES_FULL, MONTH_NAME_TO_NUMBER
 
 
 def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:

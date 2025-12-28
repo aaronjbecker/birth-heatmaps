@@ -8,13 +8,16 @@ import os
 # DIRECTORY SETTINGS
 # ===============================
 
-# Base directories (relative to project root when running in Docker)
-PROJECT_ROOT = Path(__file__).parent.parent.parent.parent
-DATA_PIPELINE_ROOT = Path(__file__).parent.parent.parent
+# Base directories - can be overridden via environment variables for Docker
+# When running in Docker, /app is the working directory
+DATA_PIPELINE_ROOT = Path(os.environ.get('DATA_PIPELINE_ROOT', Path(__file__).parent.parent.parent))
 
-# Raw data directories
-HMD_DATA_DIR = PROJECT_ROOT / 'hmd_data'
-UN_DATA_DIR = PROJECT_ROOT / 'data'
+# Project root (parent of data-pipeline, for accessing frontend directory)
+PROJECT_ROOT = DATA_PIPELINE_ROOT.parent
+
+# Raw data directories (can be overridden via environment variables)
+HMD_DATA_DIR = Path(os.environ.get('HMD_DATA_DIR', DATA_PIPELINE_ROOT / 'hmd_data'))
+UN_DATA_DIR = Path(os.environ.get('UN_DATA_DIR', DATA_PIPELINE_ROOT / 'data'))
 
 # Output directory (git-ignored, contains all generated files)
 # Can be overridden via OUTPUT_DIR environment variable

@@ -4,8 +4,11 @@ Chart exporter for generating PNG visualizations.
 Exports matplotlib charts to PNG files for the Astro frontend.
 Charts are organized by country in subdirectories.
 """
+import os
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple, Dict, Any
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
 import polars as pl
 import pandas as pd
 import numpy as np
@@ -28,7 +31,7 @@ except ImportError:
 mpl.rcParams['font.family'] = 'monospace'
 mpl.rcParams['figure.facecolor'] = '#fafaf9'
 
-from ..config import (
+from config import (
     MONTH_NAMES,
     DATA_SOURCE_LABELS,
     CHARTS_OUTPUT_DIR,
@@ -221,6 +224,12 @@ def build_monthly_fertility_boxplot(
     # Prepare violin plot data
     violin_data = [births_filtered[births_filtered['Month'] == month]['seasonality_ratio_t12m'].values
                    for month in range(1, 13)]
+
+    # Check if all months have data - if any month is empty, skip the violin plot
+    months_with_data = [i + 1 for i, data in enumerate(violin_data) if len(data) > 0]
+    if len(months_with_data) < 12:
+        print(f"Warning: Not all months have data for {country_name}, skipping boxplot")
+        return None
 
     # Create plot
     fig, ax = plt.subplots(figsize=(14, 6), dpi=150)
@@ -577,15 +586,46 @@ def export_country_charts(
     return generated_paths
 
 
+def _export_country_charts_worker(args: Tuple[Dict, Dict, str, Path, bool]) -> Tuple[str, int]:
+    """
+    Worker function for parallel chart generation.
+
+    Args:
+        args: Tuple of (births_dict, population_dict, country_name, output_dir, include_heatmaps)
+
+    Returns:
+        Tuple of (country_name, num_charts_generated)
+    """
+    births_dict, population_dict, country_name, output_dir, include_heatmaps = args
+
+    # Reconstruct DataFrames from dicts
+    births = pl.DataFrame(births_dict)
+    population = pl.DataFrame(population_dict)
+
+    try:
+        paths = export_country_charts(
+            births, population, country_name,
+            output_dir, include_heatmaps
+        )
+        # Close all matplotlib figures to free memory
+        plt.close('all')
+        return (country_name, len(paths))
+    except Exception as e:
+        plt.close('all')
+        print(f"  Error generating charts for {country_name}: {e}")
+        return (country_name, 0)
+
+
 def export_all_charts(
     births: pl.DataFrame,
     population: pl.DataFrame,
     output_dir: Optional[Path] = None,
     countries: Optional[List[str]] = None,
-    include_heatmaps: bool = True
+    include_heatmaps: bool = True,
+    max_workers: Optional[int] = None
 ) -> None:
     """
-    Export charts for all countries.
+    Export charts for all countries in parallel.
 
     Args:
         births: DataFrame with all births data
@@ -593,6 +633,7 @@ def export_all_charts(
         output_dir: Base output directory (defaults to CHARTS_OUTPUT_DIR)
         countries: Optional list of countries to export (defaults to all)
         include_heatmaps: Whether to include matplotlib heatmaps
+        max_workers: Maximum number of parallel workers (defaults to CPU count - 1)
     """
     if output_dir is None:
         output_dir = CHARTS_OUTPUT_DIR
@@ -602,14 +643,42 @@ def export_all_charts(
     if countries is None:
         countries = sorted(births['Country'].unique().to_list())
 
-    print(f"Exporting charts for {len(countries)} countries...")
+    if max_workers is None:
+        # Use fewer workers for chart generation (memory intensive)
+        max_workers = max(1, (os.cpu_count() or 4) - 1)
+        max_workers = min(max_workers, 4)  # Cap at 4 to avoid memory issues
+
+    print(f"Exporting charts for {len(countries)} countries using {max_workers} workers...")
+
+    # Convert DataFrames to dicts for serialization
+    births_dict = births.to_dict()
+    population_dict = population.to_dict()
+
+    # Create args for each country
+    export_args = [
+        (births_dict, population_dict, country_name, output_dir, include_heatmaps)
+        for country_name in countries
+    ]
 
     total_charts = 0
-    for country_name in countries:
-        paths = export_country_charts(
-            births, population, country_name,
-            output_dir, include_heatmaps
-        )
-        total_charts += len(paths)
+    completed = 0
+
+    # Use 'spawn' context to avoid issues with forking and matplotlib
+    ctx = multiprocessing.get_context('spawn')
+
+    with ProcessPoolExecutor(max_workers=max_workers, mp_context=ctx) as executor:
+        futures = {executor.submit(_export_country_charts_worker, args): args[2] for args in export_args}
+
+        for future in as_completed(futures):
+            country_name = futures[future]
+            try:
+                _, num_charts = future.result()
+                total_charts += num_charts
+                completed += 1
+                if completed % 10 == 0:
+                    print(f"  Completed {completed}/{len(countries)} countries...")
+            except Exception as e:
+                print(f"  Error processing {country_name}: {e}")
+                completed += 1
 
     print(f"\nExported {total_charts} charts to {output_dir}")

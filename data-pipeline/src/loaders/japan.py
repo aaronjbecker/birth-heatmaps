@@ -9,6 +9,8 @@ import polars.selectors as cs
 from pathlib import Path
 from typing import Optional
 
+from config import DATA_PIPELINE_ROOT
+
 
 def load_population(data_dir: Optional[Path] = None) -> pl.DataFrame:
     """
@@ -20,8 +22,8 @@ def load_population(data_dir: Optional[Path] = None) -> pl.DataFrame:
     Census date is October 1st of each year.
     """
     if data_dir is None:
-        # Default to project root
-        data_dir = Path(__file__).parent.parent.parent.parent
+        # Default to data-pipeline root where jpop.csv is stored
+        data_dir = DATA_PIPELINE_ROOT
 
     file_path = data_dir / 'jpop.csv'
     df = pl.read_csv(file_path, infer_schema_length=100000)
