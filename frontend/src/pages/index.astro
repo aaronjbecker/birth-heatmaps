@@ -2,25 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import type { CountriesIndex } from '../lib/types';
 
-// Load countries data at build time
-const countriesData: CountriesIndex = await Astro.glob('../../../public/data/countries.json').then(
-  (files) => files[0] as unknown as CountriesIndex
-).catch(() => ({
-  countries: [],
-  dataSources: {},
-  generatedAt: ''
-}));
+// Import countries data from src/assets - Vite will handle cache-busting
+import countriesData from '../assets/data/countries.json';
 
-// Fallback: try to import directly
-let countries = countriesData.countries || [];
-if (countries.length === 0) {
-  try {
-    const data = await import('../../public/data/countries.json');
-    countries = (data.countries || []) as typeof countries;
-  } catch {
-    // No data available yet
-  }
-}
+const countries = countriesData.countries || [];
 
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;

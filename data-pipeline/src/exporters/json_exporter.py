@@ -18,6 +18,9 @@ from config import (
     FERTILITY_OUTPUT_DIR,
     SEASONALITY_OUTPUT_DIR,
     JSON_OUTPUT_DIR,
+    FRONTEND_ASSETS_DATA_DIR,
+    FRONTEND_ASSETS_FERTILITY_DIR,
+    FRONTEND_ASSETS_SEASONALITY_DIR,
     ensure_output_dirs,
 )
 
@@ -79,7 +82,13 @@ def export_countries_index(
     with open(output_path, 'w') as f:
         json.dump(output, f, indent=2)
 
-    print(f"Exported countries index to {output_path}")
+    # Also export to frontend assets for Vite imports
+    frontend_assets_path = FRONTEND_ASSETS_DATA_DIR / 'countries.json'
+    frontend_assets_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(frontend_assets_path, 'w') as f:
+        json.dump(output, f, indent=2)
+
+    print(f"Exported countries index to {output_path} and {frontend_assets_path}")
 
 
 def export_fertility_data(
@@ -218,7 +227,7 @@ def export_seasonality_data(
 
 def _export_country_json(args: tuple) -> str:
     """Helper function to export JSON data for a single country (for parallel execution)."""
-    births_dict, country_name, fertility_dir, seasonality_dir = args
+    births_dict, country_name, fertility_dir, seasonality_dir, frontend_fertility_dir, frontend_seasonality_dir = args
 
     # Reconstruct DataFrame from dict for this country
     births = pl.DataFrame(births_dict)
@@ -260,7 +269,13 @@ def _export_country_json(args: tuple) -> str:
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
     }
 
-    with open(fertility_dir / f'{get_country_slug(country_name)}.json', 'w') as f:
+    fertility_filename = f'{get_country_slug(country_name)}.json'
+    with open(fertility_dir / fertility_filename, 'w') as f:
+        json.dump(fertility_output, f)
+
+    # Also export to frontend assets
+    frontend_fertility_dir.mkdir(parents=True, exist_ok=True)
+    with open(frontend_fertility_dir / fertility_filename, 'w') as f:
         json.dump(fertility_output, f)
 
     # Export seasonality data inline
@@ -289,7 +304,13 @@ def _export_country_json(args: tuple) -> str:
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
     }
 
-    with open(seasonality_dir / f'{get_country_slug(country_name)}.json', 'w') as f:
+    seasonality_filename = f'{get_country_slug(country_name)}.json'
+    with open(seasonality_dir / seasonality_filename, 'w') as f:
+        json.dump(seasonality_output, f)
+
+    # Also export to frontend assets
+    frontend_seasonality_dir.mkdir(parents=True, exist_ok=True)
+    with open(frontend_seasonality_dir / seasonality_filename, 'w') as f:
         json.dump(seasonality_output, f)
 
     return country_name
@@ -324,9 +345,10 @@ def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None
     # Convert DataFrame to dict for pickling (needed for multiprocessing)
     births_dict = births.to_dict()
 
-    # Create args for each country
+    # Create args for each country (including frontend assets directories)
     export_args = [
-        (births_dict, country_name, fertility_dir, seasonality_dir)
+        (births_dict, country_name, fertility_dir, seasonality_dir,
+         FRONTEND_ASSETS_FERTILITY_DIR, FRONTEND_ASSETS_SEASONALITY_DIR)
         for country_name in countries
     ]
 

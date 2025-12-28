@@ -11,7 +11,11 @@
  *   - births_chart.png
  *   - daily_fertility_rate_chart.png
  *
- * These are copied from data-pipeline/output/charts/ during build.
+ * These are automatically copied from data-pipeline/output/charts/ when you run:
+ *   python data-pipeline/scripts/run_pipeline.py --charts
+ *
+ * Charts are imported using import.meta.glob() for Vite optimization.
+ * See CHART_LOADING.md for detailed documentation.
  */
 
 /**

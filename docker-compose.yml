@@ -9,6 +9,11 @@ services:
       - ./data-pipeline/output:/app/output
       - ./hmd_data:/app/hmd_data:ro
       - ./data:/app/data:ro
+      # Mount frontend src/assets/data for direct export (Vite import pattern)
+      - ./frontend/src/assets/data:/app/frontend-assets:rw
+    environment:
+      # Override frontend assets path for Docker environment
+      - FRONTEND_ASSETS_DATA_DIR=/app/frontend-assets
     command: python scripts/run_pipeline.py --all
 
   # Pipeline JSON only (faster, no charts)
@@ -19,6 +24,11 @@ services:
       - ./data-pipeline/output:/app/output
       - ./hmd_data:/app/hmd_data:ro
       - ./data:/app/data:ro
+      # Mount frontend src/assets/data for direct export (Vite import pattern)
+      - ./frontend/src/assets/data:/app/frontend-assets:rw
+    environment:
+      # Override frontend assets path for Docker environment
+      - FRONTEND_ASSETS_DATA_DIR=/app/frontend-assets
     command: python scripts/run_pipeline.py --json
 
   # Jupyter notebook server for development
@@ -50,7 +60,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - ./data-pipeline/output:/app/public/data:ro
+      # Data is now imported from src/assets/data (managed by pipeline)
+      # No need to mount to public/data for build
     command: npm run build
 
   # Nginx server for production data API

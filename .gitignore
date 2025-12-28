@@ -34,6 +34,11 @@ frontend/public/data/*.json
 frontend/public/data/fertility/*.json
 frontend/public/data/seasonality/*.json
 
+# Generated data files in src/assets (PREFERRED location for Vite imports)
+frontend/src/assets/data/*.json
+frontend/src/assets/data/fertility/*.json
+frontend/src/assets/data/seasonality/*.json
+
 # Generated chart images (copied from pipeline output)
 frontend/src/content/charts/
 !frontend/src/content/charts/.gitkeep

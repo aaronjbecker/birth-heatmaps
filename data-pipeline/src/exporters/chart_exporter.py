@@ -5,6 +5,7 @@ Exports matplotlib charts to PNG files for the Astro frontend.
 Charts are organized by country in subdirectories.
 """
 import os
+import shutil
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -35,6 +36,7 @@ from config import (
     MONTH_NAMES,
     DATA_SOURCE_LABELS,
     CHARTS_OUTPUT_DIR,
+    FRONTEND_CONTENT_CHARTS_DIR,
     get_country_slug,
     ensure_output_dirs,
 )
@@ -682,3 +684,39 @@ def export_all_charts(
                 completed += 1
 
     print(f"\nExported {total_charts} charts to {output_dir}")
+
+    # Copy charts to frontend content directory for Vite/Astro imports
+    _copy_charts_to_frontend(output_dir, FRONTEND_CONTENT_CHARTS_DIR)
+
+
+def _copy_charts_to_frontend(source_dir: Path, dest_dir: Path) -> None:
+    """
+    Copy generated charts to frontend content directory.
+
+    This allows Astro to import charts using import.meta.glob() for
+    optimized asset handling with Vite.
+
+    Args:
+        source_dir: Source directory with generated charts (organized by country)
+        dest_dir: Destination directory (frontend/src/content/charts)
+    """
+    if not source_dir.exists():
+        print(f"  Warning: Source directory {source_dir} does not exist, skipping frontend copy")
+        return
+
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy all country subdirectories
+    copied_files = 0
+    for country_dir in source_dir.iterdir():
+        if country_dir.is_dir():
+            dest_country_dir = dest_dir / country_dir.name
+            dest_country_dir.mkdir(parents=True, exist_ok=True)
+
+            # Copy all PNG files
+            for chart_file in country_dir.glob('*.png'):
+                dest_file = dest_country_dir / chart_file.name
+                shutil.copy2(chart_file, dest_file)
+                copied_files += 1
+
+    print(f"  Copied {copied_files} charts to {dest_dir} for frontend imports")

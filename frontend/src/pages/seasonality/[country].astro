@@ -5,27 +5,25 @@ import ChartGallery from '../../components/ChartGallery.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
 
 export async function getStaticPaths() {
-  // Load countries index
-  let countries: CountryMeta[] = [];
-  try {
-    const data = await import('../../../public/data/countries.json');
-    countries = (data.countries || []) as unknown as CountryMeta[];
-  } catch {
-    // Fallback for when data doesn't exist yet
-    countries = [
-      { code: 'france', name: 'France', sources: ['HMD'], fertility: { yearRange: [1946, 2023], hasData: true }, seasonality: { yearRange: [1946, 2023], hasData: true } }
-    ];
-  }
+  // Import countries data from src/assets - Vite will handle cache-busting
+  const countriesData = await import('../../assets/data/countries.json');
+  const countries = countriesData.countries as CountryMeta[];
 
-  // For each country, try to load seasonality data
+  // Use Vite's import.meta.glob to load all seasonality data files at build time
+  const seasonalityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/seasonality/*.json');
+
+  // For each country, load seasonality data
   const paths = await Promise.all(
     countries.map(async (country) => {
       let heatmapData: CountryHeatmapData | null = null;
-      try {
-        const data = await import(`../../../public/data/seasonality/${country.code}.json`);
-        heatmapData = data.default || data;
-      } catch (e) {
-        // Data not available yet
+      const filePath = `../../assets/data/seasonality/${country.code}.json`;
+
+      if (seasonalityFiles[filePath]) {
+        try {
+          heatmapData = await seasonalityFiles[filePath]() as CountryHeatmapData;
+        } catch (e) {
+          console.warn(`Failed to load seasonality data for ${country.name}:`, e);
+        }
       }
 
       return {

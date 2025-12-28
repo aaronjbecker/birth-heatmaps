@@ -10,8 +10,11 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
+      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
       "env": {
-        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
+        "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
+        "UN_DATA_DIR": "${workspaceFolder}/data"
       }
     },
     {
@@ -23,8 +26,27 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
+      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
       "env": {
-        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
+        "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
+        "UN_DATA_DIR": "${workspaceFolder}/data"
+      }
+    },
+    {
+      "name": "Python: Run Pipeline (JSON + Charts)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data-pipeline/scripts/run_pipeline.py",
+      "args": ["--json", "--charts"],
+      "cwd": "${workspaceFolder}/data-pipeline",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
+        "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
+        "UN_DATA_DIR": "${workspaceFolder}/data"
       }
     },
     {
@@ -36,6 +58,7 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
+      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
       }
