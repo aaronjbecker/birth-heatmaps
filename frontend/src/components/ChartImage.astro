@@ -1,0 +1,120 @@
+---
+/**
+ * ChartImage component for displaying optimized chart images.
+ *
+ * Uses Astro's Image component for optimization when images are available,
+ * with graceful fallback when charts haven't been generated yet.
+ */
+import { Image } from 'astro:assets';
+import { CHART_METADATA, type ChartType, getChartFilename } from '../content/config';
+
+export interface Props {
+  countrySlug: string;
+  chartType: ChartType;
+  class?: string;
+}
+
+const { countrySlug, chartType, class: className } = Astro.props;
+
+const metadata = CHART_METADATA[chartType];
+const filename = getChartFilename(chartType);
+
+// Try to dynamically import the chart image
+let chartImage: ImageMetadata | null = null;
+
+try {
+  // Use Vite's glob import to get all chart images
+  const images = import.meta.glob<{ default: ImageMetadata }>(
+    '../content/charts/**/*.png',
+    { eager: true }
+  );
+
+  const imagePath = `../content/charts/${countrySlug}/${filename}`;
+  if (images[imagePath]) {
+    chartImage = images[imagePath].default;
+  }
+} catch {
+  // Image not available, chartImage remains null
+}
+---
+
+<figure class:list={['chart-figure', className]}>
+  <figcaption>
+    <h3>{metadata.label}</h3>
+    <p>{metadata.description}</p>
+  </figcaption>
+
+  <div class="chart-container">
+    {chartImage ? (
+      <Image
+        src={chartImage}
+        alt={`${metadata.label} for ${countrySlug}`}
+        width={800}
+        quality={85}
+        loading="lazy"
+        class="chart-image"
+      />
+    ) : (
+      <div class="chart-placeholder">
+        <p>Chart not available</p>
+        <small>Run the data pipeline to generate charts</small>
+      </div>
+    )}
+  </div>
+</figure>
+
+<style>
+  .chart-figure {
+    margin: 0 0 var(--space-xl) 0;
+  }
+
+  figcaption {
+    margin-bottom: var(--space-sm);
+  }
+
+  figcaption h3 {
+    margin: 0 0 var(--space-xs) 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  figcaption p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+  }
+
+  .chart-container {
+    background-color: #fafafa;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .chart-image {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .chart-placeholder {
+    padding: var(--space-xl);
+    text-align: center;
+    color: var(--color-text-muted);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .chart-placeholder p {
+    margin: 0 0 var(--space-xs) 0;
+  }
+
+  .chart-placeholder small {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+</style>

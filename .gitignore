@@ -7,8 +7,9 @@ data/
 hmd_data/
 data-pipeline/raw_data/
 
-# Generated output
+# Generated output (pipeline produces JSON and charts here)
 output/
+data-pipeline/output/
 
 # ============================================
 # Data Pipeline (Python/Conda)
@@ -32,6 +33,10 @@ frontend/.astro/
 frontend/public/data/*.json
 frontend/public/data/fertility/*.json
 frontend/public/data/seasonality/*.json
+
+# Generated chart images (copied from pipeline output)
+frontend/src/content/charts/
+!frontend/src/content/charts/.gitkeep
 
 # PyCharm project files
 .idea/

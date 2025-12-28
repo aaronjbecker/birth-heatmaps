@@ -26,7 +26,7 @@ from processors import (
     compute_births_extent_stats,
     compute_population_extent_stats,
 )
-from exporters import export_all_countries
+from exporters import export_all_countries, export_all_charts
 from schemas import BirthsSchema, PopulationSchema, StatsSchema
 
 
@@ -159,18 +159,29 @@ def export_json(births: pl.DataFrame, output_dir: Path = None):
     print("  JSON export complete")
 
 
+def export_charts(births: pl.DataFrame, population: pl.DataFrame, output_dir: Path = None):
+    """Export PNG charts for frontend."""
+    if output_dir is None:
+        output_dir = OUTPUT_DIR / 'charts'
+
+    print(f"\nExporting charts to {output_dir}...")
+    export_all_charts(births, population, output_dir, include_heatmaps=True)
+    print("  Chart export complete")
+
+
 def main():
     parser = argparse.ArgumentParser(description='HMD Births Heatmap Data Pipeline')
     parser.add_argument('--csv', action='store_true', help='Export CSV files (legacy format)')
     parser.add_argument('--json', action='store_true', help='Export JSON files for frontend')
-    parser.add_argument('--all', action='store_true', help='Export both CSV and JSON')
+    parser.add_argument('--charts', action='store_true', help='Export PNG charts for frontend')
+    parser.add_argument('--all', action='store_true', help='Export CSV, JSON, and charts')
     parser.add_argument('--hmd-dir', type=Path, help='HMD data directory')
     parser.add_argument('--un-dir', type=Path, help='UN data directory')
     parser.add_argument('--output-dir', type=Path, help='Output directory')
     args = parser.parse_args()
 
     # Default to --all if no format specified
-    if not args.csv and not args.json and not args.all:
+    if not args.csv and not args.json and not args.charts and not args.all:
         args.all = True
 
     print("=" * 50)
@@ -192,6 +203,9 @@ def main():
 
     if args.json or args.all:
         export_json(births, args.output_dir)
+
+    if args.charts or args.all:
+        export_charts(births, population, args.output_dir)
 
     print("\n" + "=" * 50)
     print("Pipeline complete!")

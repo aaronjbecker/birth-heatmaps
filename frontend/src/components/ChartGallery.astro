@@ -1,0 +1,108 @@
+---
+/**
+ * ChartGallery component for displaying all charts for a country.
+ *
+ * Organizes charts into logical sections:
+ * - Heatmaps (fertility and seasonality)
+ * - Time series (population, births, fertility rate)
+ * - Distributions (monthly boxplot, monthly trends)
+ */
+import ChartImage from './ChartImage.astro';
+import { type ChartType } from '../content/config';
+
+export interface Props {
+  countrySlug: string;
+}
+
+const { countrySlug } = Astro.props;
+
+interface ChartSection {
+  title: string;
+  description: string;
+  charts: ChartType[];
+}
+
+const sections: ChartSection[] = [
+  {
+    title: 'Heatmap Visualizations',
+    description: 'Monthly patterns across years shown as heatmaps',
+    charts: ['fertility_heatmap', 'seasonality_heatmap'],
+  },
+  {
+    title: 'Time Series',
+    description: 'Long-term trends in population, births, and fertility',
+    charts: ['population_chart', 'births_chart', 'daily_fertility_rate_chart'],
+  },
+  {
+    title: 'Monthly Patterns',
+    description: 'Analysis of which months have higher or lower birth rates',
+    charts: ['monthly_fertility_chart', 'monthly_fertility_boxplot'],
+  },
+];
+---
+
+<div class="chart-gallery">
+  {sections.map((section) => (
+    <section class="chart-section">
+      <header class="section-header">
+        <h2>{section.title}</h2>
+        <p>{section.description}</p>
+      </header>
+
+      <div class="charts-grid">
+        {section.charts.map((chartType) => (
+          <ChartImage
+            countrySlug={countrySlug}
+            chartType={chartType}
+          />
+        ))}
+      </div>
+    </section>
+  ))}
+</div>
+
+<style>
+  .chart-gallery {
+    margin-top: var(--space-xl);
+  }
+
+  .chart-section {
+    margin-bottom: var(--space-2xl);
+  }
+
+  .section-header {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .section-header h2 {
+    margin: 0 0 var(--space-xs) 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .section-header p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9375rem;
+  }
+
+  .charts-grid {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  /* For heatmaps section, keep single column for wide images */
+  .chart-section:first-child .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* For other sections, use 2 columns on larger screens */
+  @media (min-width: 1024px) {
+    .chart-section:not(:first-child) .charts-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

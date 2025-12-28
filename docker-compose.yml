@@ -1,15 +1,25 @@
 version: "3.8"
 
 services:
-  # Data pipeline - generates JSON files for frontend
+  # Data pipeline - generates JSON and chart files
   pipeline:
     build: ./data-pipeline
     volumes:
       - ./data-pipeline/raw_data:/app/raw_data:ro
-      - ./frontend/public/data:/app/output
+      - ./data-pipeline/output:/app/output
       - ./hmd_data:/app/hmd_data:ro
       - ./data:/app/data:ro
-    command: python scripts/run_pipeline.py
+    command: python scripts/run_pipeline.py --all
+
+  # Pipeline JSON only (faster, no charts)
+  pipeline-json:
+    build: ./data-pipeline
+    volumes:
+      - ./data-pipeline/raw_data:/app/raw_data:ro
+      - ./data-pipeline/output:/app/output
+      - ./hmd_data:/app/hmd_data:ro
+      - ./data:/app/data:ro
+    command: python scripts/run_pipeline.py --json
 
   # Jupyter notebook server for development
   jupyter:
@@ -30,4 +40,54 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    environment:
+      - DATA_API_URL=http://nginx/data
     command: npm run dev -- --host
+
+  # Astro frontend production build
+  frontend-build:
+    build: ./frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - ./data-pipeline/output:/app/public/data:ro
+    command: npm run build
+
+  # Nginx server for production data API
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount output for development; in production, data is built into image
+      - ./data-pipeline/output:/usr/share/nginx/html/data:ro
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Nginx with data built into image (production)
+  nginx-prod:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile.prod
+    ports:
+      - "8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Smoke test runner
+  smoke-test:
+    build: ./data-pipeline
+    depends_on:
+      nginx:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/app/scripts:ro
+    command: python /app/scripts/smoke_test.py

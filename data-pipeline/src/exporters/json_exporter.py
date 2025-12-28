@@ -15,7 +15,8 @@ from ..config import (
     get_country_slug,
     FERTILITY_OUTPUT_DIR,
     SEASONALITY_OUTPUT_DIR,
-    OUTPUT_DIR,
+    JSON_OUTPUT_DIR,
+    ensure_output_dirs,
 )
 
 
@@ -28,10 +29,10 @@ def export_countries_index(
 
     Args:
         births: DataFrame with all births data
-        output_dir: Output directory (defaults to OUTPUT_DIR)
+        output_dir: Output directory (defaults to JSON_OUTPUT_DIR)
     """
     if output_dir is None:
-        output_dir = OUTPUT_DIR
+        output_dir = JSON_OUTPUT_DIR
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -219,10 +220,13 @@ def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None
 
     Args:
         births: DataFrame with all births data
-        output_dir: Base output directory (defaults to OUTPUT_DIR)
+        output_dir: Base output directory (defaults to JSON_OUTPUT_DIR)
     """
     if output_dir is None:
-        output_dir = OUTPUT_DIR
+        output_dir = JSON_OUTPUT_DIR
+
+    # Ensure output directories exist
+    ensure_output_dirs()
 
     # Export countries index
     export_countries_index(births, output_dir)

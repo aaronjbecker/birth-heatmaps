@@ -1,0 +1,81 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Run Pipeline",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data-pipeline/scripts/run_pipeline.py",
+      "args": ["--json"],
+      "cwd": "${workspaceFolder}/data-pipeline",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
+      }
+    },
+    {
+      "name": "Python: Run Pipeline (CSV + JSON)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/data-pipeline/scripts/run_pipeline.py",
+      "args": ["--all"],
+      "cwd": "${workspaceFolder}/data-pipeline",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
+      }
+    },
+    {
+      "name": "Python: pytest",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["-v"],
+      "cwd": "${workspaceFolder}/data-pipeline",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
+      }
+    },
+    {
+      "name": "Astro: Dev Server",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Astro: Build",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "build"],
+      "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Vitest: Run Tests",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["test"],
+      "cwd": "${workspaceFolder}/frontend",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack: Pipeline + Frontend",
+      "configurations": ["Python: Run Pipeline", "Astro: Dev Server"],
+      "stopAll": true
+    }
+  ]
+}

@@ -126,35 +126,117 @@ svg.selectAll()
 
 ---
 
-## Stage E: Integration and Testing
+## Stage E: Integration and Testing (IN PROGRESS)
 
 ### Objective
-End-to-end testing of the full pipeline and deployment preparation.
+End-to-end integration of the data pipeline with the frontend, production deployment setup, and comprehensive testing.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Docker Compose                            │
+├─────────────────┬─────────────────┬─────────────────────────┤
+│   pipeline      │   frontend-dev  │   nginx (production)    │
+│   (micromamba)  │   (astro dev)   │   (static files)        │
+├─────────────────┴─────────────────┴─────────────────────────┤
+│                                                              │
+│   data-pipeline/output/          →  nginx serves JSON       │
+│   ├── countries.json                                         │
+│   ├── fertility/{country}.json                               │
+│   ├── seasonality/{country}.json                             │
+│   └── charts/{country}/                                      │
+│       ├── fertility_heatmap.png                              │
+│       ├── seasonality_heatmap.png                            │
+│       ├── monthly_fertility_chart.png                        │
+│       └── ...                                                │
+│                                                              │
+│   frontend/src/content/charts/   →  Astro Image component   │
+│   (copies from output for Vite optimization)                 │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### Tasks
 
-1. **Pipeline Integration Test**
-   - Run full pipeline with sample data
-   - Verify JSON output matches schema
-   - Test with Docker compose
+1. **VS Code Development Setup**
+   - Create `.vscode/launch.json` for debugging
+   - Configure Python and Node.js debug configurations
 
-2. **Frontend Build Test**
-   - Build static site
-   - Verify all pages render
-   - Check for console errors
+2. **Output Directory Structure**
+   - JSON outputs go to `data-pipeline/output/` (git-ignored)
+   - Chart PNG outputs go to `data-pipeline/output/charts/{country}/`
+   - Update JSON exporter to use new output path
+   - Update chart builder to output PNGs to new path
 
-3. **Visual Regression Testing** (optional)
-   - Screenshot comparison
-   - Responsive layout testing
+3. **Production Nginx Container**
+   - Create `nginx/` directory with config
+   - Serve static JSON files from `/data/` path
+   - Build data files into image (infrequent changes)
+   - Configure CORS headers for frontend
 
-4. **Performance Optimization**
-   - Lazy loading for large datasets
-   - Virtualization if needed (100+ years)
+4. **Smoke Tests**
+   - Docker compose build test
+   - Pipeline execution test
+   - Frontend build test
+   - Nginx serving test
 
-5. **Deployment Documentation**
-   - Build instructions
-   - Environment variables
-   - Hosting options
+5. **Astro Content Collection for Charts**
+   - Create `frontend/src/content/charts/` directory
+   - Define content collection schema
+   - Copy charts from pipeline output during build
+   - Use Astro `<Image>` component for optimization
+
+6. **Country Page Layout Enhancement**
+   - Add chart sections to country pages:
+     - Daily Fertility Rate Heatmap (D3 interactive)
+     - Seasonality Heatmap (D3 interactive)
+     - Monthly Fertility Rate Chart (PNG)
+     - Monthly Fertility Boxplot (PNG)
+     - Population Over Time (PNG)
+     - Total Births Over Time (PNG)
+   - Section headers with descriptions
+   - Responsive grid layout
+
+7. **Multi-Country Comparison (Future)**
+   - Keep page structure flexible for comparison views
+   - Consider shared state for country selection
+   - Plan for overlay/side-by-side visualizations
+
+### Files to Create/Modify
+
+```
+.vscode/
+└── launch.json                    # VS Code debug config
+
+data-pipeline/
+├── output/                        # Git-ignored output directory
+│   ├── countries.json
+│   ├── fertility/
+│   ├── seasonality/
+│   └── charts/
+└── src/
+    └── exporters/
+        └── chart_exporter.py      # PNG chart generation
+
+frontend/
+├── src/
+│   ├── content/
+│   │   └── charts/               # Astro content collection
+│   │       └── config.ts
+│   └── pages/
+│       ├── fertility/[country].astro  # Enhanced layout
+│       └── seasonality/[country].astro
+└── astro.config.mjs              # Content collection config
+
+nginx/
+├── Dockerfile
+├── nginx.conf
+└── default.conf
+
+docker-compose.yml                 # Add nginx service
+Makefile                          # Add smoke test targets
+```
 
 ---
 

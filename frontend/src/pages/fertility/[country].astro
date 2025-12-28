@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { HeatmapD3 } from '../../components/HeatmapD3';
+import ChartGallery from '../../components/ChartGallery.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
 
 export async function getStaticPaths() {
@@ -84,6 +85,8 @@ function formatYearRange(range: [number, number]): string {
       </div>
     )}
   </div>
+
+  <ChartGallery countrySlug={country} />
 </BaseLayout>
 
 <style>
