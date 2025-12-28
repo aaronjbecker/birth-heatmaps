@@ -17,7 +17,6 @@ export interface HeatmapInstance {
   update: (data: CountryHeatmapData, yearRange?: [number, number]) => void;
   resize: (width: number, height: number) => void;
   destroy: () => void;
-  resetZoom: () => void;
 }
 
 const defaultConfig: HeatmapConfig = {
@@ -54,29 +53,13 @@ export function createHeatmap(
     .attr('height', height + margin.top + margin.bottom)
     .attr('class', 'heatmap-svg');
 
-  // Create clip path for zoom
-  const defs = svg.append('defs');
-  defs.append('clipPath')
-    .attr('id', 'heatmap-clip')
-    .append('rect')
-    .attr('width', width)
-    .attr('height', height);
-
   // Main group with margin transform
   const g = svg.append('g')
     .attr('transform', `translate(${margin.left},${margin.top})`);
 
-  // Background for zoom handling
-  g.append('rect')
-    .attr('class', 'zoom-rect')
-    .attr('width', width)
-    .attr('height', height)
-    .attr('fill', 'transparent');
-
-  // Clipped group for cells
+  // Group for cells
   const cellsGroup = g.append('g')
-    .attr('class', 'cells-group')
-    .attr('clip-path', 'url(#heatmap-clip)');
+    .attr('class', 'cells-group');
 
   // Axes groups
   const xAxisGroup = g.append('g')
@@ -105,26 +88,7 @@ export function createHeatmap(
     .range([0, height])
     .padding(cfg.cellPadding);
 
-  // Zoom behavior
-  const zoom = d3.zoom<SVGSVGElement, unknown>()
-    .scaleExtent([1, 8])
-    .translateExtent([[0, 0], [width + margin.left + margin.right, height + margin.top + margin.bottom]])
-    .extent([[0, 0], [width, height]])
-    .on('zoom', zoomed);
-
-  svg.call(zoom);
-
-  function zoomed(event: d3.D3ZoomEvent<SVGSVGElement, unknown>) {
-
-    // Apply transform to cells
-    cellsGroup.attr('transform', event.transform.toString());
-
-    // Update axes with new scale
-    const newXScale = event.transform.rescaleX(xScale as unknown as d3.ScaleLinear<number, number, never>);
-    updateXAxis(newXScale);
-  }
-
-  function updateXAxis(_scale?: d3.ScaleLinear<number, number, never> | d3.ScaleBand<number>) {
+  function updateXAxis() {
     const years = currentData.years.filter(
       (y) => y >= currentYearRange[0] && y <= currentYearRange[1]
     );
@@ -177,7 +141,7 @@ export function createHeatmap(
     );
 
     // Update axes
-    updateXAxis(xScale);
+    updateXAxis();
 
     const yAxis = d3.axisLeft(yScale).tickSize(0);
     yAxisGroup
@@ -242,16 +206,6 @@ export function createHeatmap(
       .attr('width', newWidth)
       .attr('height', newHeight);
 
-    // Update clip path
-    defs.select('#heatmap-clip rect')
-      .attr('width', width)
-      .attr('height', height);
-
-    // Update background
-    g.select('.zoom-rect')
-      .attr('width', width)
-      .attr('height', height);
-
     // Update scales
     yScale.range([0, height]);
 
@@ -260,15 +214,6 @@ export function createHeatmap(
 
     // Re-render
     update(currentData, currentYearRange);
-  }
-
-  /**
-   * Reset zoom to initial state
-   */
-  function resetZoom() {
-    svg.transition()
-      .duration(300)
-      .call(zoom.transform, d3.zoomIdentity);
   }
 
   /**
@@ -286,7 +231,6 @@ export function createHeatmap(
     update,
     resize,
     destroy,
-    resetZoom,
   };
 }
 

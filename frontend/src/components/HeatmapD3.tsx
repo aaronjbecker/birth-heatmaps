@@ -49,21 +49,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: '4px',
     overflow: 'hidden',
   },
-  button: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    border: '1px solid #ccc',
-    borderRadius: '3px',
-    backgroundColor: '#fff',
-    color: '#666',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-  },
-  buttonIcon: {
-    fontSize: '14px',
-  },
   loading: {
     display: 'flex',
     alignItems: 'center',
@@ -128,13 +113,6 @@ export function HeatmapD3({
       heatmapRef.current.update(data, [start, end]);
     }
   }, [data]);
-
-  // Handle zoom reset
-  const handleResetZoom = useCallback(() => {
-    if (heatmapRef.current) {
-      heatmapRef.current.resetZoom();
-    }
-  }, []);
 
   // Initialize D3 heatmap
   useEffect(() => {
@@ -228,15 +206,6 @@ export function HeatmapD3({
                 onChange={handleYearRangeChange}
               />
             )}
-            <button
-              style={styles.button}
-              onClick={handleResetZoom}
-              type="button"
-              title="Reset zoom"
-            >
-              <span style={styles.buttonIcon}>↻</span>
-              Reset
-            </button>
           </div>
         </div>
       )}

@@ -53,8 +53,7 @@ frontend/src/
 │   └── YearRangeFilter.tsx     # Year range slider
 └── lib/
     ├── d3-heatmap.ts           # D3 heatmap rendering logic
-    ├── color-scales.ts         # Color scale utilities
-    └── zoom-pan.ts             # Zoom/pan behavior
+    └── color-scales.ts         # Color scale utilities
 ```
 
 ### Implementation Tasks
@@ -81,18 +80,12 @@ frontend/src/
    - Show: year, month, value, births, source
    - Fade in/out animation
 
-5. **Zoom/Pan** (`zoom-pan.ts`)
-   - D3 zoom behavior (1x-8x scale)
-   - Constrain to data bounds
-   - Update axis labels on zoom
-   - Reset button
-
-6. **Year Range Filter** (`YearRangeFilter.tsx`)
+5. **Year Range Filter** (`YearRangeFilter.tsx`)
    - Dual range slider
    - Filter visible years
    - Update heatmap on change
 
-7. **Color Legend** (`ColorLegend.tsx`)
+6. **Color Legend** (`ColorLegend.tsx`)
    - Gradient bar
    - Tick marks with values
    - Match colorScale from data
@@ -336,8 +329,7 @@ Results:
 - ✅ `src/lib/data.test.ts` - 6 tests passed
 - ✅ `src/lib/color-scales.test.ts` - 18 tests passed
 - ✅ `src/lib/d3-heatmap.test.ts` - 2 tests passed
-- ✅ `src/lib/zoom-pan.test.ts` - 9 tests passed
-- **Total: 42 tests passing**
+- **Total: 33 tests passing**
 
 ---
 
@@ -381,7 +373,6 @@ docker compose up frontend-dev            # Frontend at port 4321
 6. **Utilities created:**
    - `color-scales.ts` - Color scale creation and formatting
    - `d3-heatmap.ts` - Core D3 heatmap rendering logic
-   - `zoom-pan.ts` - Zoom and pan behavior utilities
 7. **To test with real data:** Run the data pipeline to generate JSON files, then rebuild the frontend
 
 ---
