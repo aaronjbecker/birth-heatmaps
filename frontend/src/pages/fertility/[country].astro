@@ -1,32 +1,49 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import type { CountriesIndex, CountryMeta } from '../../lib/types';
+import { HeatmapD3 } from '../../components/HeatmapD3';
+import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
 
 export async function getStaticPaths() {
   // Load countries index
   let countries: CountryMeta[] = [];
   try {
     const data = await import('../../../public/data/countries.json');
-    countries = data.countries || [];
-  } catch (e) {
+    countries = (data.countries || []) as unknown as CountryMeta[];
+  } catch {
     // Fallback for when data doesn't exist yet
     countries = [
       { code: 'france', name: 'France', sources: ['HMD'], fertility: { yearRange: [1946, 2023], hasData: true }, seasonality: { yearRange: [1946, 2023], hasData: true } }
     ];
   }
 
-  return countries.map((country) => ({
-    params: { country: country.code },
-    props: { countryMeta: country },
-  }));
+  // For each country, try to load fertility data
+  const paths = await Promise.all(
+    countries.map(async (country) => {
+      let heatmapData: CountryHeatmapData | null = null;
+      try {
+        const data = await import(`../../../public/data/fertility/${country.code}.json`);
+        heatmapData = data.default || data;
+      } catch (e) {
+        // Data not available yet
+      }
+
+      return {
+        params: { country: country.code },
+        props: { countryMeta: country, heatmapData },
+      };
+    })
+  );
+
+  return paths;
 }
 
 interface Props {
   countryMeta: CountryMeta;
+  heatmapData: CountryHeatmapData | null;
 }
 
 const { country } = Astro.params;
-const { countryMeta } = Astro.props;
+const { countryMeta, heatmapData } = Astro.props;
 
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;
@@ -51,11 +68,22 @@ function formatYearRange(range: [number, number]): string {
     <a href={`/seasonality/${country}`} class="tab">Seasonality</a>
   </div>
 
-  <div id="heatmap-container" class="heatmap-container" data-country={country}>
-    <p class="loading">Loading heatmap data...</p>
+  <div class="heatmap-wrapper">
+    {heatmapData ? (
+      <HeatmapD3
+        client:load
+        data={heatmapData}
+        height={500}
+        showLegend={true}
+        showYearFilter={true}
+        showControls={true}
+      />
+    ) : (
+      <div id="heatmap-container" class="heatmap-container" data-country={country} data-metric="fertility">
+        <p class="loading">Loading heatmap data...</p>
+      </div>
+    )}
   </div>
-
-  <div id="tooltip" class="tooltip" style="display: none;"></div>
 </BaseLayout>
 
 <style>
@@ -115,6 +143,20 @@ function formatYearRange(range: [number, number]): string {
     border-bottom-color: var(--color-primary);
   }
 
+  .heatmap-wrapper {
+    margin-bottom: var(--space-xl);
+  }
+
+  .heatmap-container {
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+  }
+
   .loading {
     padding: var(--space-xl);
     text-align: center;
@@ -122,34 +164,38 @@ function formatYearRange(range: [number, number]): string {
   }
 </style>
 
-<script>
-  // Client-side script to load and render the heatmap
-  const container = document.getElementById('heatmap-container');
-  const country = container?.dataset.country;
+{!heatmapData && (
+  <script>
+    // Client-side fallback for when data isn't available at build time
+    const container = document.getElementById('heatmap-container');
+    const country = container?.dataset.country;
+    const metric = container?.dataset.metric;
 
-  if (country) {
-    fetch(`/data/fertility/${country}.json`)
-      .then(res => {
-        if (!res.ok) throw new Error('Data not found');
-        return res.json();
-      })
-      .then(data => {
-        container!.innerHTML = `
-          <p style="text-align: center; padding: var(--space-xl);">
-            Heatmap component will be rendered here.<br>
-            <small style="color: var(--color-text-muted);">
-              Data loaded: ${data.data.length} cells, ${data.years.length} years
-            </small>
-          </p>
-        `;
-      })
-      .catch(err => {
-        container!.innerHTML = `
-          <p style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
-            No data available for this country yet.<br>
-            <small>Run the data pipeline to generate JSON files.</small>
-          </p>
-        `;
-      });
-  }
-</script>
+    if (country && container) {
+      fetch(`/data/${metric}/${country}.json`)
+        .then(res => {
+          if (!res.ok) throw new Error('Data not found');
+          return res.json();
+        })
+        .then(data => {
+          container.innerHTML = `
+            <p style="text-align: center; padding: var(--space-xl);">
+              Heatmap data loaded: ${data.data.length} cells, ${data.years.length} years<br>
+              <small style="color: var(--color-text-muted);">
+                Note: Full D3 visualization requires data at build time.<br>
+                Run the data pipeline and rebuild the site.
+              </small>
+            </p>
+          `;
+        })
+        .catch(() => {
+          container.innerHTML = `
+            <p style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
+              No data available for this country yet.<br>
+              <small>Run the data pipeline to generate JSON files.</small>
+            </p>
+          `;
+        });
+    }
+  </script>
+)}

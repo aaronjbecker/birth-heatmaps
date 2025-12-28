@@ -1,0 +1,104 @@
+---
+/**
+ * Astro wrapper component for the D3 heatmap
+ * This component handles data loading at build time and hydrates the React component
+ */
+import { HeatmapD3 } from './HeatmapD3';
+import type { CountryHeatmapData } from '../lib/types';
+
+interface Props {
+  data?: CountryHeatmapData;
+  dataUrl?: string;
+  height?: number;
+  showLegend?: boolean;
+  showYearFilter?: boolean;
+  showControls?: boolean;
+}
+
+const {
+  data,
+  dataUrl,
+  height = 500,
+  showLegend = true,
+  showYearFilter = true,
+  showControls = true,
+} = Astro.props;
+---
+
+{data ? (
+  <HeatmapD3
+    client:load
+    data={data}
+    height={height}
+    showLegend={showLegend}
+    showYearFilter={showYearFilter}
+    showControls={showControls}
+  />
+) : dataUrl ? (
+  <div class="heatmap-loader" data-url={dataUrl} data-height={height}>
+    <p class="loading">Loading heatmap...</p>
+  </div>
+  <script define:vars={{ height, showLegend, showYearFilter, showControls }}>
+    // Client-side data loading for dynamic routes
+    document.addEventListener('DOMContentLoaded', async () => {
+      const loaders = document.querySelectorAll('.heatmap-loader');
+
+      for (const loader of loaders) {
+        const url = loader.dataset.url;
+        if (!url) continue;
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`Failed to load: ${response.statusText}`);
+          }
+          const data = await response.json();
+
+          // Create React root and render HeatmapD3
+          // Note: This requires the React component to be available globally
+          // For full client-side loading, use the dataUrl approach with a script
+          loader.innerHTML = `
+            <div class="heatmap-mounted" style="min-height: ${height}px;">
+              <p style="text-align: center; padding: 20px; color: #888;">
+                Heatmap data loaded: ${data.data.length} cells
+              </p>
+            </div>
+          `;
+        } catch (error) {
+          loader.innerHTML = `
+            <p class="error" style="text-align: center; padding: 20px; color: #d32f2f;">
+              Error loading heatmap data
+            </p>
+          `;
+        }
+      }
+    });
+  </script>
+) : (
+  <div class="heatmap-placeholder">
+    <p class="no-data">No data provided. Pass either 'data' or 'dataUrl' prop.</p>
+  </div>
+)}
+
+<style>
+  .heatmap-loader,
+  .heatmap-placeholder {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+    border: 1px dashed #ccc;
+    border-radius: 4px;
+  }
+
+  .loading,
+  .no-data {
+    color: #888;
+    font-size: 14px;
+  }
+
+  .error {
+    color: #d32f2f;
+  }
+</style>

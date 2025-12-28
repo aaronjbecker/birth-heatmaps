@@ -16,8 +16,8 @@ let countries = countriesData.countries || [];
 if (countries.length === 0) {
   try {
     const data = await import('../../public/data/countries.json');
-    countries = data.countries || [];
-  } catch (e) {
+    countries = (data.countries || []) as typeof countries;
+  } catch {
     // No data available yet
   }
 }

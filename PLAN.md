@@ -26,17 +26,17 @@ This document serves as a handoff guide for continuing development of the HMD Bi
 | B | ✅ Complete | `5f204f9` | Python pipeline refactoring (modular structure) |
 | C | ✅ Complete | `22ca4e7` | Astro frontend initialization (pages, layouts, types) |
 | Testing | ✅ Complete | `b5a7ec3` | pytest + Vitest infrastructure |
+| D | ✅ Complete | - | D3 heatmap components (42 tests passing) |
 
 ### Remaining Stages
 
 | Stage | Status | Description |
 |-------|--------|-------------|
-| D | 🔲 Pending | D3 heatmap components |
 | E | 🔲 Pending | Integration and testing |
 
 ---
 
-## Stage D: D3 Heatmap Components (NEXT)
+## Stage D: D3 Heatmap Components (COMPLETED)
 
 ### Objective
 Implement interactive D3.js heatmap visualization components based on the [d3-graph-gallery example](chart_example_from_d3-graph-gallery.html).
@@ -252,7 +252,10 @@ npm test
 Results:
 - ✅ `src/lib/types.test.ts` - 7 tests passed
 - ✅ `src/lib/data.test.ts` - 6 tests passed
-- **Total: 13 tests passing**
+- ✅ `src/lib/color-scales.test.ts` - 18 tests passed
+- ✅ `src/lib/d3-heatmap.test.ts` - 2 tests passed
+- ✅ `src/lib/zoom-pan.test.ts` - 9 tests passed
+- **Total: 42 tests passing**
 
 ---
 
@@ -283,12 +286,21 @@ docker compose up frontend-dev            # Frontend at port 4321
 
 ## Notes for Next Agent
 
-1. **Stage D is ready to start** - All infrastructure is in place
-2. **Use the d3-graph-gallery example** as reference (`chart_example_from_d3-graph-gallery.html`)
-3. **TypeScript interfaces are defined** in `frontend/src/lib/types.ts`
-4. **Sample data exists** at `frontend/public/data/countries.json`
-5. **The React integration is configured** - use `client:load` for D3 components
-6. **Tests should be added** for new D3 components in `*.test.ts` files
+1. **Stage D is complete** - All D3 heatmap components are implemented
+2. **Stage E (Integration) is ready to start** - Run full pipeline with real data
+3. **42 frontend tests passing** - Run with `npm test` in frontend directory
+4. **TypeScript strict mode** - 0 errors with `npx astro check`
+5. **Components created:**
+   - `HeatmapD3.tsx` - Main React wrapper with D3 rendering
+   - `Tooltip.tsx` - Hover tooltip with cell details
+   - `ColorLegend.tsx` - Gradient color scale legend
+   - `YearRangeFilter.tsx` - Dual range slider for year filtering
+   - `Heatmap.astro` - Astro wrapper for SSG integration
+6. **Utilities created:**
+   - `color-scales.ts` - Color scale creation and formatting
+   - `d3-heatmap.ts` - Core D3 heatmap rendering logic
+   - `zoom-pan.ts` - Zoom and pan behavior utilities
+7. **To test with real data:** Run the data pipeline to generate JSON files, then rebuild the frontend
 
 ---
 
