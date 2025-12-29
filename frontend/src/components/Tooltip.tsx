@@ -24,11 +24,11 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'opacity 0.15s ease-in-out',
   },
   tooltip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    border: '1px solid #ccc',
+    backgroundColor: 'var(--color-tooltip-bg)',
+    border: '1px solid var(--color-tooltip-border)',
     borderRadius: '4px',
     padding: '8px 12px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 2px 8px var(--color-shadow)',
     fontSize: '13px',
     lineHeight: '1.4',
     minWidth: '140px',
@@ -37,30 +37,30 @@ const styles: Record<string, React.CSSProperties> = {
   header: {
     fontWeight: 600,
     marginBottom: '4px',
-    color: '#333',
+    color: 'var(--color-text)',
   },
   value: {
     fontSize: '18px',
     fontWeight: 700,
-    color: '#111',
+    color: 'var(--color-text)',
     marginBottom: '4px',
   },
   row: {
     display: 'flex',
     justifyContent: 'space-between',
     marginBottom: '2px',
-    color: '#666',
+    color: 'var(--color-text-muted)',
     fontSize: '12px',
   },
   label: {
-    color: '#888',
+    color: 'var(--color-text-muted)',
   },
   source: {
     marginTop: '6px',
     paddingTop: '6px',
-    borderTop: '1px solid #eee',
+    borderTop: '1px solid var(--color-border-light)',
     fontSize: '11px',
-    color: '#888',
+    color: 'var(--color-text-muted)',
   },
 };
 

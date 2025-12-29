@@ -45,7 +45,7 @@ const styles: Record<string, React.CSSProperties> = {
   heatmapContainer: {
     width: '100%',
     minHeight: '400px',
-    border: '1px solid #e0e0e0',
+    border: '1px solid var(--color-border)',
     borderRadius: '4px',
     overflow: 'hidden',
   },
@@ -54,7 +54,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '400px',
-    color: '#888',
+    color: 'var(--color-text-muted)',
   },
   error: {
     display: 'flex',

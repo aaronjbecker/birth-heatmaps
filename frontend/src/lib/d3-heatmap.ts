@@ -5,6 +5,15 @@ import * as d3 from 'd3';
 import type { CountryHeatmapData, HeatmapCell } from './types';
 import { createColorScale, getColor } from './color-scales';
 
+/**
+ * Helper to get CSS variable value
+ */
+function getCSSVariable(name: string): string {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+}
+
 export interface HeatmapConfig {
   margin: { top: number; right: number; bottom: number; left: number };
   cellPadding: number;
@@ -107,8 +116,12 @@ export function createHeatmap(
 
     xAxisGroup.selectAll('text')
       .style('font-size', '11px')
+      .style('fill', getCSSVariable('--color-svg-text'))
       .attr('transform', 'rotate(-45)')
       .style('text-anchor', 'end');
+
+    xAxisGroup.selectAll('line')
+      .style('stroke', getCSSVariable('--color-svg-axis'));
   }
 
   /**
@@ -149,7 +162,11 @@ export function createHeatmap(
       .select('.domain').remove();
 
     yAxisGroup.selectAll('text')
-      .style('font-size', '12px');
+      .style('font-size', '12px')
+      .style('fill', getCSSVariable('--color-svg-text'));
+
+    yAxisGroup.selectAll('line')
+      .style('stroke', getCSSVariable('--color-svg-axis'));
 
     // Bind data
     const rects = cellsGroup.selectAll<SVGRectElement, HeatmapCell>('rect.cell')
@@ -175,7 +192,7 @@ export function createHeatmap(
       .style('cursor', 'pointer')
       .on('mouseenter', function (event: MouseEvent, d: HeatmapCell) {
         d3.select(this)
-          .style('stroke', '#333')
+          .style('stroke', getCSSVariable('--color-text'))
           .raise();
         if (onCellHover) {
           onCellHover(d, event);
@@ -220,8 +237,37 @@ export function createHeatmap(
    * Clean up
    */
   function destroy() {
+    if (themeObserver) {
+      themeObserver.disconnect();
+    }
     svg.remove();
   }
+
+  // Set up theme change listener
+  const themeObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'data-theme') {
+        // Re-render axes with new colors
+        updateXAxis();
+        const yAxis = d3.axisLeft(yScale).tickSize(0);
+        yAxisGroup
+          .call(yAxis)
+          .select('.domain').remove();
+
+        yAxisGroup.selectAll('text')
+          .style('font-size', '12px')
+          .style('fill', getCSSVariable('--color-svg-text'));
+
+        yAxisGroup.selectAll('line')
+          .style('stroke', getCSSVariable('--color-svg-axis'));
+      }
+    });
+  });
+
+  themeObserver.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme']
+  });
 
   // Initial render
   update(data);

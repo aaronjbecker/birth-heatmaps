@@ -1,4 +1,6 @@
 ---
+import ThemeToggle from '../components/ThemeToggle.astro';
+
 interface Props {
   title: string;
   description?: string;
@@ -15,15 +17,28 @@ const { title, description = 'Interactive visualization of birth seasonality pat
     <meta name="description" content={description} />
     <title>{title} | HMD Births Heatmaps</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Theme initialization - must be inline and blocking to prevent FOUC -->
+    <script is:inline>
+      (function() {
+        const THEME_KEY = 'hmd-theme';
+        const stored = localStorage.getItem(THEME_KEY);
+        const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body>
     <header class="header">
       <div class="container">
         <a href="/"><h1>HMD Births Heatmaps</h1></a>
-        <nav>
-          <a href="/">Countries</a>
-          <a href="/about">About</a>
-        </nav>
+        <div class="header-right">
+          <nav>
+            <a href="/">Countries</a>
+            <a href="/about">About</a>
+          </nav>
+          <ThemeToggle />
+        </div>
       </div>
     </header>
 
@@ -47,4 +62,19 @@ const { title, description = 'Interactive visualization of birth seasonality pat
 
 <style is:global>
   @import '../styles/global.css';
+</style>
+
+<style>
+  .header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+  }
 </style>

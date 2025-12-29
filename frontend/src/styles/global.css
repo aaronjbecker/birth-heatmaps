@@ -1,14 +1,32 @@
 /* Global styles for HMD Births Heatmaps */
 
-:root {
+/* Light theme (default) */
+:root,
+:root[data-theme="light"] {
   /* Colors */
   --color-bg: #fafafa;
   --color-bg-alt: #ffffff;
+  --color-bg-elevated: #ffffff;
   --color-text: #1a1a1a;
   --color-text-muted: #666666;
   --color-border: #e5e5e5;
+  --color-border-light: #f0f0f0;
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
+
+  /* Component-specific colors */
+  --color-card-bg: #ffffff;
+  --color-card-border: #e5e5e5;
+  --color-tooltip-bg: rgba(255, 255, 255, 0.98);
+  --color-tooltip-border: #cccccc;
+  --color-shadow: rgba(0, 0, 0, 0.1);
+
+  /* SVG/D3 visualization colors */
+  --color-svg-text: #333333;
+  --color-svg-axis: #666666;
+  --color-svg-grid: #e0e0e0;
+
+  color-scheme: light;
 
   /* Spacing */
   --space-xs: 0.25rem;
@@ -27,6 +45,34 @@
   --header-height: 60px;
 }
 
+/* Dark theme */
+:root[data-theme="dark"] {
+  /* Colors */
+  --color-bg: #0f0f0f;
+  --color-bg-alt: #1a1a1a;
+  --color-bg-elevated: #242424;
+  --color-text: #e5e5e5;
+  --color-text-muted: #a0a0a0;
+  --color-border: #333333;
+  --color-border-light: #2a2a2a;
+  --color-primary: #60a5fa;
+  --color-primary-hover: #93c5fd;
+
+  /* Component-specific colors */
+  --color-card-bg: #1a1a1a;
+  --color-card-border: #333333;
+  --color-tooltip-bg: rgba(26, 26, 26, 0.98);
+  --color-tooltip-border: #444444;
+  --color-shadow: rgba(0, 0, 0, 0.5);
+
+  /* SVG/D3 visualization colors */
+  --color-svg-text: #cccccc;
+  --color-svg-axis: #999999;
+  --color-svg-grid: #333333;
+
+  color-scheme: dark;
+}
+
 /* Reset */
 *, *::before, *::after {
   box-sizing: border-box;
@@ -40,10 +86,12 @@ html {
   line-height: 1.5;
   color: var(--color-text);
   background: var(--color-bg);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Typography */
@@ -115,6 +163,7 @@ a:hover {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: var(--space-lg);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* Country grid */
@@ -160,6 +209,7 @@ a:hover {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: var(--space-lg);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Tooltip */

@@ -23,7 +23,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: '12px',
-    color: '#666',
+    color: 'var(--color-text-muted)',
     marginBottom: '6px',
   },
 };
@@ -42,6 +42,12 @@ export function ColorLegend({
 
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
+
+    // Get theme-aware colors from CSS variables
+    const svgAxisColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-svg-axis').trim();
+    const svgTextColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-svg-text').trim();
 
     const colorScale = createColorScale(colorScaleConfig);
     const domain = colorScaleConfig.domain;
@@ -98,14 +104,14 @@ export function ColorLegend({
         .attr('x2', x)
         .attr('y1', 0)
         .attr('y2', 4)
-        .attr('stroke', '#999');
+        .attr('stroke', svgAxisColor);
 
       tickGroup.append('text')
         .attr('x', x)
         .attr('y', 14)
         .attr('text-anchor', 'middle')
         .attr('font-size', '10px')
-        .attr('fill', '#666')
+        .attr('fill', svgTextColor)
         .text(formatValue(tick, metric));
     });
   }, [colorScaleConfig, width, height, metric]);

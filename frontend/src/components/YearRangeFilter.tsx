@@ -25,11 +25,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '13px',
   },
   label: {
-    color: '#666',
+    color: 'var(--color-text-muted)',
     fontWeight: 500,
   },
   range: {
-    color: '#333',
+    color: 'var(--color-text)',
     fontWeight: 600,
   },
   sliderContainer: {
@@ -42,14 +42,14 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     height: '4px',
-    backgroundColor: '#e0e0e0',
+    backgroundColor: 'var(--color-border)',
     borderRadius: '2px',
   },
   sliderRange: {
     position: 'absolute',
     top: '10px',
     height: '4px',
-    backgroundColor: '#4a90d9',
+    backgroundColor: 'var(--color-primary)',
     borderRadius: '2px',
   },
   slider: {
@@ -65,10 +65,10 @@ const styles: Record<string, React.CSSProperties> = {
   resetButton: {
     padding: '4px 8px',
     fontSize: '11px',
-    border: '1px solid #ccc',
+    border: '1px solid var(--color-border)',
     borderRadius: '3px',
-    backgroundColor: '#fff',
-    color: '#666',
+    backgroundColor: 'var(--color-bg-alt)',
+    color: 'var(--color-text-muted)',
     cursor: 'pointer',
   },
 };
@@ -81,9 +81,9 @@ const sliderStyles = `
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: #4a90d9;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    background: var(--color-primary);
+    border: 2px solid var(--color-bg-alt);
+    box-shadow: 0 1px 3px var(--color-shadow);
     cursor: pointer;
   }
   .year-range-slider::-moz-range-thumb {
@@ -91,9 +91,9 @@ const sliderStyles = `
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #4a90d9;
-    border: 2px solid #fff;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    background: var(--color-primary);
+    border: 2px solid var(--color-bg-alt);
+    box-shadow: 0 1px 3px var(--color-shadow);
     cursor: pointer;
   }
 `;
