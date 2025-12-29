@@ -1,7 +1,7 @@
 /**
  * Year range filter component with dual range slider
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 
 export interface YearRangeFilterProps {
   min: number;
@@ -30,6 +30,12 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'space-between',
     alignItems: 'center',
     fontSize: '13px',
+    height: '24px', // Prevent layout shift
+  },
+  labelGroup: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
   },
   label: {
     color: 'var(--color-text-muted)',
@@ -43,6 +49,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: 'relative',
     height: '24px',
     marginBottom: '18px',
+    cursor: 'pointer',
   },
   sliderTrack: {
     position: 'absolute',
@@ -76,12 +83,14 @@ const styles: Record<string, React.CSSProperties> = {
     left: 0,
     right: 0,
     height: '12px',
+    pointerEvents: 'none',
   },
   tickMark: {
     position: 'absolute',
     width: '1px',
-    height: '6px',
-    backgroundColor: 'var(--color-border)',
+    height: '8px', // Larger ticks
+    backgroundColor: 'var(--color-text-muted)', // More visible
+    opacity: 0.4,
   },
   edgeLabelsContainer: {
     display: 'flex',
@@ -147,7 +156,7 @@ const sliderStyles = `
  * Calculate tick mark positions based on year range
  * Uses 5-year intervals for short ranges (≤ 30 years), 10-year intervals for longer ranges
  */
-function calculateTickMarks(min: number, max: number): number[] {
+export function calculateTickMarks(min: number, max: number): number[] {
   const range = max - min;
   const interval = range <= 30 ? 5 : 10;
   const ticks: number[] = [];
@@ -234,8 +243,40 @@ export function YearRangeFilter({
   onChange,
   dataYears,
 }: YearRangeFilterProps): React.ReactElement {
-  const [start, setStart] = useState(initialStart ?? min);
-  const [end, setEnd] = useState(initialEnd ?? max);
+  // Determine effective range based on data availability
+  const { effectiveMin, effectiveMax } = useMemo(() => {
+    if (!dataYears || dataYears.length === 0) {
+      return { effectiveMin: min, effectiveMax: max };
+    }
+    const dMin = Math.min(...dataYears);
+    const dMax = Math.max(...dataYears);
+    // Respect the props bounds if they are tighter, but primarily use data bounds
+    return {
+      effectiveMin: Math.max(min, dMin),
+      effectiveMax: Math.min(max, dMax),
+    };
+  }, [min, max, dataYears]);
+
+  const [start, setStart] = useState(() => 
+    Math.max(effectiveMin, Math.min(effectiveMax, initialStart ?? effectiveMin))
+  );
+  const [end, setEnd] = useState(() => 
+    Math.max(effectiveMin, Math.min(effectiveMax, initialEnd ?? effectiveMax))
+  );
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync internal state if effective bounds change (e.g., country change)
+  useEffect(() => {
+    const clampedStart = Math.max(effectiveMin, Math.min(effectiveMax, start));
+    const clampedEnd = Math.max(effectiveMin, Math.min(effectiveMax, end));
+    
+    if (clampedStart !== start || clampedEnd !== end) {
+      setStart(clampedStart);
+      setEnd(clampedEnd);
+      onChange(clampedStart, clampedEnd);
+    }
+  }, [effectiveMin, effectiveMax, start, end, onChange]);
 
   const handleStartChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,46 +298,100 @@ export function YearRangeFilter({
     [start, onChange]
   );
 
-  const handleReset = useCallback(() => {
-    setStart(min);
-    setEnd(max);
-    onChange(min, max);
-  }, [min, max, onChange]);
+  const handleTrackInteraction = useCallback(
+    (clientX: number) => {
+      if (!containerRef.current) return;
 
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const percentage = Math.max(0, Math.min(1, x / rect.width));
+      const clickedYear = Math.round(effectiveMin + percentage * (effectiveMax - effectiveMin));
+
+      const distToStart = Math.abs(clickedYear - start);
+      const distToEnd = Math.abs(clickedYear - end);
+
+      if (distToStart <= distToEnd) {
+        const newStart = Math.min(clickedYear, end - 1);
+        setStart(newStart);
+        onChange(newStart, end);
+      } else {
+        const newEnd = Math.max(clickedYear, start + 1);
+        setEnd(newEnd);
+        onChange(start, newEnd);
+      }
+    },
+    [effectiveMin, effectiveMax, start, end, onChange]
+  );
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      handleTrackInteraction(e.clientX);
+    },
+    [handleTrackInteraction]
+  );
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      if (e.touches[0]) {
+        handleTrackInteraction(e.touches[0].clientX);
+      }
+    },
+    [handleTrackInteraction]
+  );
+
+  const handleReset = useCallback(() => {
+    setStart(effectiveMin);
+    setEnd(effectiveMax);
+    onChange(effectiveMin, effectiveMax);
+  }, [effectiveMin, effectiveMax, onChange]);
+
+  const totalRange = effectiveMax - effectiveMin || 1;
   const rangePercent = {
-    left: ((start - min) / (max - min)) * 100,
-    right: ((max - end) / (max - min)) * 100,
+    left: ((start - effectiveMin) / totalRange) * 100,
+    right: ((effectiveMax - end) / totalRange) * 100,
   };
 
-  const isReset = start === min && end === max;
-  const tickMarks = calculateTickMarks(min, max);
-  const dataZones = analyzeDataZones(min, max, dataYears);
+  const isReset = start === effectiveMin && end === effectiveMax;
+  const tickMarks = calculateTickMarks(effectiveMin, effectiveMax);
+  const dataZones = analyzeDataZones(effectiveMin, effectiveMax, dataYears);
 
   return (
     <div style={styles.container}>
       <style>{sliderStyles}</style>
       <div style={styles.header}>
-        <span style={styles.label}>Year Range</span>
-        <span style={styles.range}>
-          {start} – {end}
-        </span>
-        {!isReset && (
-          <button
-            style={styles.resetButton}
-            onClick={handleReset}
-            type="button"
-            data-testid="year-range-reset"
-          >
-            Reset
-          </button>
-        )}
+        <div style={styles.labelGroup}>
+          <span style={styles.label}>Year Range</span>
+          <span style={styles.range}>
+            {start} – {end}
+          </span>
+        </div>
+        <div style={{ minHeight: '24px', display: 'flex', alignItems: 'center' }}>
+          {!isReset && (
+            <button
+              style={styles.resetButton}
+              onClick={handleReset}
+              type="button"
+              data-testid="year-range-reset"
+            >
+              Reset
+            </button>
+          )}
+        </div>
       </div>
-      <div style={styles.sliderContainer}>
+      <div 
+        style={styles.sliderContainer} 
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        data-testid="year-range-container"
+      >
         {/* Multi-zone track showing data availability */}
         {dataZones.map((zone, index) => {
-          const zoneStart = ((zone.start - min) / (max - min)) * 100;
-          const zoneEnd = ((zone.end + 1 - min) / (max - min)) * 100;
-          const zoneWidth = zoneEnd - zoneStart;
+          const zoneStart = ((zone.start - effectiveMin) / totalRange) * 100;
+          const zoneEnd = ((zone.end - effectiveMin) / totalRange) * 100;
+          const zoneWidth = Math.max(zoneEnd - zoneStart, zone.hasData ? 0.5 : 0);
 
           // Determine opacity based on selection
           const isInSelection = zone.end >= start && zone.start <= end;
@@ -333,7 +428,7 @@ export function YearRangeFilter({
         {/* Tick marks */}
         <div style={styles.ticksContainer} data-testid="year-range-ticks">
           {tickMarks.map((year) => {
-            const position = ((year - min) / (max - min)) * 100;
+            const position = ((year - effectiveMin) / totalRange) * 100;
             return (
               <div
                 key={year}
@@ -350,8 +445,8 @@ export function YearRangeFilter({
           type="range"
           className="year-range-slider"
           style={{ ...styles.slider, zIndex: 2 }}
-          min={min}
-          max={max}
+          min={effectiveMin}
+          max={effectiveMax}
           value={start}
           onChange={handleStartChange}
           data-testid="year-range-start"
@@ -360,8 +455,8 @@ export function YearRangeFilter({
           type="range"
           className="year-range-slider"
           style={{ ...styles.slider, zIndex: 1 }}
-          min={min}
-          max={max}
+          min={effectiveMin}
+          max={effectiveMax}
           value={end}
           onChange={handleEndChange}
           data-testid="year-range-end"
@@ -369,8 +464,8 @@ export function YearRangeFilter({
       </div>
       {/* Edge labels */}
       <div style={styles.edgeLabelsContainer}>
-        <span data-testid="year-range-min-label">{min}</span>
-        <span data-testid="year-range-max-label">{max}</span>
+        <span data-testid="year-range-min-label">{effectiveMin}</span>
+        <span data-testid="year-range-max-label">{effectiveMax}</span>
       </div>
     </div>
   );

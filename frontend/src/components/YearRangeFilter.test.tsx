@@ -2,7 +2,7 @@
  * Tests for YearRangeFilter component
  */
 import { describe, it, expect } from 'vitest';
-import { analyzeDataZones } from './YearRangeFilter';
+import { analyzeDataZones, calculateTickMarks } from './YearRangeFilter';
 
 describe('YearRangeFilter', () => {
   describe('analyzeDataZones', () => {
@@ -116,6 +116,36 @@ describe('YearRangeFilter', () => {
       expect(zones[0]).toEqual({ start: 2000, end: 2002, hasData: false });
       expect(zones[1]).toEqual({ start: 2003, end: 2003, hasData: true });
       expect(zones[2]).toEqual({ start: 2004, end: 2005, hasData: false });
+    });
+
+    it('should return continuous data zone when start/end match data bounds', () => {
+      const zones = analyzeDataZones(2000, 2002, [2000, 2001, 2002]);
+
+      expect(zones).toHaveLength(1);
+      expect(zones[0]).toEqual({ start: 2000, end: 2002, hasData: true });
+    });
+  });
+
+  describe('calculateTickMarks', () => {
+    it('should use 5-year intervals for small ranges (<= 30 years)', () => {
+      const ticks = calculateTickMarks(2000, 2020);
+      expect(ticks).toEqual([2000, 2005, 2010, 2015, 2020]);
+    });
+
+    it('should use 10-year intervals for large ranges (> 30 years)', () => {
+      const ticks = calculateTickMarks(1950, 2020);
+      expect(ticks).toEqual([1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020]);
+    });
+
+    it('should align ticks to intervals', () => {
+      const ticks = calculateTickMarks(2003, 2012);
+      // Interval is 5. Next multiple of 5 after 2003 is 2005.
+      expect(ticks).toEqual([2005, 2010]);
+    });
+
+    it('should handle empty range', () => {
+      const ticks = calculateTickMarks(2000, 2000);
+      expect(ticks).toEqual([2000]);
     });
   });
 });
