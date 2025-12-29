@@ -1,0 +1,91 @@
+---
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props {
+	src: string | ImageMetadata;
+	alt: string;
+	width?: number;
+	height?: number;
+}
+
+const { src, alt, width, height } = Astro.props;
+
+// Check if this is an optimized local image (ImageMetadata) or external URL
+const isLocalImage = typeof src !== "string";
+
+// Get image dimensions
+const imageWidth = isLocalImage ? (src as ImageMetadata).width : width;
+const imageHeight = isLocalImage ? (src as ImageMetadata).height : height;
+
+// Determine if this image should have lightbox functionality
+// Only apply to images that are "large" (width >= 200px or unspecified local images)
+const shouldHaveLightbox = !imageWidth || imageWidth >= 200;
+
+// For PhotoSwipe, we need the full-size image URL
+// For local images, Astro will optimize them, so we use the src directly
+// The href will point to the optimized image that Astro generates
+const fullSizeUrl = isLocalImage ? (src as ImageMetadata).src : (src as string);
+---
+
+{
+	shouldHaveLightbox ? (
+		isLocalImage ? (
+			<a
+				href={fullSizeUrl}
+				data-pswp-width={imageWidth}
+				data-pswp-height={imageHeight}
+				class="lightbox-trigger block"
+			>
+				<Image
+					src={src as ImageMetadata}
+					alt={alt}
+					class="lightbox-image cursor-zoom-in transition-transform duration-200 ease-in-out hover:scale-[1.02]"
+					loading="lazy"
+					{...(width ? { width } : {})}
+					{...(height ? { height } : {})}
+				/>
+			</a>
+		) : (
+			<a
+				href={fullSizeUrl}
+				data-pswp-width={imageWidth || 1200}
+				data-pswp-height={imageHeight || 800}
+				class="lightbox-trigger block"
+			>
+				<img
+					src={src as string}
+					alt={alt}
+					class="lightbox-image cursor-zoom-in transition-transform duration-200 ease-in-out hover:scale-[1.02]"
+					loading="lazy"
+					{...(width ? { width } : {})}
+					{...(height ? { height } : {})}
+				/>
+			</a>
+		)
+	) : isLocalImage ? (
+		<Image
+			src={src as ImageMetadata}
+			alt={alt}
+			loading="lazy"
+			{...(width ? { width } : {})}
+			{...(height ? { height } : {})}
+		/>
+	) : (
+		<img
+			src={src as string}
+			alt={alt}
+			loading="lazy"
+			{...(width ? { width } : {})}
+			{...(height ? { height } : {})}
+		/>
+	)
+}
+
+<style>
+	.lightbox-trigger:focus-visible img {
+		outline: 2px solid var(--accent, #2bbc8a);
+		outline-offset: 2px;
+		border-radius: 0.25rem;
+	}
+</style>
