@@ -174,3 +174,88 @@ export const METRICS = {
   SEASONALITY_RATIO: 'seasonality_ratio',
   SEASONALITY_PCT: 'seasonality_pct',
 };
+
+/**
+ * Wait for PhotoSwipe lightbox to open
+ *
+ * @param page - Playwright page object
+ * @param timeout - Maximum wait time in ms (default: 2000)
+ */
+export async function waitForLightboxOpen(page: Page, timeout: number = 2000): Promise<void> {
+  // Wait for PhotoSwipe container with 'pswp--open' class
+  await page.waitForSelector('.pswp.pswp--open', { state: 'visible', timeout });
+
+  // Wait for image to load
+  await page.waitForSelector('.pswp__img', { state: 'visible', timeout });
+
+  // Small buffer for animations
+  await page.waitForTimeout(300);
+}
+
+/**
+ * Wait for PhotoSwipe lightbox to close
+ *
+ * @param page - Playwright page object
+ * @param timeout - Maximum wait time in ms (default: 2000)
+ */
+export async function waitForLightboxClose(page: Page, timeout: number = 2000): Promise<void> {
+  // Wait for pswp--open class to be removed
+  await page.waitForFunction(
+    () => {
+      const pswp = document.querySelector('.pswp');
+      return !pswp || !pswp.classList.contains('pswp--open');
+    },
+    { timeout }
+  );
+
+  // Small buffer for animations
+  await page.waitForTimeout(200);
+}
+
+/**
+ * Chart types available in the gallery
+ * Matches CHART_TYPES from content/config.ts
+ */
+export const GALLERY_CHART_TYPES = [
+  'fertility_heatmap',
+  'seasonality_heatmap',
+  'monthly_fertility_chart',
+  'monthly_fertility_boxplot',
+  'population_chart',
+  'births_chart',
+  'daily_fertility_rate_chart',
+] as const;
+
+/**
+ * Expected chart count per country page
+ */
+export const EXPECTED_CHART_COUNT = 7;
+
+/**
+ * Get the src of the currently active PhotoSwipe image
+ *
+ * @param page - Playwright page object
+ * @returns The src attribute of the active image, or null if not found
+ */
+export async function getActiveLightboxImageSrc(page: Page): Promise<string | null> {
+  // Wait a moment for PhotoSwipe to settle
+  await page.waitForTimeout(300);
+
+  return await page.evaluate(() => {
+    // Try multiple selectors in order of preference
+    const selectors = [
+      '.pswp__item--active .pswp__img:not(.pswp__img--placeholder)',
+      '.pswp__img:not(.pswp__img--placeholder)',
+      '.pswp__img',
+    ];
+
+    for (const selector of selectors) {
+      const img = document.querySelector(selector);
+      if (img && img.getAttribute('src')) {
+        return img.getAttribute('src');
+      }
+    }
+
+    return null;
+  });
+}

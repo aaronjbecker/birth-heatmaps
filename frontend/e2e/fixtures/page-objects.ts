@@ -294,4 +294,81 @@ export class CountryPage {
   async hasPipelineMessage(): Promise<boolean> {
     return await this.getPipelineMessage().count() > 0;
   }
+
+  // --- Chart Gallery Methods ---
+
+  getChartGallery(): Locator {
+    return this.page.locator('.chart-gallery');
+  }
+
+  getChartImages(): Locator {
+    return this.page.locator('.chart-image');
+  }
+
+  getChartTriggers(): Locator {
+    return this.page.locator('.lightbox-trigger');
+  }
+
+  async getChartCount(): Promise<number> {
+    return await this.getChartImages().count();
+  }
+
+  async clickChart(index: number) {
+    const trigger = this.getChartTriggers().nth(index);
+    await trigger.click();
+    // Small delay for lightbox initialization
+    await this.page.waitForTimeout(200);
+  }
+
+  // --- PhotoSwipe Lightbox Methods ---
+
+  getLightbox(): Locator {
+    return this.page.locator('.pswp');
+  }
+
+  async isLightboxOpen(): Promise<boolean> {
+    const lightbox = this.getLightbox();
+    const count = await lightbox.count();
+    if (count === 0) return false;
+
+    // Check if lightbox has 'pswp--open' class
+    const classes = await lightbox.getAttribute('class');
+    return classes?.includes('pswp--open') || false;
+  }
+
+  getLightboxImage(): Locator {
+    return this.page.locator('.pswp__img').first();
+  }
+
+  getLightboxNextButton(): Locator {
+    return this.page.locator('.pswp__button--arrow--next');
+  }
+
+  getLightboxPrevButton(): Locator {
+    return this.page.locator('.pswp__button--arrow--prev');
+  }
+
+  async navigateLightboxNext() {
+    await this.getLightboxNextButton().click();
+    await this.page.waitForTimeout(1000); // Wait longer for transition
+  }
+
+  async navigateLightboxPrev() {
+    await this.getLightboxPrevButton().click();
+    await this.page.waitForTimeout(1000); // Wait longer for transition
+  }
+
+  async closeLightbox() {
+    // Press escape key (most reliable method)
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(300);
+  }
+
+  getLightboxZoomButton(): Locator {
+    return this.page.locator('.pswp__button--zoom');
+  }
+
+  getLightboxCloseButton(): Locator {
+    return this.page.locator('.pswp__button--close');
+  }
 }

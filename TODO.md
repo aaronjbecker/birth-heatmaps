@@ -26,10 +26,10 @@
 * Add heatmaps with recent trends (last 50 years) for countries with long histories.
 
 ## Static image display
-* Add lightbox gallery for static image display modeled in component in example-components directory. Use in place of regular `<Image>` component. Use PhotoSwipe for lightbox and allow navigation between images on the page.
+* ~~Add lightbox gallery for static image display modeled in component in example-components directory. Use in place of regular `<Image>` component. Use PhotoSwipe for lightbox and allow navigation between images on the page.~~ COMPLETED
 
 ## Country Listing and Filtering
-* Create a single sortable table listing of countries with filters for country name, earliest year, latest year, number of missing years, sources. Prioritize sources with HMD data (over UN data) in default sorting.
+* Create a single sortable table listing of countries with filters for country name, earliest year, latest year, number of missing years, sources. Prioritize sources with HMD data (over only UN data) in default sorting.
 
 
 ## Comparison View

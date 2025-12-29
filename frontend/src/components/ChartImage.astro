@@ -46,14 +46,22 @@ try {
 
   <div class="chart-container">
     {chartImage ? (
-      <Image
-        src={chartImage}
-        alt={`${metadata.label} for ${countrySlug}`}
-        width={800}
-        quality={85}
-        loading="lazy"
-        class="chart-image"
-      />
+      <a
+        href={chartImage.src}
+        data-pswp-width={chartImage.width}
+        data-pswp-height={chartImage.height}
+        class="lightbox-trigger"
+        aria-label={`View full size: ${metadata.label}`}
+      >
+        <Image
+          src={chartImage}
+          alt={`${metadata.label} for ${countrySlug}`}
+          width={800}
+          quality={85}
+          loading="lazy"
+          class="chart-image cursor-zoom-in transition-transform duration-200 ease-in-out hover:scale-[1.02]"
+        />
+      </a>
     ) : (
       <div class="chart-placeholder">
         <p>Chart not available</p>
@@ -116,5 +124,17 @@ try {
   .chart-placeholder small {
     font-size: 0.75rem;
     opacity: 0.7;
+  }
+
+  .lightbox-trigger {
+    display: block;
+    cursor: zoom-in;
+    text-decoration: none;
+  }
+
+  .lightbox-trigger:focus-visible .chart-image {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 </style>
