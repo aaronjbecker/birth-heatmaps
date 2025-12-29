@@ -56,6 +56,41 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: '8px',
   },
+  scrollIndicatorLeft: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    height: '28px',
+    width: '90px',
+    background: 'linear-gradient(to right, var(--color-bg), transparent)',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    paddingLeft: '10px',
+    fontSize: '11px',
+    fontWeight: 500,
+    color: 'var(--color-text-muted)',
+    transition: 'opacity 0.2s ease-in-out',
+    zIndex: 10,
+  },
+  scrollIndicatorRight: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    height: '28px',
+    width: '110px',
+    background: 'linear-gradient(to left, var(--color-bg), transparent)',
+    pointerEvents: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingRight: '10px',
+    fontSize: '11px',
+    fontWeight: 500,
+    color: 'var(--color-text-muted)',
+    transition: 'opacity 0.2s ease-in-out',
+    zIndex: 10,
+  },
 };
 
 export function HeatmapD3({
@@ -67,6 +102,7 @@ export function HeatmapD3({
   showControls = true,
 }: HeatmapD3Props): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const heatmapRef = useRef<HeatmapInstance | null>(null);
 
   const [tooltip, setTooltip] = useState<TooltipState>({
@@ -86,6 +122,11 @@ export function HeatmapD3({
   const [scrollEnabled, setScrollEnabled] = useState<boolean>(false);
 
   const [hoveredValue, setHoveredValue] = useState<number | null>(null);
+
+  const [scrollState, setScrollState] = useState({
+    atStart: true,    // Whether scrolled to leftmost position
+    atEnd: false,     // Whether scrolled to rightmost position
+  });
 
   // Handle cell hover
   const handleCellHover = useCallback((cell: HeatmapCell | null, event: MouseEvent) => {
@@ -114,6 +155,19 @@ export function HeatmapD3({
       setScrollEnabled(scrollInfo?.needsScroll ?? false);
     }
   }, [data]);
+
+  // Handle scroll position changes
+  const updateScrollState = useCallback(() => {
+    if (!scrollWrapperRef.current) return;
+
+    const wrapper = scrollWrapperRef.current;
+    const { scrollLeft, scrollWidth, clientWidth } = wrapper;
+
+    setScrollState({
+      atStart: scrollLeft <= 1,  // Small threshold for rounding
+      atEnd: scrollLeft + clientWidth >= scrollWidth - 1,
+    });
+  }, []);
 
   // Initialize D3 heatmap
   useEffect(() => {
@@ -178,6 +232,33 @@ export function HeatmapD3({
     };
   }, []);
 
+  // Handle scroll events
+  useEffect(() => {
+    if (!scrollWrapperRef.current) return;
+
+    const wrapper = scrollWrapperRef.current;
+
+    // Update initial scroll state
+    updateScrollState();
+
+    // Attach scroll listener
+    wrapper.addEventListener('scroll', updateScrollState);
+
+    return () => {
+      wrapper.removeEventListener('scroll', updateScrollState);
+    };
+  }, [updateScrollState]);
+
+  // Update scroll state when scrollEnabled changes
+  useEffect(() => {
+    if (scrollEnabled) {
+      updateScrollState();
+    } else {
+      // Reset to default state when scrolling is disabled
+      setScrollState({ atStart: true, atEnd: false });
+    }
+  }, [scrollEnabled, updateScrollState]);
+
   if (!data || !data.data || data.data.length === 0) {
     return (
       <div style={styles.error}>
@@ -207,14 +288,40 @@ export function HeatmapD3({
         </div>
       )}
 
-      <div
-        ref={containerRef}
-        style={{
-          ...styles.heatmapContainer,
-          height,
-          overflowX: scrollEnabled ? 'auto' : 'hidden',
-        }}
-      />
+      <div style={{ position: 'relative' }}>
+        {/* Scrolling container */}
+        <div
+          ref={scrollWrapperRef}
+          style={{
+            ...styles.heatmapContainer,
+            height,
+            overflowX: scrollEnabled ? 'auto' : 'hidden',
+          }}
+        >
+          {/* D3 will render into this container */}
+          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+        </div>
+
+        {/* Left scroll indicator - positioned outside scrolling context */}
+        <div
+          style={{
+            ...styles.scrollIndicatorLeft,
+            opacity: scrollEnabled && !scrollState.atStart ? 1 : 0,
+          }}
+        >
+          ← more left
+        </div>
+
+        {/* Right scroll indicator - positioned outside scrolling context */}
+        <div
+          style={{
+            ...styles.scrollIndicatorRight,
+            opacity: scrollEnabled && !scrollState.atEnd ? 1 : 0,
+          }}
+        >
+          more right →
+        </div>
+      </div>
 
       {showControls && showLegend && (
         <div style={styles.controlsBottom}>
