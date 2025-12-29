@@ -21,6 +21,9 @@
 * Make color scale full width below heatmap. Ensure labels are not cut off by color scale container. Add labels with min and max values on left and right edges of color scale.
 * When a heatmap cell is hovered, we should show an indicator with the current value superimposed on the color scale (vertical line with a triangle on bottom, label on top). This may require some type of context between heatmap and color scale.
 
+## Heatmap tooltip
+* Integrate floating-ui to keep tooltip visible within container.
+
 ## Static image heatmaps
 * Add "stacked" format of heatmaps that breaks full history across mutiple rows (for countries with long histories). Generate using matplotlib like existing heatmaps (consult existing python modules).
 * Add heatmaps with recent trends (last 50 years) for countries with long histories.

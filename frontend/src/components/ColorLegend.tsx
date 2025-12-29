@@ -24,7 +24,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: '12px',
-    color: 'var(--color-text-muted)',
+    color: 'var(--color-text)',
     marginBottom: '6px',
   },
 };
@@ -59,7 +59,7 @@ export function ColorLegend({
     const clampedValue = Math.max(min, Math.min(max, hoveredValue));
 
     // Create scale to position indicator
-    const margin = { left: 40, right: 40 };
+    const margin = { top: 30, left: 40, right: 40 }; // Increased top margin
     const barWidth = width - margin.left - margin.right;
     const indicatorScale = d3.scaleLinear()
       .domain([min, max])
@@ -68,12 +68,12 @@ export function ColorLegend({
     const x = indicatorScale(clampedValue);
 
     // Get theme colors
-    const svgTextColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-svg-text').trim();
+    const indicatorColor = '#fbbf24'; // Tailwind amber-400
 
-    // Create indicator group
+    // Create indicator group and shift it down to match the bar
     const indicator = svg.append('g')
-      .attr('class', 'hover-indicator');
+      .attr('class', 'hover-indicator')
+      .attr('transform', `translate(0, ${margin.top})`);
 
     // Vertical line
     indicator.append('line')
@@ -81,27 +81,28 @@ export function ColorLegend({
       .attr('x2', x)
       .attr('y1', 0)
       .attr('y2', height)
-      .attr('stroke', svgTextColor)
-      .attr('stroke-width', 2)
-      .attr('opacity', 0.8);
+      .attr('stroke', indicatorColor)
+      .attr('stroke-width', 3)
+      .attr('opacity', 1);
 
     // Triangle at bottom
     indicator.append('path')
-      .attr('d', `M ${x},${height} L ${x-6},${height+6} L ${x+6},${height+6} Z`)
-      .attr('fill', svgTextColor)
-      .attr('opacity', 0.8);
+      .attr('d', `M ${x},${height} L ${x-8},${height+8} L ${x+8},${height+8} Z`)
+      .attr('fill', indicatorColor)
+      .attr('opacity', 1);
 
     // Label at top with background
     const labelText = formatValue(clampedValue, metric);
-    const labelPadding = 4;
+    const labelPaddingX = 6;
+    const labelPaddingY = 2; // Reduced vertical padding
 
     // Measure text to create background rect
     const tempText = indicator.append('text')
       .attr('x', x)
-      .attr('y', -10)
+      .attr('y', -8) // Closer to the bar
       .attr('text-anchor', 'middle')
-      .attr('font-size', '11px')
-      .attr('font-weight', 600)
+      .attr('font-size', '12px')
+      .attr('font-weight', 700)
       .text(labelText);
 
     const textBox = tempText.node()?.getBBox();
@@ -109,21 +110,19 @@ export function ColorLegend({
     if (textBox) {
       // Background rectangle
       indicator.insert('rect', 'text')
-        .attr('x', textBox.x - labelPadding)
-        .attr('y', textBox.y - labelPadding)
-        .attr('width', textBox.width + labelPadding * 2)
-        .attr('height', textBox.height + labelPadding * 2)
-        .attr('fill', 'var(--color-bg-alt)')
-        .attr('stroke', svgTextColor)
-        .attr('stroke-width', 1)
+        .attr('x', textBox.x - labelPaddingX)
+        .attr('y', textBox.y - labelPaddingY)
+        .attr('width', textBox.width + labelPaddingX * 2)
+        .attr('height', textBox.height + labelPaddingY * 2)
+        .attr('fill', indicatorColor)
         .attr('rx', 3)
         .attr('ry', 3)
-        .attr('opacity', 0.95);
+        .attr('opacity', 1);
     }
 
     // Style the text
     tempText
-      .attr('fill', svgTextColor)
+      .attr('fill', '#000000') // Black text on amber
       .attr('opacity', 1);
 
   }, [hoveredValue, colorScaleConfig, width, height, metric]);
@@ -134,16 +133,15 @@ export function ColorLegend({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    // Get theme-aware colors from CSS variables
-    const svgAxisColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-svg-axis').trim();
-    const svgTextColor = getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-svg-text').trim();
-
     const colorScale = createColorScale(colorScaleConfig);
     const domain = colorScaleConfig.domain;
     const min = domain[0];
     const max = domain[domain.length - 1];
+
+    // Margin and layout
+    const margin = { top: 30, left: 40, right: 40 }; // Increased top margin
+    const barWidth = width - margin.left - margin.right;
+    const g = svg.append('g').attr('transform', `translate(0, ${margin.top})`);
 
     // Create gradient
     const gradientId = `legend-gradient-${Math.random().toString(36).substring(2, 11)}`;
@@ -166,10 +164,7 @@ export function ColorLegend({
     }
 
     // Draw gradient bar
-    const margin = { left: 40, right: 40 };
-    const barWidth = width - margin.left - margin.right;
-
-    svg.append('rect')
+    g.append('rect')
       .attr('x', margin.left)
       .attr('y', 0)
       .attr('width', barWidth)
@@ -184,7 +179,7 @@ export function ColorLegend({
       .domain([min, max])
       .range([margin.left, margin.left + barWidth]);
 
-    const tickGroup = svg.append('g')
+    const tickGroup = g.append('g')
       .attr('transform', `translate(0, ${height + 2})`);
 
     ticks.forEach((tick) => {
@@ -195,45 +190,45 @@ export function ColorLegend({
         .attr('x2', x)
         .attr('y1', 0)
         .attr('y2', 4)
-        .attr('stroke', svgAxisColor);
+        .style('stroke', 'var(--color-svg-axis)');
 
       tickGroup.append('text')
         .attr('x', x)
         .attr('y', 14)
         .attr('text-anchor', 'middle')
         .attr('font-size', '10px')
-        .attr('fill', svgTextColor)
+        .style('fill', 'var(--color-text)')
         .text(formatValue(tick, metric));
     });
 
     // Add edge labels (min/max values)
-    const edgeLabelsGroup = svg.append('g')
+    const edgeLabelsGroup = g.append('g')
       .attr('class', 'edge-labels');
 
     // Min label (left edge)
     edgeLabelsGroup.append('text')
       .attr('x', 0)
-      .attr('y', -5)
+      .attr('y', -8)
       .attr('text-anchor', 'start')
       .attr('font-size', '12px')
       .attr('font-weight', 600)
-      .attr('fill', svgTextColor)
+      .style('fill', 'var(--color-text)')
       .attr('data-testid', 'legend-min-label')
       .text(formatValue(min, metric));
 
     // Max label (right edge)
     edgeLabelsGroup.append('text')
       .attr('x', width)
-      .attr('y', -5)
+      .attr('y', -8)
       .attr('text-anchor', 'end')
       .attr('font-size', '12px')
       .attr('font-weight', 600)
-      .attr('fill', svgTextColor)
+      .style('fill', 'var(--color-text)')
       .attr('data-testid', 'legend-max-label')
       .text(formatValue(max, metric));
   }, [colorScaleConfig, width, height, metric]);
 
-  const totalHeight = height + 50; // Space for ticks and edge labels
+  const totalHeight = height + 75; // Increased to account for top and bottom spacing
 
   return (
     <div style={styles.container}>
