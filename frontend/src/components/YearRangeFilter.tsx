@@ -45,6 +45,22 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--color-text)',
     fontWeight: 600,
   },
+  yearInput: {
+    width: '60px',
+    padding: '2px 4px',
+    fontSize: '13px',
+    border: '1px solid var(--color-border)',
+    borderRadius: '4px',
+    backgroundColor: 'var(--color-bg-alt)',
+    color: 'var(--color-text)',
+    fontWeight: 600,
+    textAlign: 'center',
+    appearance: 'none',
+  },
+  inputSeparator: {
+    padding: '0 4px',
+    color: 'var(--color-text-muted)',
+  },
   sliderContainer: {
     position: 'relative',
     height: '24px',
@@ -149,6 +165,15 @@ const sliderStyles = `
   }
   .year-range-slider:focus::-moz-range-thumb {
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  /* Hide number input spinners */
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
   }
 `;
 
@@ -264,7 +289,26 @@ export function YearRangeFilter({
     Math.max(effectiveMin, Math.min(effectiveMax, initialEnd ?? effectiveMax))
   );
   
+  // Local state for numeric inputs to allow intermediate typing states
+  const [startInput, setStartInput] = useState(start.toString());
+  const [endInput, setEndInput] = useState(end.toString());
+  const isInteractingWithStart = useRef(false);
+  const isInteractingWithEnd = useRef(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Sync inputs when start/end changes (e.g. from slider)
+  useEffect(() => {
+    if (!isInteractingWithStart.current) {
+      setStartInput(start.toString());
+    }
+  }, [start]);
+
+  useEffect(() => {
+    if (!isInteractingWithEnd.current) {
+      setEndInput(end.toString());
+    }
+  }, [end]);
 
   // Sync internal state if effective bounds change (e.g., country change)
   useEffect(() => {
@@ -280,23 +324,65 @@ export function YearRangeFilter({
 
   const handleStartChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(e.target.value, 10);
-      const newStart = Math.min(value, end - 1);
-      setStart(newStart);
-      onChange(newStart, end);
+      const rawValue = e.target.value;
+      // Only allow digits
+      const sanitizedValue = rawValue.replace(/\D/g, '');
+      setStartInput(sanitizedValue);
+      
+      if (sanitizedValue === '') return;
+
+      const value = parseInt(sanitizedValue, 10);
+      if (!isNaN(value) && value >= effectiveMin && value < end) {
+        setStart(value);
+        onChange(value, end);
+      }
     },
-    [end, onChange]
+    [effectiveMin, end, onChange]
   );
+
+  const handleStartFocus = useCallback(() => {
+    isInteractingWithStart.current = true;
+  }, []);
+
+  const handleStartBlur = useCallback(() => {
+    isInteractingWithStart.current = false;
+    // Commit current start value to input on blur
+    setStartInput(start.toString());
+  }, [start]);
 
   const handleEndChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = parseInt(e.target.value, 10);
-      const newEnd = Math.max(value, start + 1);
-      setEnd(newEnd);
-      onChange(start, newEnd);
+      const rawValue = e.target.value;
+      // Only allow digits
+      const sanitizedValue = rawValue.replace(/\D/g, '');
+      setEndInput(sanitizedValue);
+      
+      if (sanitizedValue === '') return;
+
+      const value = parseInt(sanitizedValue, 10);
+      if (!isNaN(value) && value > start && value <= effectiveMax) {
+        setEnd(value);
+        onChange(start, value);
+      }
     },
-    [start, onChange]
+    [effectiveMax, start, onChange]
   );
+
+  const handleEndFocus = useCallback(() => {
+    isInteractingWithEnd.current = true;
+  }, []);
+
+  const handleEndBlur = useCallback(() => {
+    isInteractingWithEnd.current = false;
+    // Commit current end value to input on blur
+    setEndInput(end.toString());
+  }, [end]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      (e.target as HTMLInputElement).blur();
+    }
+  }, []);
 
   const handleTrackInteraction = useCallback(
     (clientX: number) => {
@@ -363,9 +449,35 @@ export function YearRangeFilter({
       <div style={styles.header}>
         <div style={styles.labelGroup}>
           <span style={styles.label}>Year Range</span>
-          <span style={styles.range}>
-            {start} – {end}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '8px' }}>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              style={styles.yearInput}
+              value={startInput}
+              onChange={handleStartChange}
+              onFocus={handleStartFocus}
+              onBlur={handleStartBlur}
+              onKeyDown={handleKeyDown}
+              data-testid="year-input-start"
+              aria-label="Start year"
+            />
+            <span style={styles.inputSeparator}>–</span>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              style={styles.yearInput}
+              value={endInput}
+              onChange={handleEndChange}
+              onFocus={handleEndFocus}
+              onBlur={handleEndBlur}
+              onKeyDown={handleKeyDown}
+              data-testid="year-input-end"
+              aria-label="End year"
+            />
+          </div>
         </div>
         <div style={{ minHeight: '24px', display: 'flex', alignItems: 'center' }}>
           {!isReset && (
