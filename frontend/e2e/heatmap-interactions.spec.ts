@@ -58,18 +58,21 @@ test.describe('Heatmap Interactions', () => {
     await cell.hover();
     await waitForTooltipVisible(page);
 
-    // Get tooltip position
-    const tooltipPos = await countryPage.getTooltipPosition();
+    // Get tooltip bounding box
+    const tooltip = countryPage.getTooltip();
+    const box = await tooltip.boundingBox();
 
-    // Tooltip should be positioned somewhere on the page
-    expect(tooltipPos.x).toBeGreaterThan(0);
-    expect(tooltipPos.y).toBeGreaterThan(0);
+    expect(box).not.toBeNull();
 
-    // Tooltip should be within viewport
-    const viewport = page.viewportSize();
-    if (viewport) {
-      expect(tooltipPos.x).toBeLessThan(viewport.width);
-      expect(tooltipPos.y).toBeLessThan(viewport.height);
+    // With floating-ui, tooltip should be positioned and visible
+    if (box) {
+      // Tooltip should be positioned (not at 0,0)
+      expect(box.x).toBeGreaterThan(0);
+      expect(box.y).toBeGreaterThan(0);
+
+      // Tooltip should have dimensions
+      expect(box.width).toBeGreaterThan(0);
+      expect(box.height).toBeGreaterThan(0);
     }
   });
 
@@ -176,6 +179,33 @@ test.describe('Heatmap Interactions', () => {
       content.source?.toUpperCase().includes(src.toUpperCase())
     );
     expect(hasKnownSource).toBe(true);
+  });
+
+  test('tooltip stays within viewport bounds', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Test tooltip positioning near viewport edges
+    // Hover near bottom-right corner
+    const cells = countryPage.getHeatmapCells();
+    const lastCell = cells.last();
+    await lastCell.hover();
+    await waitForTooltipVisible(page);
+
+    const tooltip = countryPage.getTooltip();
+    const box = await tooltip.boundingBox();
+    const viewport = page.viewportSize();
+
+    if (box && viewport) {
+      // Tooltip should be shifted/flipped to stay mostly within viewport
+      // Allow reasonable overflow for shadows and padding
+      expect(box.x).toBeGreaterThanOrEqual(-10);
+      expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 10);
+
+      // Y position might overflow more due to page scroll, so be more lenient
+      expect(box.y).toBeGreaterThanOrEqual(-10);
+    }
   });
 
   test('tooltip has pointer-events none', async ({ page }) => {

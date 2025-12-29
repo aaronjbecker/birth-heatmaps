@@ -1,7 +1,7 @@
 /**
  * Tooltip component for heatmap cell hover display
  */
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { HeatmapCell } from '../lib/types';
 import { getMonthName } from '../lib/d3-heatmap';
 import { formatValue } from '../lib/color-scales';
@@ -64,6 +64,51 @@ const styles: Record<string, React.CSSProperties> = {
   },
 };
 
+/**
+ * Calculate tooltip position that stays within viewport bounds
+ */
+function calculateTooltipPosition(
+  cursorX: number,
+  cursorY: number,
+  tooltipWidth: number,
+  tooltipHeight: number
+): { x: number; y: number } {
+  const offset = 15;
+  const padding = 8;
+
+  // Get viewport dimensions
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  // Default position: bottom-right of cursor
+  let x = cursorX + offset;
+  let y = cursorY + offset;
+
+  // Check if tooltip would overflow right edge
+  if (x + tooltipWidth + padding > viewportWidth) {
+    // Position to the left of cursor
+    x = cursorX - tooltipWidth - offset;
+  }
+
+  // Check if tooltip would overflow bottom edge
+  if (y + tooltipHeight + padding > viewportHeight) {
+    // Position above cursor
+    y = cursorY - tooltipHeight - offset;
+  }
+
+  // Ensure tooltip doesn't go off left edge
+  if (x < padding) {
+    x = padding;
+  }
+
+  // Ensure tooltip doesn't go off top edge
+  if (y < padding) {
+    y = padding;
+  }
+
+  return { x, y };
+}
+
 export function Tooltip({
   cell,
   x,
@@ -71,28 +116,39 @@ export function Tooltip({
   visible,
   metric = 'daily_fertility_rate',
 }: TooltipProps): React.ReactElement | null {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ x: number; y: number }>({ x: x + 15, y: y + 15 });
+
+  useEffect(() => {
+    if (!visible || !cell || !tooltipRef.current) {
+      return;
+    }
+
+    // Get tooltip dimensions
+    const rect = tooltipRef.current.getBoundingClientRect();
+
+    // Calculate position that stays within viewport
+    const newPosition = calculateTooltipPosition(x, y, rect.width, rect.height);
+    setPosition(newPosition);
+  }, [visible, cell, x, y]);
+
   if (!visible || !cell) {
     return null;
   }
-
-  const offset = 15;
-  const tooltipX = x + offset;
-  const tooltipY = y + offset;
-
-  // Keep tooltip within viewport
-  const adjustedStyle: React.CSSProperties = {
-    ...styles.container,
-    left: tooltipX,
-    top: tooltipY,
-    opacity: visible ? 1 : 0,
-  };
 
   const monthName = getMonthName(cell.month);
   const formattedValue = formatValue(cell.value, metric);
   const sourceName = getSourceDisplayName(cell.source);
 
+  const tooltipStyle: React.CSSProperties = {
+    ...styles.container,
+    left: position.x,
+    top: position.y,
+    opacity: visible ? 1 : 0,
+  };
+
   return (
-    <div style={adjustedStyle}>
+    <div ref={tooltipRef} style={tooltipStyle}>
       <div style={styles.tooltip}>
         <div style={styles.header}>
           {monthName} {cell.year}
