@@ -204,14 +204,35 @@ pytest tests/test_exporters.py      # JSON export validation
 - `lib/d3-heatmap.test.ts` - D3 rendering logic
 
 **E2E Tests (Playwright):**
-- `e2e/*.spec.ts` - Browser interaction tests
+
+Playwright tests validate end-to-end user workflows and component integration:
+
+- `e2e/navigation.spec.ts` - Page routing, breadcrumbs, tab switching
+- `e2e/data-loading.spec.ts` - Data fetching, error states, metadata parsing
+- `e2e/heatmap-rendering.spec.ts` - D3 SVG rendering, axes, color scales
+- `e2e/heatmap-interactions.spec.ts` - Tooltips, hover states, year range filtering
+- `e2e/theme-toggle.spec.ts` - Theme switching and persistence
+
+**Test Organization:**
+- Page Object Models in `e2e/fixtures/page-objects.ts` - Reusable selectors and methods
+- Test utilities in `e2e/fixtures/test-data.ts` - Helper functions and constants
+- Uses United States of America (`united-states-of-america`) as reference test country
 
 ```bash
 cd frontend
 npm test                    # Unit tests
-npm run test:e2e           # E2E tests
-npm run test:all           # Both
+npm run test:e2e           # E2E tests (headless)
+npm run test:e2e:ui        # E2E with Playwright UI
+npm run test:e2e:headed    # E2E in headed browser
+npm run test:all           # Both unit and E2E tests
 ```
+
+**Writing New E2E Tests:**
+- Use page objects (`HomePage`, `CountryPage`) to reduce duplication
+- Follow existing patterns in theme-toggle.spec.ts
+- Use helper functions from test-data.ts (`waitForHeatmapRender`, `waitForTooltipVisible`)
+- Tests run against `http://localhost:4321` (dev server auto-starts)
+- Chromium only for now; future: Firefox, WebKit support
 
 ## Metrics Computed
 

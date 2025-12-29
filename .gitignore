@@ -29,6 +29,14 @@ frontend/node_modules/
 frontend/dist/
 frontend/.astro/
 
+# Test artifacts (Playwright) - can be in frontend/ or root
+frontend/test-results/
+frontend/playwright-report/
+frontend/.playwright/
+test-results/
+playwright-report/
+.playwright/
+
 # Generated data files (can regenerate from pipeline)
 frontend/public/data/*.json
 frontend/public/data/fertility/*.json
