@@ -81,18 +81,18 @@ describe('Color scale utilities', () => {
   });
 
   describe('calculateDomain', () => {
-    it('should calculate sequential domain from values', () => {
+    it('should calculate sequential domain using absolute min/max', () => {
       const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const domain = calculateDomain(values, 'sequential', 0);
+      const domain = calculateDomain(values, 'sequential');
 
       expect(domain).toHaveLength(2);
       expect(domain[0]).toBe(1);
       expect(domain[1]).toBe(10);
     });
 
-    it('should calculate diverging domain from values', () => {
+    it('should calculate diverging domain using absolute min/max', () => {
       const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const domain = calculateDomain(values, 'diverging', 0);
+      const domain = calculateDomain(values, 'diverging');
 
       expect(domain).toHaveLength(3);
       expect(domain[0]).toBe(1);
@@ -100,9 +100,46 @@ describe('Color scale utilities', () => {
       expect(domain[2]).toBe(10);
     });
 
+    it('should use absolute min/max even with outliers', () => {
+      // Test that outliers are NOT excluded (unlike old percentile-based approach)
+      const values = [1.5, 2.0, 2.5, 3.0, 100.0];
+      const domain = calculateDomain(values, 'sequential');
+
+      expect(domain).toHaveLength(2);
+      expect(domain[0]).toBe(1.5); // Absolute min, not percentile
+      expect(domain[1]).toBe(100.0); // Absolute max, not percentile
+    });
+
+    it('should apply floor of 1e-6 for log-scale compatibility', () => {
+      const values = [0.0, 0.1, 0.5, 1.0];
+      const domain = calculateDomain(values, 'sequential');
+
+      expect(domain).toHaveLength(2);
+      expect(domain[0]).toBe(1e-6); // Floor applied instead of 0.0
+      expect(domain[1]).toBe(1.0);
+    });
+
+    it('should apply floor to near-zero positive values', () => {
+      const values = [1e-8, 0.5, 1.0];
+      const domain = calculateDomain(values, 'sequential');
+
+      expect(domain).toHaveLength(2);
+      expect(domain[0]).toBe(1e-6); // Floor applied instead of 1e-8
+      expect(domain[1]).toBe(1.0);
+    });
+
+    it('should not apply floor when min is above 1e-6', () => {
+      const values = [0.001, 0.5, 1.0];
+      const domain = calculateDomain(values, 'sequential');
+
+      expect(domain).toHaveLength(2);
+      expect(domain[0]).toBe(0.001); // No floor needed
+      expect(domain[1]).toBe(1.0);
+    });
+
     it('should filter out null values', () => {
       const values: (number | null)[] = [null, 1, null, 5, null, 10, null];
-      const domain = calculateDomain(values, 'sequential', 0);
+      const domain = calculateDomain(values, 'sequential');
 
       expect(domain[0]).toBe(1);
       expect(domain[1]).toBe(10);
@@ -116,6 +153,12 @@ describe('Color scale utilities', () => {
     it('should return default diverging domain for empty array', () => {
       const domain = calculateDomain([], 'diverging');
       expect(domain).toEqual([0, 0.5, 1]);
+    });
+
+    it('should return default domain for all-null array', () => {
+      const values: (number | null)[] = [null, null, null];
+      const domain = calculateDomain(values, 'sequential');
+      expect(domain).toEqual([0, 1]);
     });
   });
 

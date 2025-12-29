@@ -23,24 +23,15 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     width: '100%',
   },
-  controls: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '16px',
+  controlsTop: {
+    width: '100%',
     marginBottom: '16px',
-    padding: '0 8px',
+    padding: '0 16px',
   },
-  controlsLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-  },
-  controlsRight: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+  controlsBottom: {
+    width: '100%',
+    marginTop: '16px',
+    padding: '0 16px',
   },
   heatmapContainer: {
     width: '100%',
@@ -92,6 +83,10 @@ export function HeatmapD3({
 
   const [containerWidth, setContainerWidth] = useState<number>(width || 800);
 
+  const [scrollEnabled, setScrollEnabled] = useState<boolean>(false);
+
+  const [hoveredValue, setHoveredValue] = useState<number | null>(null);
+
   // Handle cell hover
   const handleCellHover = useCallback((cell: HeatmapCell | null, event: MouseEvent) => {
     if (cell) {
@@ -101,8 +96,10 @@ export function HeatmapD3({
         y: event.clientY,
         cell,
       });
+      setHoveredValue(cell.value);
     } else {
       setTooltip((prev) => ({ ...prev, visible: false }));
+      setHoveredValue(null);
     }
   }, []);
 
@@ -111,6 +108,10 @@ export function HeatmapD3({
     setYearRange([start, end]);
     if (heatmapRef.current) {
       heatmapRef.current.update(data, [start, end]);
+
+      // Update scroll state
+      const scrollInfo = heatmapRef.current.getScrollInfo();
+      setScrollEnabled(scrollInfo?.needsScroll ?? false);
     }
   }, [data]);
 
@@ -140,6 +141,10 @@ export function HeatmapD3({
     // Apply initial year range
     heatmapRef.current.update(data, yearRange);
 
+    // Update scroll state
+    const scrollInfo = heatmapRef.current.getScrollInfo();
+    setScrollEnabled(scrollInfo?.needsScroll ?? false);
+
     return () => {
       if (heatmapRef.current) {
         heatmapRef.current.destroy();
@@ -158,6 +163,10 @@ export function HeatmapD3({
         setContainerWidth(newWidth);
         if (heatmapRef.current && newWidth > 0 && newHeight > 0) {
           heatmapRef.current.resize(newWidth, newHeight);
+
+          // Update scroll state after resize
+          const scrollInfo = heatmapRef.current.getScrollInfo();
+          setScrollEnabled(scrollInfo?.needsScroll ?? false);
         }
       }
     });
@@ -185,35 +194,38 @@ export function HeatmapD3({
 
   return (
     <div style={styles.container}>
-      {showControls && (
-        <div style={styles.controls}>
-          <div style={styles.controlsLeft}>
-            {showLegend && (
-              <ColorLegend
-                colorScale={data.colorScale}
-                width={Math.min(200, containerWidth * 0.3)}
-                metric={data.metric}
-              />
-            )}
-          </div>
-          <div style={styles.controlsRight}>
-            {showYearFilter && (
-              <YearRangeFilter
-                min={minYear}
-                max={maxYear}
-                start={yearRange[0]}
-                end={yearRange[1]}
-                onChange={handleYearRangeChange}
-              />
-            )}
-          </div>
+      {showControls && showYearFilter && (
+        <div style={styles.controlsTop}>
+          <YearRangeFilter
+            min={minYear}
+            max={maxYear}
+            start={yearRange[0]}
+            end={yearRange[1]}
+            onChange={handleYearRangeChange}
+            dataYears={data.years}
+          />
         </div>
       )}
 
       <div
         ref={containerRef}
-        style={{ ...styles.heatmapContainer, height }}
+        style={{
+          ...styles.heatmapContainer,
+          height,
+          overflowX: scrollEnabled ? 'auto' : 'hidden',
+        }}
       />
+
+      {showControls && showLegend && (
+        <div style={styles.controlsBottom}>
+          <ColorLegend
+            colorScale={data.colorScale}
+            width={containerWidth - 32}
+            metric={data.metric}
+            hoveredValue={hoveredValue}
+          />
+        </div>
+      )}
 
       <Tooltip
         cell={tooltip.cell}

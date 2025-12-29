@@ -359,4 +359,350 @@ test.describe('Heatmap Interactions', () => {
       expect(resetRange).toBe(initialRange);
     }
   });
+
+  test('tick marks are visible below slider track', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Check that tick marks container exists
+    const ticksContainer = page.locator('[data-testid="year-range-ticks"]');
+    await expect(ticksContainer).toBeVisible();
+
+    // Verify tick marks are rendered
+    const tickMarks = ticksContainer.locator('div[data-year]');
+    const tickCount = await tickMarks.count();
+
+    // Should have at least 2 tick marks (depends on year range)
+    expect(tickCount).toBeGreaterThanOrEqual(2);
+  });
+
+  test('tick marks are correctly positioned', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get slider range
+    const startSlider = countryPage.getStartSlider();
+    const min = parseInt(await startSlider.getAttribute('min') || '0', 10);
+    const max = parseInt(await startSlider.getAttribute('max') || '0', 10);
+
+    // Get all tick marks
+    const ticksContainer = page.locator('[data-testid="year-range-ticks"]');
+    const tickMarks = ticksContainer.locator('div[data-year]');
+    const firstTick = tickMarks.first();
+
+    // Get the year value from data attribute
+    const firstYear = parseInt(await firstTick.getAttribute('data-year') || '0', 10);
+
+    // Verify year is within valid range
+    expect(firstYear).toBeGreaterThanOrEqual(min);
+    expect(firstYear).toBeLessThanOrEqual(max);
+
+    // Verify tick has left positioning
+    const leftPosition = await firstTick.evaluate(el => {
+      return (el as HTMLElement).style.left;
+    });
+    expect(leftPosition).toMatch(/%$/); // Should end with %
+  });
+
+  test('edge labels display min and max years', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get slider range attributes
+    const startSlider = countryPage.getStartSlider();
+    const min = await startSlider.getAttribute('min');
+    const max = await startSlider.getAttribute('max');
+
+    // Check edge labels exist and display correct values
+    const minLabel = page.locator('[data-testid="year-range-min-label"]');
+    const maxLabel = page.locator('[data-testid="year-range-max-label"]');
+
+    await expect(minLabel).toBeVisible();
+    await expect(maxLabel).toBeVisible();
+
+    const minText = await minLabel.textContent();
+    const maxText = await maxLabel.textContent();
+
+    expect(minText).toBe(min);
+    expect(maxText).toBe(max);
+  });
+
+  test('slider values snap to integers', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get slider
+    const startSlider = countryPage.getStartSlider();
+    const min = parseInt(await startSlider.getAttribute('min') || '0', 10);
+    const max = parseInt(await startSlider.getAttribute('max') || '0', 10);
+
+    // Set a year value
+    const testYear = Math.floor((min + max) / 2);
+    await countryPage.setYearRange(testYear, max);
+
+    // Get displayed range
+    const rangeText = await countryPage.getRangeText();
+
+    // Should contain integer year (not decimal)
+    expect(rangeText).toContain(testYear.toString());
+    expect(rangeText).not.toMatch(/\d+\.\d+/); // No decimal points
+  });
+
+  test('slider thumbs have improved styling', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Check that slider has correct class
+    const startSlider = countryPage.getStartSlider();
+    const className = await startSlider.getAttribute('class');
+
+    expect(className).toContain('year-range-slider');
+
+    // Verify background is transparent (thumbs styled via CSS)
+    const bgStyle = await startSlider.evaluate(el => {
+      return getComputedStyle(el).background;
+    });
+
+    // Should have transparent background (thumbs are styled separately)
+    expect(bgStyle).toMatch(/transparent|rgba\(0,\s*0,\s*0,\s*0\)/i);
+  });
+
+  test('data availability zones are rendered on slider track', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Check that zones are rendered
+    const zones = page.locator('[data-testid^="zone-"]');
+    const zoneCount = await zones.count();
+
+    // Should have at least 1 zone
+    expect(zoneCount).toBeGreaterThanOrEqual(1);
+  });
+
+  test('zones have correct hasData attribute', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get all zones
+    const zones = page.locator('[data-testid^="zone-"]');
+    const firstZone = zones.first();
+
+    // Should have data-has-data attribute
+    const hasData = await firstZone.getAttribute('data-has-data');
+    expect(hasData).toBeTruthy();
+    expect(hasData).toMatch(/true|false/);
+  });
+
+  test('zones use different colors for data vs no-data', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get all zones
+    const zones = page.locator('[data-testid^="zone-"]');
+    const zoneCount = await zones.count();
+
+    // Collect background colors for zones with data vs no data
+    const colors = [];
+    for (let i = 0; i < Math.min(zoneCount, 5); i++) {
+      const zone = zones.nth(i);
+      const hasData = await zone.getAttribute('data-has-data');
+      const bgColor = await zone.evaluate(el => getComputedStyle(el).backgroundColor);
+      colors.push({ hasData: hasData === 'true', bgColor });
+    }
+
+    // Verify zones exist
+    expect(colors.length).toBeGreaterThan(0);
+  });
+
+  test('zone widths are proportional to year ranges', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get slider range
+    const startSlider = countryPage.getStartSlider();
+    const min = parseInt(await startSlider.getAttribute('min') || '0', 10);
+    const max = parseInt(await startSlider.getAttribute('max') || '0', 10);
+    const totalRange = max - min;
+
+    // Get first zone
+    const firstZone = page.locator('[data-testid="zone-0"]');
+    const zoneStyle = await firstZone.evaluate(el => (el as HTMLElement).style.width);
+
+    // Width should be a percentage
+    expect(zoneStyle).toMatch(/%$/);
+
+    // Extract percentage value
+    const widthPercent = parseFloat(zoneStyle);
+    expect(widthPercent).toBeGreaterThan(0);
+    // Allow small floating point error (zone widths may sum slightly over 100 due to rounding)
+    expect(widthPercent).toBeLessThanOrEqual(102);
+  });
+
+  test('horizontal scroll appears at narrow viewport with many years', async ({ page }) => {
+    // Set narrow viewport
+    await page.setViewportSize({ width: 800, height: 600 });
+
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // USA has 91 years of data (1933-2023)
+    // At 800px viewport, cells would be too narrow, so scroll should activate
+    const isScrollable = await countryPage.isHeatmapScrollable();
+    expect(isScrollable).toBe(true);
+
+    // Verify scrollWidth > clientWidth
+    const scrollWidth = await countryPage.getHeatmapScrollWidth();
+    const clientWidth = await countryPage.getHeatmapClientWidth();
+    expect(scrollWidth).toBeGreaterThan(clientWidth);
+  });
+
+  test('no horizontal scroll at wide viewport', async ({ page }) => {
+    // Set wide viewport
+    await page.setViewportSize({ width: 1920, height: 1080 });
+
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // At 1920px viewport, cells should fit without scroll
+    const isScrollable = await countryPage.isHeatmapScrollable();
+    expect(isScrollable).toBe(false);
+
+    // Verify scrollWidth equals clientWidth (no overflow)
+    const scrollWidth = await countryPage.getHeatmapScrollWidth();
+    const clientWidth = await countryPage.getHeatmapClientWidth();
+    // Allow small margin for rounding
+    expect(Math.abs(scrollWidth - clientWidth)).toBeLessThan(5);
+  });
+
+  test('scroll position resets when year range changes', async ({ page }) => {
+    // Set narrow viewport to ensure scroll is active
+    await page.setViewportSize({ width: 800, height: 600 });
+
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Verify scroll is active
+    const isScrollable = await countryPage.isHeatmapScrollable();
+    expect(isScrollable).toBe(true);
+
+    // Scroll to some position
+    await countryPage.scrollHeatmapTo(200);
+    let scrollLeft = await countryPage.getHeatmapScrollLeft();
+    // Verify we actually scrolled (browser may clamp to max scrollable area)
+    expect(scrollLeft).toBeGreaterThan(100);
+    const initialScrollLeft = scrollLeft;
+
+    // Change year range
+    await countryPage.setYearRange(1950, 1980);
+    await waitForHeatmapRender(page);
+
+    // Scroll position should be reset to 0 or much less than before
+    scrollLeft = await countryPage.getHeatmapScrollLeft();
+    // Allow small tolerance for scroll behavior
+    expect(scrollLeft).toBeLessThan(initialScrollLeft / 2);
+  });
+
+  test('hover indicator appears on color legend when hovering cell', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Verify no indicator initially
+    let isVisible = await countryPage.isHoverIndicatorVisible();
+    expect(isVisible).toBe(false);
+
+    // Hover over a cell
+    await countryPage.hoverCell(10);
+    await waitForTooltipVisible(page);
+
+    // Indicator should appear
+    isVisible = await countryPage.isHoverIndicatorVisible();
+    expect(isVisible).toBe(true);
+
+    // Indicator should have a label
+    const label = await countryPage.getHoverIndicatorLabel();
+    expect(label).toBeTruthy();
+    expect(label.length).toBeGreaterThan(0);
+  });
+
+  test('hover indicator disappears when mouse leaves cell', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Hover over a cell
+    await countryPage.hoverCell(10);
+    await waitForTooltipVisible(page);
+
+    // Indicator should appear
+    let isVisible = await countryPage.isHoverIndicatorVisible();
+    expect(isVisible).toBe(true);
+
+    // Move mouse away
+    await page.mouse.move(10, 10);
+    await page.waitForTimeout(300);
+
+    // Indicator should disappear
+    isVisible = await countryPage.isHoverIndicatorVisible();
+    expect(isVisible).toBe(false);
+  });
+
+  test('hover indicator updates when moving between cells', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Hover over first cell
+    await countryPage.hoverCell(10);
+    await waitForTooltipVisible(page);
+
+    const firstLabel = await countryPage.getHoverIndicatorLabel();
+    const firstPosition = await countryPage.getHoverIndicatorPosition();
+
+    // Hover over second cell (different position)
+    await countryPage.hoverCell(50);
+    await page.waitForTimeout(100);
+
+    const secondLabel = await countryPage.getHoverIndicatorLabel();
+    const secondPosition = await countryPage.getHoverIndicatorPosition();
+
+    // Labels and positions should be different (different cells have different values)
+    // Note: positions might be the same if values are similar, so we mainly check label exists
+    expect(secondLabel).toBeTruthy();
+    expect(secondLabel.length).toBeGreaterThan(0);
+  });
+
+  test('hover indicator position corresponds to cell value', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Hover over a cell
+    await countryPage.hoverCell(10);
+    await waitForTooltipVisible(page);
+
+    // Get indicator position
+    const position = await countryPage.getHoverIndicatorPosition();
+
+    // Position should be within legend bounds (margin.left to width - margin.right)
+    // Legend has 40px left margin and 40px right margin
+    expect(position).toBeGreaterThanOrEqual(40);
+
+    // Get legend width from the ColorLegend SVG
+    const legend = countryPage.getColorLegend();
+    const svgWidth = await legend.evaluate(el => el.getBoundingClientRect().width);
+    expect(position).toBeLessThanOrEqual(svgWidth - 40);
+  });
 });

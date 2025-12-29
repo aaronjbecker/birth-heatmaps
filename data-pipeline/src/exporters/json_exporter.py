@@ -115,13 +115,14 @@ def export_fertility_data(
     years = sorted(country_data['Year'].unique().to_list())
     sources = country_data['Source'].unique().to_list()
 
-    # Compute color scale domain (5th and 95th percentile)
+    # Compute color scale domain (absolute min/max to match Python heatmap plotting)
+    # Apply floor of 1e-6 for log-scale compatibility
     valid_values = country_data.filter(pl.col('daily_fertility_rate').is_not_null())
     if len(valid_values) > 0:
-        min_val = float(valid_values['daily_fertility_rate'].quantile(0.05))
-        max_val = float(valid_values['daily_fertility_rate'].quantile(0.95))
+        min_val = max(float(valid_values['daily_fertility_rate'].min()), 1e-6)
+        max_val = float(valid_values['daily_fertility_rate'].max())
     else:
-        min_val, max_val = 0, 10
+        min_val, max_val = 1e-6, 10
 
     # Build data array
     data = []
@@ -238,12 +239,14 @@ def _export_country_json(args: tuple) -> str:
     years = sorted(country_data['Year'].unique().to_list())
     sources = country_data['Source'].unique().to_list()
 
+    # Compute color scale domain (absolute min/max to match Python heatmap plotting)
+    # Apply floor of 1e-6 for log-scale compatibility
     valid_values = country_data.filter(pl.col('daily_fertility_rate').is_not_null())
     if len(valid_values) > 0:
-        min_val = float(valid_values['daily_fertility_rate'].quantile(0.05))
-        max_val = float(valid_values['daily_fertility_rate'].quantile(0.95))
+        min_val = max(float(valid_values['daily_fertility_rate'].min()), 1e-6)
+        max_val = float(valid_values['daily_fertility_rate'].max())
     else:
-        min_val, max_val = 0, 10
+        min_val, max_val = 1e-6, 10
 
     fertility_data = []
     for row in country_data.iter_rows(named=True):

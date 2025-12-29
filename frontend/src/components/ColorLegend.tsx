@@ -12,6 +12,7 @@ export interface ColorLegendProps {
   height?: number;
   metric?: string;
   title?: string;
+  hoveredValue?: number | null;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -19,7 +20,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '8px 0',
+    padding: '8px 16px',
   },
   title: {
     fontSize: '12px',
@@ -30,12 +31,102 @@ const styles: Record<string, React.CSSProperties> = {
 
 export function ColorLegend({
   colorScale: colorScaleConfig,
-  width = 200,
+  width = 800,
   height = 16,
   metric = 'daily_fertility_rate',
   title,
+  hoveredValue,
 }: ColorLegendProps): React.ReactElement {
   const svgRef = useRef<SVGSVGElement>(null);
+
+  // Render hover indicator when hoveredValue changes (Stage 7)
+  useEffect(() => {
+    if (!svgRef.current) return;
+
+    const svg = d3.select(svgRef.current);
+
+    // Remove any existing hover indicator
+    svg.selectAll('.hover-indicator').remove();
+
+    // If no hovered value, we're done
+    if (hoveredValue === null || hoveredValue === undefined) return;
+
+    const domain = colorScaleConfig.domain;
+    const min = domain[0];
+    const max = domain[domain.length - 1];
+
+    // Clamp value to domain range
+    const clampedValue = Math.max(min, Math.min(max, hoveredValue));
+
+    // Create scale to position indicator
+    const margin = { left: 40, right: 40 };
+    const barWidth = width - margin.left - margin.right;
+    const indicatorScale = d3.scaleLinear()
+      .domain([min, max])
+      .range([margin.left, margin.left + barWidth]);
+
+    const x = indicatorScale(clampedValue);
+
+    // Get theme colors
+    const svgTextColor = getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-svg-text').trim();
+
+    // Create indicator group
+    const indicator = svg.append('g')
+      .attr('class', 'hover-indicator');
+
+    // Vertical line
+    indicator.append('line')
+      .attr('x1', x)
+      .attr('x2', x)
+      .attr('y1', 0)
+      .attr('y2', height)
+      .attr('stroke', svgTextColor)
+      .attr('stroke-width', 2)
+      .attr('opacity', 0.8);
+
+    // Triangle at bottom
+    indicator.append('path')
+      .attr('d', `M ${x},${height} L ${x-6},${height+6} L ${x+6},${height+6} Z`)
+      .attr('fill', svgTextColor)
+      .attr('opacity', 0.8);
+
+    // Label at top with background
+    const labelText = formatValue(clampedValue, metric);
+    const labelPadding = 4;
+
+    // Measure text to create background rect
+    const tempText = indicator.append('text')
+      .attr('x', x)
+      .attr('y', -10)
+      .attr('text-anchor', 'middle')
+      .attr('font-size', '11px')
+      .attr('font-weight', 600)
+      .text(labelText);
+
+    const textBox = tempText.node()?.getBBox();
+
+    if (textBox) {
+      // Background rectangle
+      indicator.insert('rect', 'text')
+        .attr('x', textBox.x - labelPadding)
+        .attr('y', textBox.y - labelPadding)
+        .attr('width', textBox.width + labelPadding * 2)
+        .attr('height', textBox.height + labelPadding * 2)
+        .attr('fill', 'var(--color-bg-alt)')
+        .attr('stroke', svgTextColor)
+        .attr('stroke-width', 1)
+        .attr('rx', 3)
+        .attr('ry', 3)
+        .attr('opacity', 0.95);
+    }
+
+    // Style the text
+    tempText
+      .attr('fill', svgTextColor)
+      .attr('opacity', 1);
+
+  }, [hoveredValue, colorScaleConfig, width, height, metric]);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -75,7 +166,7 @@ export function ColorLegend({
     }
 
     // Draw gradient bar
-    const margin = { left: 5, right: 5 };
+    const margin = { left: 40, right: 40 };
     const barWidth = width - margin.left - margin.right;
 
     svg.append('rect')
@@ -88,7 +179,7 @@ export function ColorLegend({
       .attr('fill', `url(#${gradientId})`);
 
     // Add ticks
-    const ticks = generateLegendTicks(domain, 5);
+    const ticks = generateLegendTicks(domain, 7);
     const tickScale = d3.scaleLinear()
       .domain([min, max])
       .range([margin.left, margin.left + barWidth]);
@@ -114,9 +205,35 @@ export function ColorLegend({
         .attr('fill', svgTextColor)
         .text(formatValue(tick, metric));
     });
+
+    // Add edge labels (min/max values)
+    const edgeLabelsGroup = svg.append('g')
+      .attr('class', 'edge-labels');
+
+    // Min label (left edge)
+    edgeLabelsGroup.append('text')
+      .attr('x', 0)
+      .attr('y', -5)
+      .attr('text-anchor', 'start')
+      .attr('font-size', '12px')
+      .attr('font-weight', 600)
+      .attr('fill', svgTextColor)
+      .attr('data-testid', 'legend-min-label')
+      .text(formatValue(min, metric));
+
+    // Max label (right edge)
+    edgeLabelsGroup.append('text')
+      .attr('x', width)
+      .attr('y', -5)
+      .attr('text-anchor', 'end')
+      .attr('font-size', '12px')
+      .attr('font-weight', 600)
+      .attr('fill', svgTextColor)
+      .attr('data-testid', 'legend-max-label')
+      .text(formatValue(max, metric));
   }, [colorScaleConfig, width, height, metric]);
 
-  const totalHeight = height + 20; // Space for ticks
+  const totalHeight = height + 50; // Space for ticks and edge labels
 
   return (
     <div style={styles.container}>

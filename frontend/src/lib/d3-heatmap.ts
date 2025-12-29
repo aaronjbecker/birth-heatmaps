@@ -2,7 +2,7 @@
  * D3 heatmap rendering logic
  */
 import * as d3 from 'd3';
-import type { CountryHeatmapData, HeatmapCell } from './types';
+import type { CountryHeatmapData, HeatmapCell, ScrollInfo } from './types';
 import { createColorScale, getColor } from './color-scales';
 
 /**
@@ -26,6 +26,7 @@ export interface HeatmapInstance {
   update: (data: CountryHeatmapData, yearRange?: [number, number]) => void;
   resize: (width: number, height: number) => void;
   destroy: () => void;
+  getScrollInfo: () => ScrollInfo | null;
 }
 
 const defaultConfig: HeatmapConfig = {
@@ -84,6 +85,9 @@ export function createHeatmap(
     Math.min(...data.years),
     Math.max(...data.years),
   ];
+
+  // State for scroll information
+  let currentScrollInfo: ScrollInfo | null = null;
 
   // Create color scale
   let colorScale = createColorScale(data.colorScale);
@@ -145,8 +149,26 @@ export function createHeatmap(
       (y) => y >= currentYearRange[0] && y <= currentYearRange[1]
     );
 
-    // Update x scale
-    xScale.domain(years).range([0, width]);
+    // Calculate scroll requirements
+    const desiredCellHeight = height / 12; // 12 months
+    const minCellWidth = desiredCellHeight * 0.25; // 25% aspect ratio
+    const desiredCellWidth = width / years.length;
+    const needsScroll = desiredCellWidth < minCellWidth;
+
+    let scrollWidth: number;
+    if (needsScroll) {
+      scrollWidth = years.length * minCellWidth;
+      currentScrollInfo = { needsScroll: true, scrollWidth };
+    } else {
+      scrollWidth = width;
+      currentScrollInfo = { needsScroll: false, scrollWidth: width };
+    }
+
+    // Update x scale with appropriate range
+    xScale.domain(years).range([0, scrollWidth]);
+
+    // Update SVG width if scrolling is needed
+    svg.attr('width', scrollWidth + margin.left + margin.right);
 
     // Filter cells
     const cells = newData.data.filter(
@@ -269,6 +291,13 @@ export function createHeatmap(
     attributeFilter: ['data-theme']
   });
 
+  /**
+   * Get current scroll information
+   */
+  function getScrollInfo(): ScrollInfo | null {
+    return currentScrollInfo;
+  }
+
   // Initial render
   update(data);
 
@@ -277,6 +306,7 @@ export function createHeatmap(
     update,
     resize,
     destroy,
+    getScrollInfo,
   };
 }
 

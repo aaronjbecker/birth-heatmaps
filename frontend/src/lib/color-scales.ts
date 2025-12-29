@@ -62,12 +62,19 @@ export function getColor(
 }
 
 /**
- * Calculate color scale domain from data
+ * Calculate color scale domain from data using absolute min/max
+ *
+ * This matches the Python implementation which uses the full data range
+ * rather than percentile-based filtering. A floor of 1e-6 is applied
+ * to ensure compatibility with logarithmic scales.
+ *
+ * @param values - Array of numeric values (may include nulls)
+ * @param type - Scale type: 'sequential' or 'diverging'
+ * @returns Domain array: [min, max] for sequential, [min, mid, max] for diverging
  */
 export function calculateDomain(
   values: (number | null)[],
-  type: 'sequential' | 'diverging',
-  percentile: number = 0.02
+  type: 'sequential' | 'diverging'
 ): number[] {
   const validValues = values.filter((v): v is number => v !== null);
 
@@ -75,21 +82,19 @@ export function calculateDomain(
     return type === 'diverging' ? [0, 0.5, 1] : [0, 1];
   }
 
-  validValues.sort((a, b) => a - b);
+  // Use absolute min/max (matches Python implementation)
+  const min = Math.min(...validValues);
+  const max = Math.max(...validValues);
 
-  // Use percentile to exclude outliers
-  const lowIndex = Math.floor(validValues.length * percentile);
-  const highIndex = Math.ceil(validValues.length * (1 - percentile)) - 1;
-
-  const low = validValues[lowIndex];
-  const high = validValues[highIndex];
+  // Apply floor for log-scale compatibility (matches Python's max(min, 1e-6))
+  const safeMin = Math.max(min, 1e-6);
 
   if (type === 'diverging') {
-    const mid = (low + high) / 2;
-    return [low, mid, high];
+    const mid = (safeMin + max) / 2;
+    return [safeMin, mid, max];
   }
 
-  return [low, high];
+  return [safeMin, max];
 }
 
 /**

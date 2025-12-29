@@ -271,4 +271,176 @@ test.describe('Heatmap Rendering', () => {
 
     await verifyAxes(page);
   });
+
+  test('color scale domain uses absolute min/max (not percentile)', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get the data from the page
+    const heatmapData = await page.evaluate(() => {
+      // Access the data that was passed to the heatmap component
+      // This requires the data to be available in the global scope or we extract it from DOM
+      const dataElement = document.querySelector('[data-testid="heatmap-data"]');
+      if (dataElement) {
+        return JSON.parse(dataElement.textContent || '{}');
+      }
+
+      // Alternative: fetch the data file directly
+      return fetch(`/src/assets/data/fertility/${window.location.pathname.split('/')[2]}.json`)
+        .then(r => r.json());
+    });
+
+    // Extract domain from color scale config
+    const domain = heatmapData.colorScale.domain;
+    expect(domain).toHaveLength(2); // Sequential scale has [min, max]
+
+    // Calculate actual min/max from data
+    const validValues = heatmapData.data
+      .map((cell: any) => cell.value)
+      .filter((v: number | null) => v !== null);
+
+    const actualMin = Math.min(...validValues);
+    const actualMax = Math.max(...validValues);
+
+    // Verify domain uses absolute min/max (with 1e-6 floor)
+    const expectedMin = Math.max(actualMin, 1e-6);
+    expect(domain[0]).toBeCloseTo(expectedMin, 0); // Allow rounding to 1 decimal (precision 0 means ±0.5)
+    expect(domain[1]).toBeCloseTo(actualMax, 0); // Allow rounding to 1 decimal (precision 0 means ±0.5)
+
+    // Verify it's NOT using percentile-based filtering
+    // Calculate what 5th and 95th percentiles would be
+    const sortedValues = [...validValues].sort((a, b) => a - b);
+    const percentile5th = sortedValues[Math.floor(sortedValues.length * 0.05)];
+    const percentile95th = sortedValues[Math.ceil(sortedValues.length * 0.95) - 1];
+
+    // If there are outliers, the domain should differ from percentile bounds
+    // (This test will pass even without outliers, but is more meaningful with them)
+    if (actualMin < percentile5th || actualMax > percentile95th) {
+      // Verify we're using absolute values, not percentiles
+      expect(domain[0]).not.toBeCloseTo(percentile5th, 1);
+      expect(domain[1]).not.toBeCloseTo(percentile95th, 1);
+    }
+  });
+
+  test('color legend is positioned below heatmap', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get heatmap by finding the heatmap SVG
+    const heatmapSvg = countryPage.getHeatmapSVG();
+    const heatmapBox = await heatmapSvg.boundingBox();
+
+    // Get legend
+    const legend = countryPage.getColorLegend();
+    const legendBox = await legend.boundingBox();
+
+    // Verify legend is below heatmap
+    expect(legendBox).not.toBeNull();
+    expect(heatmapBox).not.toBeNull();
+
+    if (legendBox && heatmapBox) {
+      expect(legendBox.y).toBeGreaterThan(heatmapBox.y + heatmapBox.height);
+    }
+  });
+
+  test('color legend spans full width', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get legend SVG
+    const legend = countryPage.getColorLegend();
+    const legendBox = await legend.boundingBox();
+
+    // Get viewport width
+    const viewport = page.viewportSize();
+
+    expect(legendBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+
+    if (legendBox && viewport) {
+      // Legend should be wide (relative to viewport)
+      // At 1280px viewport, legend should be > 1000px
+      const widthRatio = legendBox.width / viewport.width;
+      expect(widthRatio).toBeGreaterThan(0.7); // At least 70% of viewport width
+    }
+  });
+
+  test('color legend displays min/max edge labels', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Check for edge labels
+    const minLabel = page.locator('[data-testid="legend-min-label"]');
+    const maxLabel = page.locator('[data-testid="legend-max-label"]');
+
+    await expect(minLabel).toBeVisible();
+    await expect(maxLabel).toBeVisible();
+
+    // Verify labels have text content
+    const minText = await minLabel.textContent();
+    const maxText = await maxLabel.textContent();
+
+    expect(minText).toBeTruthy();
+    expect(maxText).toBeTruthy();
+    expect(minText!.length).toBeGreaterThan(0);
+    expect(maxText!.length).toBeGreaterThan(0);
+  });
+
+  test('year range filter is positioned above heatmap', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    // Get year range filter
+    const filter = countryPage.getYearRangeFilter();
+    const filterBox = await filter.boundingBox();
+
+    // Get heatmap by finding the heatmap SVG
+    const heatmapSvg = countryPage.getHeatmapSVG();
+    const heatmapBox = await heatmapSvg.boundingBox();
+
+    // Verify filter is above heatmap
+    expect(filterBox).not.toBeNull();
+    expect(heatmapBox).not.toBeNull();
+
+    if (filterBox && heatmapBox) {
+      expect(filterBox.y).toBeLessThan(heatmapBox.y);
+    }
+  });
+
+  test('layout is responsive on different viewport sizes', async ({ page }) => {
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+
+    // Test on different viewports
+    const viewports = [
+      { width: 768, height: 1024, name: 'tablet' },
+      { width: 1024, height: 768, name: 'desktop-small' },
+      { width: 1920, height: 1080, name: 'desktop-large' },
+    ];
+
+    for (const viewport of viewports) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.waitForTimeout(300); // Allow layout to settle
+
+      // Verify legend is visible and properly sized
+      const legend = countryPage.getColorLegend();
+      const legendBox = await legend.boundingBox();
+
+      expect(legendBox).not.toBeNull();
+      if (legendBox) {
+        // Legend should scale with viewport
+        expect(legendBox.width).toBeGreaterThan(viewport.width * 0.5);
+        expect(legendBox.width).toBeLessThan(viewport.width * 0.95);
+      }
+
+      // Verify year filter is visible
+      const filter = countryPage.getYearRangeFilter();
+      await expect(filter).toBeVisible();
+    }
+  });
 });

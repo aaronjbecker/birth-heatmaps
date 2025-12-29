@@ -88,3 +88,9 @@ export interface YearRangeState {
   start: number;
   end: number;
 }
+
+/** Scroll information for heatmap with horizontal overflow */
+export interface ScrollInfo {
+  needsScroll: boolean;
+  scrollWidth: number;
+}

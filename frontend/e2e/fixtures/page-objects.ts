@@ -91,6 +91,52 @@ export class CountryPage {
     return labels;
   }
 
+  // --- Scroll Methods ---
+
+  getHeatmapContainer(): Locator {
+    // The heatmap container is the div that is the direct parent of the SVG
+    // It should have border styling
+    return this.page.locator('.heatmap-svg').locator('..');
+  }
+
+  async isHeatmapScrollable(): Promise<boolean> {
+    const container = this.getHeatmapContainer();
+    const overflowX = await container.evaluate((el) => {
+      return getComputedStyle(el).overflowX;
+    });
+    return overflowX === 'auto' || overflowX === 'scroll';
+  }
+
+  async getHeatmapScrollWidth(): Promise<number> {
+    const container = this.getHeatmapContainer();
+    return await container.evaluate((el) => {
+      return el.scrollWidth;
+    });
+  }
+
+  async getHeatmapClientWidth(): Promise<number> {
+    const container = this.getHeatmapContainer();
+    return await container.evaluate((el) => {
+      return el.clientWidth;
+    });
+  }
+
+  async scrollHeatmapTo(x: number) {
+    const container = this.getHeatmapContainer();
+    await container.evaluate((el, scrollX) => {
+      el.scrollLeft = scrollX;
+    }, x);
+    // Small delay for scroll to settle
+    await this.page.waitForTimeout(100);
+  }
+
+  async getHeatmapScrollLeft(): Promise<number> {
+    const container = this.getHeatmapContainer();
+    return await container.evaluate((el) => {
+      return el.scrollLeft;
+    });
+  }
+
   // --- Tooltip Methods ---
 
   getTooltip(): Locator {
@@ -176,13 +222,13 @@ export class CountryPage {
   }
 
   getStartSlider(): Locator {
-    // First range input with class year-range-slider
-    return this.page.locator('input.year-range-slider').first();
+    // Use testid for reliability
+    return this.page.locator('[data-testid="year-range-start"]');
   }
 
   getEndSlider(): Locator {
-    // Second range input with class year-range-slider
-    return this.page.locator('input.year-range-slider').last();
+    // Use testid for reliability
+    return this.page.locator('[data-testid="year-range-end"]');
   }
 
   async getRangeText(): Promise<string> {
@@ -204,7 +250,7 @@ export class CountryPage {
   }
 
   getResetButton(): Locator {
-    return this.page.locator('button:has-text("Reset")');
+    return this.page.locator('[data-testid="year-range-reset"]');
   }
 
   async clickReset() {
@@ -244,6 +290,28 @@ export class CountryPage {
   async getLegendGradientStopCount(): Promise<number> {
     const stops = this.page.locator('linearGradient stop');
     return await stops.count();
+  }
+
+  getHoverIndicator(): Locator {
+    return this.page.locator('.hover-indicator');
+  }
+
+  async isHoverIndicatorVisible(): Promise<boolean> {
+    const indicator = this.getHoverIndicator();
+    return await indicator.count() > 0;
+  }
+
+  async getHoverIndicatorLabel(): Promise<string> {
+    const indicator = this.getHoverIndicator();
+    const text = indicator.locator('text');
+    return await text.textContent() || '';
+  }
+
+  async getHoverIndicatorPosition(): Promise<number> {
+    const indicator = this.getHoverIndicator();
+    const line = indicator.locator('line').first();
+    const x1 = await line.getAttribute('x1');
+    return parseFloat(x1 || '0');
   }
 
   // --- Navigation & Metadata Methods ---

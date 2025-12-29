@@ -9,6 +9,13 @@ export interface YearRangeFilterProps {
   start?: number;
   end?: number;
   onChange: (start: number, end: number) => void;
+  dataYears?: number[];
+}
+
+interface DataZone {
+  start: number;
+  end: number;
+  hasData: boolean;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -35,6 +42,7 @@ const styles: Record<string, React.CSSProperties> = {
   sliderContainer: {
     position: 'relative',
     height: '24px',
+    marginBottom: '18px',
   },
   sliderTrack: {
     position: 'absolute',
@@ -62,6 +70,26 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'transparent',
     pointerEvents: 'none',
   },
+  ticksContainer: {
+    position: 'absolute',
+    top: '14px',
+    left: 0,
+    right: 0,
+    height: '12px',
+  },
+  tickMark: {
+    position: 'absolute',
+    width: '1px',
+    height: '6px',
+    backgroundColor: 'var(--color-border)',
+  },
+  edgeLabelsContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    fontSize: '11px',
+    color: 'var(--color-text-muted)',
+    marginTop: '-6px',
+  },
   resetButton: {
     padding: '4px 8px',
     fontSize: '11px',
@@ -78,6 +106,23 @@ const sliderStyles = `
   .year-range-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     pointer-events: all;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--color-primary);
+    border: 2px solid var(--color-bg-alt);
+    box-shadow: 0 1px 3px var(--color-shadow);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .year-range-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+  .year-range-slider:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  }
+  .year-range-slider::-moz-range-thumb {
+    pointer-events: all;
     width: 16px;
     height: 16px;
     border-radius: 50%;
@@ -85,18 +130,101 @@ const sliderStyles = `
     border: 2px solid var(--color-bg-alt);
     box-shadow: 0 1px 3px var(--color-shadow);
     cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
-  .year-range-slider::-moz-range-thumb {
-    pointer-events: all;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-alt);
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
+  .year-range-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+  }
+  .year-range-slider:focus {
+    outline: none;
+  }
+  .year-range-slider:focus::-moz-range-thumb {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
   }
 `;
+
+/**
+ * Calculate tick mark positions based on year range
+ * Uses 5-year intervals for short ranges (≤ 30 years), 10-year intervals for longer ranges
+ */
+function calculateTickMarks(min: number, max: number): number[] {
+  const range = max - min;
+  const interval = range <= 30 ? 5 : 10;
+  const ticks: number[] = [];
+
+  for (let year = Math.ceil(min / interval) * interval; year <= max; year += interval) {
+    ticks.push(year);
+  }
+
+  return ticks;
+}
+
+/**
+ * Analyze data availability to create zones for dual-color track
+ * Returns array of zones indicating continuous ranges of data presence/absence
+ */
+export function analyzeDataZones(
+  min: number,
+  max: number,
+  dataYears?: number[]
+): DataZone[] {
+  if (!dataYears || dataYears.length === 0) {
+    return [{ start: min, end: max, hasData: false }];
+  }
+
+  const zones: DataZone[] = [];
+  const sortedDataYears = [...dataYears].sort((a, b) => a - b);
+
+  let currentYear = min;
+
+  for (let i = 0; i < sortedDataYears.length; i++) {
+    const dataYear = sortedDataYears[i];
+
+    // Skip years outside our range
+    if (dataYear < min) continue;
+    if (dataYear > max) break;
+
+    // If there's a gap before this data year, create a no-data zone
+    if (dataYear > currentYear) {
+      zones.push({
+        start: currentYear,
+        end: dataYear - 1,
+        hasData: false,
+      });
+    }
+
+    // Find the end of this continuous data range
+    let rangeEnd = dataYear;
+    while (
+      i + 1 < sortedDataYears.length &&
+      sortedDataYears[i + 1] === rangeEnd + 1 &&
+      sortedDataYears[i + 1] <= max
+    ) {
+      i++;
+      rangeEnd = sortedDataYears[i];
+    }
+
+    // Create data zone
+    zones.push({
+      start: dataYear,
+      end: rangeEnd,
+      hasData: true,
+    });
+
+    currentYear = rangeEnd + 1;
+  }
+
+  // If there's a gap at the end, create final no-data zone
+  if (currentYear <= max) {
+    zones.push({
+      start: currentYear,
+      end: max,
+      hasData: false,
+    });
+  }
+
+  return zones;
+}
 
 export function YearRangeFilter({
   min,
@@ -104,6 +232,7 @@ export function YearRangeFilter({
   start: initialStart,
   end: initialEnd,
   onChange,
+  dataYears,
 }: YearRangeFilterProps): React.ReactElement {
   const [start, setStart] = useState(initialStart ?? min);
   const [end, setEnd] = useState(initialEnd ?? max);
@@ -140,6 +269,8 @@ export function YearRangeFilter({
   };
 
   const isReset = start === min && end === max;
+  const tickMarks = calculateTickMarks(min, max);
+  const dataZones = analyzeDataZones(min, max, dataYears);
 
   return (
     <div style={styles.container}>
@@ -154,20 +285,67 @@ export function YearRangeFilter({
             style={styles.resetButton}
             onClick={handleReset}
             type="button"
+            data-testid="year-range-reset"
           >
             Reset
           </button>
         )}
       </div>
       <div style={styles.sliderContainer}>
-        <div style={styles.sliderTrack} />
+        {/* Multi-zone track showing data availability */}
+        {dataZones.map((zone, index) => {
+          const zoneStart = ((zone.start - min) / (max - min)) * 100;
+          const zoneEnd = ((zone.end + 1 - min) / (max - min)) * 100;
+          const zoneWidth = zoneEnd - zoneStart;
+
+          // Determine opacity based on selection
+          const isInSelection = zone.end >= start && zone.start <= end;
+          const opacity = isInSelection ? 0.4 : 0.2;
+
+          return (
+            <div
+              key={index}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                left: `${zoneStart}%`,
+                width: `${zoneWidth}%`,
+                height: '4px',
+                backgroundColor: zone.hasData
+                  ? 'var(--color-primary)'
+                  : 'var(--color-border)',
+                opacity,
+                borderRadius: index === 0 ? '2px 0 0 2px' : index === dataZones.length - 1 ? '0 2px 2px 0' : '0',
+              }}
+              data-testid={`zone-${index}`}
+              data-has-data={zone.hasData}
+            />
+          );
+        })}
         <div
           style={{
             ...styles.sliderRange,
             left: `${rangePercent.left}%`,
             right: `${rangePercent.right}%`,
+            opacity: 0.6,
           }}
         />
+        {/* Tick marks */}
+        <div style={styles.ticksContainer} data-testid="year-range-ticks">
+          {tickMarks.map((year) => {
+            const position = ((year - min) / (max - min)) * 100;
+            return (
+              <div
+                key={year}
+                style={{
+                  ...styles.tickMark,
+                  left: `${position}%`,
+                }}
+                data-year={year}
+              />
+            );
+          })}
+        </div>
         <input
           type="range"
           className="year-range-slider"
@@ -176,6 +354,7 @@ export function YearRangeFilter({
           max={max}
           value={start}
           onChange={handleStartChange}
+          data-testid="year-range-start"
         />
         <input
           type="range"
@@ -185,7 +364,13 @@ export function YearRangeFilter({
           max={max}
           value={end}
           onChange={handleEndChange}
+          data-testid="year-range-end"
         />
+      </div>
+      {/* Edge labels */}
+      <div style={styles.edgeLabelsContainer}>
+        <span data-testid="year-range-min-label">{min}</span>
+        <span data-testid="year-range-max-label">{max}</span>
       </div>
     </div>
   );
