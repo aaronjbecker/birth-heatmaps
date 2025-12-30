@@ -274,3 +274,25 @@ a:hover {
 .footer a:hover {
   color: var(--color-primary);
 }
+
+.footer-content {
+  text-align: center;
+}
+
+.footer-content p {
+  margin: var(--space-xs) 0;
+}
+
+.footer-data-sources {
+  margin-bottom: var(--space-sm) !important;
+}
+
+.footer-author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.footer-logo {
+  vertical-align: middle;
+}

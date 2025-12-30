@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Logo from '../components/Logo.astro';
 ---
 
 <BaseLayout
@@ -65,7 +66,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     </p>
   </section>
 
-  <section class="card">
+  <section class="card" style="margin-bottom: var(--space-xl);">
     <h2>Technical Details</h2>
     <p>
       Built with:
@@ -77,4 +78,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <li>Docker for containerized deployment</li>
     </ul>
   </section>
+
+  <section class="card">
+    <h2>Author</h2>
+    <p class="author-info">
+      <a href="https://aaronjbecker.com" target="_blank" rel="noopener" class="author-link">
+        <Logo size={32} />
+        <span>Aaron J Becker</span>
+      </a>
+    </p>
+  </section>
 </BaseLayout>
+
+<style>
+  .author-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 1.1rem;
+  }
+</style>

@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.3 -0.3 16.6 16.6"
+     aria-hidden="true"
+     focusable="false">
+  <style lang="postcss">
+    /* Logo responds to theme color because it shows alongside page content. */
+    /* Default/light theme */
+    :root[data-theme="light"] #top-path,
+    :root #top-path { fill: url(#topGradient) }
+    :root[data-theme="light"] #middle-path,
+    :root #middle-path { fill: url(#middleGradient) }
+    :root[data-theme="light"] #bottom-path,
+    :root #bottom-path { fill: url(#bottomGradient) }
+
+    /* Dark theme */
+    :root[data-theme="dark"] #top-path { fill: url(#topGradientDark) }
+    :root[data-theme="dark"] #middle-path { fill: url(#middleGradientDark) }
+    :root[data-theme="dark"] #bottom-path { fill: url(#bottomGradientDark) }
+  </style>
+  <!-- Define the gradients -->
+  <defs>
+    <!-- Light mode gradients -->
+    <linearGradient id="topGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000"/>
+      <stop offset="100%" style="stop-color:#111111"/>
+    </linearGradient>
+    <linearGradient id="middleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#222222"/>
+      <stop offset="100%" style="stop-color:#444444"/>
+    </linearGradient>
+    <linearGradient id="bottomGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#666666"/>
+      <stop offset="100%" style="stop-color:#EEEEEE"/>
+    </linearGradient>
+    <!-- Dark mode gradients -->
+    <linearGradient id="topGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#EEEEEE"/>
+    </linearGradient>
+    <linearGradient id="middleGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DDDDDD"/>
+      <stop offset="100%" style="stop-color:#BBBBBB"/>
+    </linearGradient>
+    <linearGradient id="bottomGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#999999"/>
+      <stop offset="100%" style="stop-color:#111111"/>
+    </linearGradient>
+  </defs>
+  <!-- Top triangle -->
+  <path id="top-path" d="M10.29 5L8 1L5.71 5z"
+        stroke="currentColor" 
+        stroke-width="0.4" />
+  <!-- Middle section -->
+  <path id="middle-path" d="M13.14 10l-2.28-4H5.14l-2.28 4z"
+        stroke="currentColor" 
+        stroke-width="0.4" />
+  <!-- Base -->
+  <path id="bottom-path"
+        stroke="currentColor" 
+        stroke-width="0.4" 
+        d="M2.29 11L0 15h16l-2.29-4z"/>
+</svg>

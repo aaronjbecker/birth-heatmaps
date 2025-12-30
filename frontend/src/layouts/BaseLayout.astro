@@ -1,6 +1,7 @@
 ---
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeadMeta from '../components/HeadMeta.astro';
+import Logo from '../components/Logo.astro';
 import { CountryDropdown } from '../components/CountryDropdown';
 import countriesData from '../assets/data/countries.json';
 import type { CountryMeta } from '../lib/types';
@@ -68,11 +69,22 @@ const countries = countriesData.countries as CountryMeta[];
 
     <footer class="footer">
       <div class="container">
-        <p>
-          Data sources:
-          <a href="https://www.mortality.org/" target="_blank" rel="noopener">Human Mortality Database</a>,
-          <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">UN Population Division</a>
-        </p>
+        <div class="footer-content">
+          <p class="footer-data-sources">
+            Data sources:
+            <a href="https://www.mortality.org/" target="_blank" rel="noopener">Human Mortality Database</a>,
+            <a href="https://population.un.org/wpp/" target="_blank" rel="noopener">UN Population Division</a>
+          </p>
+          <p class="footer-author">
+            <a href="https://aaronjbecker.com" target="_blank" rel="noopener" class="footer-author-link">
+              <Logo size={20} class="footer-logo" />
+              <span>Aaron J Becker</span>
+            </a>
+          </p>
+          <p class="footer-copyright">
+            &copy; {new Date().getFullYear()} Aaron J Becker. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   </body>

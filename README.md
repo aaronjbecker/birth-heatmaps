@@ -210,3 +210,7 @@ Test modules:
 - [CHANGELOG.md](CHANGELOG.md) - Detailed progress at each development stage
 - [CHART_LOADING.md](CHART_LOADING.md) - How chart images are loaded in the frontend
 - [data-pipeline/README.md](data-pipeline/README.md) - Pipeline architecture and outputs
+
+## Author
+
+Created by [Aaron J Becker](https://aaronjbecker.com)
