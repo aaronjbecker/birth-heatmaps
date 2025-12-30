@@ -22,6 +22,7 @@ from config import (
     FRONTEND_ASSETS_FERTILITY_DIR,
     FRONTEND_ASSETS_SEASONALITY_DIR,
     MIN_YEARS_DATA,
+    MIN_MONTHLY_BIRTHS,
     ensure_output_dirs,
 )
 
@@ -82,23 +83,64 @@ def filter_countries_by_min_years(
     return included, excluded
 
 
+def filter_countries_by_min_monthly_births(
+    births: pl.DataFrame,
+    min_monthly_births: int = MIN_MONTHLY_BIRTHS
+) -> tuple[List[str], List[tuple[str, int]]]:
+    """
+    Filter countries based on minimum monthly births.
+
+    Only countries with at least min_monthly_births in EVERY month of every year are included.
+    This filters out small countries with noisy data due to low birth counts.
+
+    Args:
+        births: DataFrame with all births data (must have 'Country' and 'Births' columns)
+        min_monthly_births: Minimum births required in every month
+
+    Returns:
+        Tuple of (included_countries, excluded_countries_with_min_births)
+        - included_countries: List of country names that pass the filter
+        - excluded_countries_with_min_births: List of (country_name, min_births) for excluded countries
+    """
+    all_countries = sorted(births['Country'].unique().to_list())
+    included = []
+    excluded = []
+
+    for country_name in all_countries:
+        country_data = births.filter(pl.col('Country') == country_name)
+
+        # Find the minimum births in any month for this country
+        min_births_value = country_data['Births'].min()
+
+        if min_births_value is not None and min_births_value >= min_monthly_births:
+            included.append(country_name)
+        else:
+            excluded.append((country_name, int(min_births_value) if min_births_value is not None else 0))
+
+    return included, excluded
+
+
 def export_countries_index(
     births: pl.DataFrame,
     output_dir: Optional[Path] = None,
-    min_years: int = MIN_YEARS_DATA
+    min_years: int = MIN_YEARS_DATA,
+    min_monthly_births: int = MIN_MONTHLY_BIRTHS
 ) -> List[str]:
     """
     Export countries.json with metadata about available countries.
 
-    Countries with fewer than min_years complete years of data are excluded.
+    Countries are excluded if they have:
+    - Fewer than min_years complete years of data
+    - Any month with fewer than min_monthly_births births
 
     Args:
         births: DataFrame with all births data
         output_dir: Output directory (defaults to JSON_OUTPUT_DIR)
         min_years: Minimum number of complete years required (default: MIN_YEARS_DATA)
+        min_monthly_births: Minimum births required in every month (default: MIN_MONTHLY_BIRTHS)
 
     Returns:
-        List of country names that were included (passed the filter)
+        List of country names that were included (passed all filters)
     """
     if output_dir is None:
         output_dir = JSON_OUTPUT_DIR
@@ -106,12 +148,24 @@ def export_countries_index(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Filter countries by minimum years
-    included_countries, excluded_countries = filter_countries_by_min_years(births, min_years)
+    included_countries, excluded_by_years = filter_countries_by_min_years(births, min_years)
 
-    if excluded_countries:
-        print(f"Excluding {len(excluded_countries)} countries with fewer than {min_years} complete years:")
-        for country_name, years in excluded_countries:
+    if excluded_by_years:
+        print(f"Excluding {len(excluded_by_years)} countries with fewer than {min_years} complete years:")
+        for country_name, years in excluded_by_years:
             print(f"  - {country_name}: {years} complete years")
+
+    # Filter remaining countries by minimum monthly births
+    # Only check countries that passed the min_years filter
+    births_filtered = births.filter(pl.col('Country').is_in(included_countries))
+    included_countries, excluded_by_births = filter_countries_by_min_monthly_births(
+        births_filtered, min_monthly_births
+    )
+
+    if excluded_by_births:
+        print(f"Excluding {len(excluded_by_births)} countries with months below {min_monthly_births} births:")
+        for country_name, min_births in excluded_by_births:
+            print(f"  - {country_name}: minimum {min_births} births in a month")
 
     countries = []
     for country_name in included_countries:
@@ -402,7 +456,8 @@ def export_all_countries(
     births: pl.DataFrame,
     output_dir: Optional[Path] = None,
     max_workers: Optional[int] = None,
-    min_years: int = MIN_YEARS_DATA
+    min_years: int = MIN_YEARS_DATA,
+    min_monthly_births: int = MIN_MONTHLY_BIRTHS
 ) -> List[str]:
     """
     Export all data for all countries in parallel.
@@ -412,9 +467,10 @@ def export_all_countries(
         output_dir: Base output directory (defaults to JSON_OUTPUT_DIR)
         max_workers: Maximum number of parallel workers (defaults to CPU count)
         min_years: Minimum number of complete years required (default: MIN_YEARS_DATA)
+        min_monthly_births: Minimum births required in every month (default: MIN_MONTHLY_BIRTHS)
 
     Returns:
-        List of country names that were exported (passed the filter)
+        List of country names that were exported (passed all filters)
     """
     if output_dir is None:
         output_dir = JSON_OUTPUT_DIR
@@ -426,7 +482,7 @@ def export_all_countries(
     ensure_output_dirs()
 
     # Export countries index and get filtered country list
-    countries = export_countries_index(births, output_dir, min_years)
+    countries = export_countries_index(births, output_dir, min_years, min_monthly_births)
 
     # Prepare for parallel export (only for filtered countries)
     fertility_dir = output_dir / 'fertility'

@@ -116,6 +116,10 @@ CSV_OUTPUT_DIR = DATA_PIPELINE_ROOT / 'src'
 # A "complete year" means all 12 months have data for that year
 MIN_YEARS_DATA = 25
 
+# This is used to exclude noisy countries, 
+# which have at least one month with this many or fewer births in non-provisional data.
+MIN_MONTHLY_BIRTHS = 200
+
 # ===============================
 # MONTH NAMES
 # ===============================

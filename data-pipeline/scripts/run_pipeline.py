@@ -17,7 +17,7 @@ from typing import List, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import polars as pl
-from config import HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR, MIN_YEARS_DATA
+from config import HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR, MIN_YEARS_DATA, MIN_MONTHLY_BIRTHS
 from loaders import hmd, un, japan
 from processors import (
     interpolate_population,
@@ -153,7 +153,8 @@ def export_csv(births: pl.DataFrame, population: pl.DataFrame, stats: pl.DataFra
 def export_json(
     births: pl.DataFrame,
     output_dir: Path = None,
-    min_years: Optional[int] = None
+    min_years: Optional[int] = None,
+    min_monthly_births: Optional[int] = None
 ) -> List[str]:
     """Export to JSON files for frontend.
 
@@ -161,18 +162,22 @@ def export_json(
         births: DataFrame with all births data
         output_dir: Output directory (defaults to OUTPUT_DIR)
         min_years: Minimum complete years required (defaults to MIN_YEARS_DATA)
+        min_monthly_births: Minimum births in every month (defaults to MIN_MONTHLY_BIRTHS)
 
     Returns:
-        List of country names that were exported (passed the filter)
+        List of country names that were exported (passed all filters)
     """
     if output_dir is None:
         output_dir = OUTPUT_DIR
     if min_years is None:
         min_years = MIN_YEARS_DATA
+    if min_monthly_births is None:
+        min_monthly_births = MIN_MONTHLY_BIRTHS
 
     print(f"\nExporting JSON files to {output_dir}...")
     print(f"  Minimum complete years required: {min_years}")
-    countries = export_all_countries(births, output_dir, min_years=min_years)
+    print(f"  Minimum monthly births required: {min_monthly_births}")
+    countries = export_all_countries(births, output_dir, min_years=min_years, min_monthly_births=min_monthly_births)
     print("  JSON export complete")
     return countries
 
@@ -212,19 +217,23 @@ def main():
     parser.add_argument('--output-dir', type=Path, help='Output directory')
     parser.add_argument('--min-years', type=int, default=None,
                         help=f'Minimum complete years required for country inclusion (default: {MIN_YEARS_DATA})')
+    parser.add_argument('--min-monthly-births', type=int, default=None,
+                        help=f'Minimum births required in every month for country inclusion (default: {MIN_MONTHLY_BIRTHS})')
     args = parser.parse_args()
 
     # Default to --all if no format specified
     if not args.csv and not args.json and not args.charts and not args.all:
         args.all = True
 
-    # Resolve min_years
+    # Resolve filter thresholds
     min_years = args.min_years if args.min_years is not None else MIN_YEARS_DATA
+    min_monthly_births = args.min_monthly_births if args.min_monthly_births is not None else MIN_MONTHLY_BIRTHS
 
     print("=" * 50)
     print("HMD Births Heatmap Data Pipeline")
     print("=" * 50)
     print(f"Minimum complete years threshold: {min_years}")
+    print(f"Minimum monthly births threshold: {min_monthly_births}")
 
     # Load data
     births, population = load_all_data(args.hmd_dir, args.un_dir)
@@ -243,7 +252,7 @@ def main():
         export_csv(births, population, stats, args.output_dir)
 
     if args.json or args.all:
-        filtered_countries = export_json(births, args.output_dir, min_years)
+        filtered_countries = export_json(births, args.output_dir, min_years, min_monthly_births)
 
     if args.charts or args.all:
         # Use filtered countries from JSON export if available
