@@ -25,6 +25,10 @@ def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:
     df = pl.read_csv(file_path, infer_schema_length=1000000)
     # exclude provisional data (it's generally lower quality data)
     df = df.filter(~pl.col('Reliability').str.contains('Provisional figure'))
+    # filter any rows where the value is 0 (results in NaN when calculating fertility rate)
+    df = df.filter(
+        pl.col('Value').cast(pl.Float64).is_not_null(), 
+        pl.col('Value').cast(pl.Float64) > 0)
 
     # Average multiple sources per country/year/month when they exist
     df = (

@@ -1,11 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import type { CountriesIndex } from '../lib/types';
+import type { CountryMeta } from '../lib/types';
 
 // Import countries data from src/assets - Vite will handle cache-busting
 import countriesData from '../assets/data/countries.json';
 
-const countries = countriesData.countries || [];
+const countries = (countriesData.countries || []) as CountryMeta[];
 
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;

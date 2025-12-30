@@ -75,12 +75,16 @@ function formatYearRange(range: [number, number]): string {
 const pageTitle = `${countryMeta.name} - ${metricConfig.label}`;
 const pageDescription = `${metricConfig.label} data for ${countryMeta.name} from ${metricData.yearRange[0]} to ${metricData.yearRange[1]}. ${metricConfig.subtitle} Data sources: ${countryMeta.sources.join(', ')}.`;
 const canonicalPath = `/${metric}/${country}`;
+
+// Build full OG image URL (must be absolute for social media crawlers)
+const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${country}.png`;
 ---
 
 <BaseLayout
   title={pageTitle}
   description={pageDescription}
   canonicalPath={canonicalPath}
+  ogImage={ogImageUrl}
 >
   <nav class="breadcrumb">
     <a href="/">Countries</a> / <CountryDropdown
