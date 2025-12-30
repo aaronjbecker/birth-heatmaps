@@ -23,6 +23,8 @@ def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:
         data_dir = UN_DATA_DIR
     file_path = data_dir / 'un_births_by_month_data_raw.csv'
     df = pl.read_csv(file_path, infer_schema_length=1000000)
+    # exclude provisional data (it's generally lower quality data)
+    df = df.filter(~pl.col('Reliability').str.contains('Provisional figure'))
 
     # Average multiple sources per country/year/month when they exist
     df = (
