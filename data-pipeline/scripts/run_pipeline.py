@@ -24,6 +24,7 @@ from processors import (
     create_births_monthly_index,
     compute_fertility_rates,
     compute_seasonality,
+    compute_conception_rates,
     compute_births_extent_stats,
     compute_population_extent_stats,
 )
@@ -124,6 +125,9 @@ def process_data(births: pl.DataFrame, population: pl.DataFrame):
 
     print("Computing seasonality metrics...")
     births = compute_seasonality(births)
+
+    print("Computing conception rates...")
+    births = compute_conception_rates(births)
 
     return births, population, stats
 

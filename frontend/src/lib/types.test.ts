@@ -23,6 +23,7 @@ describe('Type definitions', () => {
         completeYears: 77,
         fertility: { yearRange: [1946, 2023], hasData: true },
         seasonality: { yearRange: [1946, 2023], hasData: true },
+        conception: { yearRange: [1946, 2022], hasData: true },
       };
 
       expect(country.code).toBe('france');
@@ -41,6 +42,7 @@ describe('Type definitions', () => {
             completeYears: 77,
             fertility: { yearRange: [1946, 2023], hasData: true },
             seasonality: { yearRange: [1946, 2023], hasData: true },
+            conception: { yearRange: [1946, 2022], hasData: true },
           },
         ],
         dataSources: {

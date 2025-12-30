@@ -85,6 +85,7 @@ OUTPUT_DIR = Path(os.environ.get('OUTPUT_DIR', DATA_PIPELINE_ROOT / 'output'))
 JSON_OUTPUT_DIR = OUTPUT_DIR
 FERTILITY_OUTPUT_DIR = OUTPUT_DIR / 'fertility'
 SEASONALITY_OUTPUT_DIR = OUTPUT_DIR / 'seasonality'
+CONCEPTION_OUTPUT_DIR = OUTPUT_DIR / 'conception'
 
 # Chart output directory
 CHARTS_OUTPUT_DIR = OUTPUT_DIR / 'charts'
@@ -95,6 +96,7 @@ CHARTS_OUTPUT_DIR = OUTPUT_DIR / 'charts'
 FRONTEND_ASSETS_DATA_DIR = Path(os.environ.get('FRONTEND_ASSETS_DATA_DIR', PROJECT_ROOT / 'frontend' / 'src' / 'assets' / 'data'))
 FRONTEND_ASSETS_FERTILITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'fertility'
 FRONTEND_ASSETS_SEASONALITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'seasonality'
+FRONTEND_ASSETS_CONCEPTION_DIR = FRONTEND_ASSETS_DATA_DIR / 'conception'
 
 # Frontend content charts (for Astro Image component with Vite asset handling)
 # Charts are imported using import.meta.glob() for optimization
@@ -154,8 +156,10 @@ def ensure_output_dirs() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     FERTILITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SEASONALITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    CONCEPTION_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     CHARTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_DATA_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_ASSETS_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_CONTENT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)

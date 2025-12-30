@@ -18,10 +18,12 @@ export async function getStaticPaths() {
   // Load all data files for each metric using import.meta.glob
   const fertilityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/fertility/*.json');
   const seasonalityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/seasonality/*.json');
+  const conceptionFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/conception/*.json');
 
   const dataFilesByMetric: Record<MetricSlug, Record<string, () => Promise<CountryHeatmapData>>> = {
     fertility: fertilityFiles,
     seasonality: seasonalityFiles,
+    conception: conceptionFiles,
   };
 
   // Generate paths for all metric × country combinations

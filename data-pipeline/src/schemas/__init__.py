@@ -23,6 +23,10 @@ BirthsSchema = pa.DataFrameSchema({
     "seasonality_ratio_annual": pa.Column(pl.Float64, nullable=True),
     "seasonality_percentage_annual": pa.Column(pl.Float64, nullable=True),
     "seasonality_percentage_normalized": pa.Column(pl.Float64, nullable=True),
+    "future_births": pa.Column(pl.Float64, nullable=True),
+    "future_days_in_month": pa.Column(pl.Int8, nullable=True),
+    "future_births_per_day": pa.Column(pl.Float64, nullable=True),
+    "daily_conception_rate": pa.Column(pl.Float64, nullable=True),
 })
 
 

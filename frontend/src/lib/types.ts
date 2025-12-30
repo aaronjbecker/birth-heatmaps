@@ -16,6 +16,10 @@ export interface CountryMeta {
     yearRange: [number, number];
     hasData: boolean;
   };
+  conception: {
+    yearRange: [number, number];
+    hasData: boolean;
+  };
 }
 
 /** Data source metadata */

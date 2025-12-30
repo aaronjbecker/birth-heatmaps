@@ -17,10 +17,12 @@ from config import (
     get_country_slug,
     FERTILITY_OUTPUT_DIR,
     SEASONALITY_OUTPUT_DIR,
+    CONCEPTION_OUTPUT_DIR,
     JSON_OUTPUT_DIR,
     FRONTEND_ASSETS_DATA_DIR,
     FRONTEND_ASSETS_FERTILITY_DIR,
     FRONTEND_ASSETS_SEASONALITY_DIR,
+    FRONTEND_ASSETS_CONCEPTION_DIR,
     MIN_YEARS_DATA,
     MIN_MONTHLY_BIRTHS,
     ensure_output_dirs,
@@ -188,6 +190,17 @@ def export_countries_index(
         # Get complete years count for metadata
         complete_years = compute_complete_years(births, country_name)
 
+        # Get conception year range (may differ due to edge case filtering)
+        conception_data = country_data.filter(pl.col('daily_conception_rate').is_not_null())
+        if len(conception_data) > 0:
+            conception_min_year = int(conception_data['Year'].min())
+            conception_max_year = int(conception_data['Year'].max())
+            has_conception = True
+        else:
+            conception_min_year = min_year
+            conception_max_year = max_year
+            has_conception = False
+
         countries.append({
             'code': get_country_slug(country_name),
             'name': country_name,
@@ -200,6 +213,10 @@ def export_countries_index(
             'seasonality': {
                 'yearRange': [min_year, max_year],
                 'hasData': True
+            },
+            'conception': {
+                'yearRange': [conception_min_year, conception_max_year],
+                'hasData': has_conception
             }
         })
 
@@ -382,9 +399,88 @@ def export_seasonality_data(
     print(f"Exported seasonality data for {country_name} to {output_path}")
 
 
+def export_conception_data(
+    births: pl.DataFrame,
+    country_name: str,
+    output_dir: Optional[Path] = None
+) -> None:
+    """
+    Export conception heatmap data for a single country.
+
+    Only includes months where 10-month-future births data exists.
+
+    Args:
+        births: DataFrame with births data for the country
+        country_name: Name of the country
+        output_dir: Output directory (defaults to CONCEPTION_OUTPUT_DIR)
+    """
+    if output_dir is None:
+        output_dir = CONCEPTION_OUTPUT_DIR
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    country_data = births.filter(pl.col('Country') == country_name)
+
+    # Filter to only rows with valid conception rate (has future births data)
+    valid_data = country_data.filter(pl.col('daily_conception_rate').is_not_null())
+
+    if len(valid_data) == 0:
+        print(f"  No valid conception data for {country_name}, skipping")
+        return
+
+    # Get metadata from valid data only
+    years = sorted(valid_data['Year'].unique().to_list())
+    sources = valid_data['Source'].unique().to_list()
+
+    # Compute color scale domain (absolute min/max)
+    # Apply floor of 1e-6 for log-scale compatibility
+    min_val = max(float(valid_data['daily_conception_rate'].min()), 1e-6)
+    max_val = float(valid_data['daily_conception_rate'].max())
+
+    # Build data array (only valid rows)
+    data = []
+    for row in valid_data.iter_rows(named=True):
+        value = row['daily_conception_rate']
+        data.append({
+            'year': int(row['Year']),
+            'month': int(row['Month']),
+            'value': round(value, 2) if value is not None else None,
+            'futureBirths': int(row['future_births']) if row['future_births'] is not None else None,
+            'population': int(row['childbearing_population']) if row['childbearing_population'] is not None else None,
+            'source': row['Source']
+        })
+
+    output = {
+        'country': {
+            'code': get_country_slug(country_name),
+            'name': country_name
+        },
+        'metric': 'daily_conception_rate',
+        'title': 'Daily Conceptions Per 100k Women (Age 15-44)',
+        'subtitle': 'Based on births 10 months later',
+        'colorScale': {
+            'type': 'sequential',
+            'domain': [round(min_val, 1), round(max_val, 1)],
+            'scheme': 'turbo'
+        },
+        'years': [int(y) for y in years],
+        'months': MONTH_NAMES,
+        'data': data,
+        'sources': sources,
+        'generatedAt': datetime.utcnow().isoformat() + 'Z'
+    }
+
+    output_path = output_dir / f'{get_country_slug(country_name)}.json'
+    with open(output_path, 'w') as f:
+        json.dump(output, f)
+
+    print(f"Exported conception data for {country_name} to {output_path}")
+
+
 def _export_country_json(args: tuple) -> str:
     """Helper function to export JSON data for a single country (for parallel execution)."""
-    births_dict, country_name, fertility_dir, seasonality_dir, frontend_fertility_dir, frontend_seasonality_dir = args
+    (births_dict, country_name, fertility_dir, seasonality_dir, conception_dir,
+     frontend_fertility_dir, frontend_seasonality_dir, frontend_conception_dir) = args
 
     # Reconstruct DataFrame from dict for this country
     births = pl.DataFrame(births_dict)
@@ -496,6 +592,55 @@ def _export_country_json(args: tuple) -> str:
     with open(frontend_seasonality_dir / seasonality_filename, 'w') as f:
         json.dump(seasonality_output, f)
 
+    # Export conception data inline (only for rows with valid conception rate)
+    valid_conception_data = country_data.filter(pl.col('daily_conception_rate').is_not_null())
+
+    if len(valid_conception_data) > 0:
+        conception_dir.mkdir(parents=True, exist_ok=True)
+        conception_years = sorted(valid_conception_data['Year'].unique().to_list())
+
+        # Compute color scale domain
+        conception_min_val = max(float(valid_conception_data['daily_conception_rate'].min()), 1e-6)
+        conception_max_val = float(valid_conception_data['daily_conception_rate'].max())
+
+        conception_data = []
+        for row in valid_conception_data.iter_rows(named=True):
+            value = row['daily_conception_rate']
+            conception_data.append({
+                'year': int(row['Year']),
+                'month': int(row['Month']),
+                'value': round(value, 2) if value is not None else None,
+                'futureBirths': int(row['future_births']) if row['future_births'] is not None else None,
+                'population': int(row['childbearing_population']) if row['childbearing_population'] is not None else None,
+                'source': row['Source']
+            })
+
+        conception_output = {
+            'country': {'code': get_country_slug(country_name), 'name': country_name},
+            'metric': 'daily_conception_rate',
+            'title': 'Daily Conceptions Per 100k Women (Age 15-44)',
+            'subtitle': 'Based on births 10 months later',
+            'colorScale': {
+                'type': 'sequential',
+                'domain': [round(conception_min_val, 1), round(conception_max_val, 1)],
+                'scheme': 'turbo'
+            },
+            'years': [int(y) for y in conception_years],
+            'months': MONTH_NAMES,
+            'data': conception_data,
+            'sources': sources,
+            'generatedAt': datetime.utcnow().isoformat() + 'Z'
+        }
+
+        conception_filename = f'{get_country_slug(country_name)}.json'
+        with open(conception_dir / conception_filename, 'w') as f:
+            json.dump(conception_output, f)
+
+        # Also export to frontend assets
+        frontend_conception_dir.mkdir(parents=True, exist_ok=True)
+        with open(frontend_conception_dir / conception_filename, 'w') as f:
+            json.dump(conception_output, f)
+
     return country_name
 
 
@@ -534,14 +679,15 @@ def export_all_countries(
     # Prepare for parallel export (only for filtered countries)
     fertility_dir = output_dir / 'fertility'
     seasonality_dir = output_dir / 'seasonality'
+    conception_dir = output_dir / 'conception'
 
     # Convert DataFrame to dict for pickling (needed for multiprocessing)
     births_dict = births.to_dict()
 
     # Create args for each country (including frontend assets directories)
     export_args = [
-        (births_dict, country_name, fertility_dir, seasonality_dir,
-         FRONTEND_ASSETS_FERTILITY_DIR, FRONTEND_ASSETS_SEASONALITY_DIR)
+        (births_dict, country_name, fertility_dir, seasonality_dir, conception_dir,
+         FRONTEND_ASSETS_FERTILITY_DIR, FRONTEND_ASSETS_SEASONALITY_DIR, FRONTEND_ASSETS_CONCEPTION_DIR)
         for country_name in countries
     ]
 

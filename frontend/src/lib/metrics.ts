@@ -17,6 +17,11 @@ export const METRICS = {
     label: 'Seasonality',
     subtitle: 'Percentage of Annual Births by Month (normalized)',
   },
+  conception: {
+    slug: 'conception',
+    label: 'Conception',
+    subtitle: 'Daily Conceptions Per 100k Women (Age 15-44)',
+  },
 } as const;
 
 export type MetricSlug = keyof typeof METRICS;
