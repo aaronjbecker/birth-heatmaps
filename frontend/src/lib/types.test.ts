@@ -20,6 +20,7 @@ describe('Type definitions', () => {
         code: 'france',
         name: 'France',
         sources: ['HMD'],
+        completeYears: 77,
         fertility: { yearRange: [1946, 2023], hasData: true },
         seasonality: { yearRange: [1946, 2023], hasData: true },
       };
@@ -37,6 +38,7 @@ describe('Type definitions', () => {
             code: 'france',
             name: 'France',
             sources: ['HMD'],
+            completeYears: 77,
             fertility: { yearRange: [1946, 2023], hasData: true },
             seasonality: { yearRange: [1946, 2023], hasData: true },
           },
@@ -44,6 +46,7 @@ describe('Type definitions', () => {
         dataSources: {
           HMD: { name: 'Human Mortality Database', url: 'https://www.mortality.org/' },
         },
+        minYearsThreshold: 25,
         generatedAt: '2024-01-01T00:00:00Z',
       };
 

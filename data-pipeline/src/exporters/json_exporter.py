@@ -29,20 +29,27 @@ from config import (
 
 def compute_complete_years(births: pl.DataFrame, country_name: str) -> int:
     """
-    Count the number of complete years (all 12 months have data) for a country.
+    Count the number of complete years (all 12 months have valid fertility rate data) for a country.
+
+    A complete year requires all 12 months to have non-null daily_fertility_rate values.
+    This ensures we're counting years with actual usable data, not just rows that exist
+    but have missing population data.
 
     Args:
         births: DataFrame with all births data
         country_name: Name of the country
 
     Returns:
-        Number of complete years
+        Number of complete years with valid fertility rate data
     """
     country_data = births.filter(pl.col('Country') == country_name)
 
+    # Filter to only rows with valid fertility rate data
+    valid_data = country_data.filter(pl.col('daily_fertility_rate').is_not_null())
+
     # Group by year and count unique months per year
     year_month_counts = (
-        country_data
+        valid_data
         .group_by('Year')
         .agg(pl.col('Month').n_unique().alias('month_count'))
     )

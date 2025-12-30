@@ -7,6 +7,7 @@ export interface CountryMeta {
   code: string;
   name: string;
   sources: string[];
+  completeYears: number;
   fertility: {
     yearRange: [number, number];
     hasData: boolean;
@@ -27,6 +28,7 @@ export interface DataSource {
 export interface CountriesIndex {
   countries: CountryMeta[];
   dataSources: Record<string, DataSource>;
+  minYearsThreshold: number;
   generatedAt: string;
 }
 

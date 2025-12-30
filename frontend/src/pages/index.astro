@@ -28,7 +28,7 @@ function formatYearRange(range: [number, number]): string {
             Sources: {country.sources.join(', ')}
           </p>
           <p class="year-range">
-            {formatYearRange(country.fertility.yearRange)}
+            {formatYearRange(country.fertility.yearRange)} · {country.completeYears} complete years
           </p>
         </a>
       ))}
