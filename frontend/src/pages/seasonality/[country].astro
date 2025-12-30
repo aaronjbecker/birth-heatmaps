@@ -1,8 +1,13 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { HeatmapD3 } from '../../components/HeatmapD3';
+import { CountryDropdown } from '../../components/CountryDropdown';
 import ChartGallery from '../../components/ChartGallery.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
+
+// Import countries data at module level for use in page
+const countriesData = await import('../../assets/data/countries.json');
+const allCountries = countriesData.countries as CountryMeta[];
 
 export async function getStaticPaths() {
   // Import countries data from src/assets - Vite will handle cache-busting
@@ -51,7 +56,13 @@ function formatYearRange(range: [number, number]): string {
 
 <BaseLayout title={`${countryMeta.name} - Seasonality`}>
   <nav class="breadcrumb">
-    <a href="/">Countries</a> / <span>{countryMeta.name}</span>
+    <a href="/">Countries</a> / <CountryDropdown
+      client:load
+      countries={allCountries}
+      currentCountry={country}
+      metric="seasonality"
+      variant="inline"
+    />
   </nav>
 
   <h1>{countryMeta.name}</h1>

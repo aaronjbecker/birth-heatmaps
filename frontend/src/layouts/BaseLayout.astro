@@ -1,5 +1,8 @@
 ---
 import ThemeToggle from '../components/ThemeToggle.astro';
+import { CountryDropdown } from '../components/CountryDropdown';
+import countriesData from '../assets/data/countries.json';
+import type { CountryMeta } from '../lib/types';
 
 interface Props {
   title: string;
@@ -7,6 +10,7 @@ interface Props {
 }
 
 const { title, description = 'Interactive visualization of birth seasonality patterns' } = Astro.props;
+const countries = countriesData.countries as CountryMeta[];
 ---
 
 <!DOCTYPE html>
@@ -35,6 +39,12 @@ const { title, description = 'Interactive visualization of birth seasonality pat
         <div class="header-right">
           <nav>
             <a href="/">Countries</a>
+            <CountryDropdown
+              client:load
+              countries={countries}
+              metric="fertility"
+              variant="header"
+            />
             <a href="/about">About</a>
           </nav>
           <ThemeToggle />

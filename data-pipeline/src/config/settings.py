@@ -54,6 +54,14 @@ FRONTEND_DATA_DIR = PROJECT_ROOT / 'frontend' / 'public' / 'data'
 CSV_OUTPUT_DIR = DATA_PIPELINE_ROOT / 'src'
 
 # ===============================
+# DATA FILTERING SETTINGS
+# ===============================
+
+# Minimum number of complete years required for a country to be included in exports
+# A "complete year" means all 12 months have data for that year
+MIN_YEARS_DATA = 25
+
+# ===============================
 # MONTH NAMES
 # ===============================
 

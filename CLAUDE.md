@@ -20,6 +20,9 @@ python data-pipeline/scripts/run_pipeline.py --json --charts
 # JSON only (fastest, for frontend development)
 python data-pipeline/scripts/run_pipeline.py --json
 
+# Include countries with fewer years of data (default: 25)
+python data-pipeline/scripts/run_pipeline.py --json --min-years 10
+
 # Run tests
 cd data-pipeline && pytest
 cd data-pipeline && pytest --cov=src
@@ -242,6 +245,36 @@ The pipeline calculates:
 - **12-Month Moving Average**: Smoothed fertility trend
 - **Seasonality Ratio (12-month)**: DFR / 12-month moving average
 - **Seasonality Ratio (Annual)**: Percentage of annual births per month (normalized to 30-day months)
+
+## Data Filtering
+
+### Minimum Years Threshold
+
+The pipeline filters out countries with insufficient data coverage to ensure meaningful visualizations.
+
+**Configuration:**
+- Default threshold: 25 complete years
+- A "complete year" requires all 12 months to have data
+- Override via CLI: `--min-years <N>`
+
+**Examples:**
+```bash
+# Use default threshold (25 years)
+python data-pipeline/scripts/run_pipeline.py --json
+
+# Lower threshold for testing/exploration
+python data-pipeline/scripts/run_pipeline.py --json --min-years 10
+
+# Include all countries regardless of data coverage
+python data-pipeline/scripts/run_pipeline.py --json --min-years 0
+```
+
+**Output metadata:**
+The `countries.json` file includes:
+- `minYearsThreshold`: The threshold used for filtering
+- `completeYears`: Number of complete years for each country
+
+Countries excluded by the filter are logged during pipeline execution but not included in any output files (JSON, charts).
 
 ## Common Workflows
 

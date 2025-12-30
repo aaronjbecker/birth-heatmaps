@@ -75,3 +75,44 @@ def sample_country_meta() -> dict:
         'fertility': {'yearRange': [1946, 2023], 'hasData': True},
         'seasonality': {'yearRange': [1946, 2023], 'hasData': True},
     }
+
+
+@pytest.fixture
+def sample_births_partial_years() -> pl.DataFrame:
+    """Sample births data with varying completeness for testing min_years filtering.
+
+    - CountryA: 3 complete years (2019, 2020, 2021) - all 12 months each
+    - CountryB: 1 complete year (2020) + 1 partial year (2021 with only 6 months)
+    """
+    country_a_data = []
+    for year in [2019, 2020, 2021]:
+        for month in range(1, 13):
+            country_a_data.append({
+                'Country': 'CountryA',
+                'Year': year,
+                'Month': month,
+                'Births': 10000,
+                'Source': 'HMD'
+            })
+
+    country_b_data = []
+    # 2020 complete
+    for month in range(1, 13):
+        country_b_data.append({
+            'Country': 'CountryB',
+            'Year': 2020,
+            'Month': month,
+            'Births': 5000,
+            'Source': 'HMD'
+        })
+    # 2021 partial (only 6 months)
+    for month in range(1, 7):
+        country_b_data.append({
+            'Country': 'CountryB',
+            'Year': 2021,
+            'Month': month,
+            'Births': 5000,
+            'Source': 'HMD'
+        })
+
+    return pl.DataFrame(country_a_data + country_b_data)

@@ -11,12 +11,13 @@ This script orchestrates:
 import sys
 import argparse
 from pathlib import Path
+from typing import List, Optional
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import polars as pl
-from config import HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR
+from config import HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR, MIN_YEARS_DATA
 from loaders import hmd, un, japan
 from processors import (
     interpolate_population,
@@ -149,23 +150,54 @@ def export_csv(births: pl.DataFrame, population: pl.DataFrame, stats: pl.DataFra
     print("  CSV export complete")
 
 
-def export_json(births: pl.DataFrame, output_dir: Path = None):
-    """Export to JSON files for frontend."""
+def export_json(
+    births: pl.DataFrame,
+    output_dir: Path = None,
+    min_years: Optional[int] = None
+) -> List[str]:
+    """Export to JSON files for frontend.
+
+    Args:
+        births: DataFrame with all births data
+        output_dir: Output directory (defaults to OUTPUT_DIR)
+        min_years: Minimum complete years required (defaults to MIN_YEARS_DATA)
+
+    Returns:
+        List of country names that were exported (passed the filter)
+    """
     if output_dir is None:
         output_dir = OUTPUT_DIR
+    if min_years is None:
+        min_years = MIN_YEARS_DATA
 
     print(f"\nExporting JSON files to {output_dir}...")
-    export_all_countries(births, output_dir)
+    print(f"  Minimum complete years required: {min_years}")
+    countries = export_all_countries(births, output_dir, min_years=min_years)
     print("  JSON export complete")
+    return countries
 
 
-def export_charts(births: pl.DataFrame, population: pl.DataFrame, output_dir: Path = None):
-    """Export PNG charts for frontend."""
+def export_charts(
+    births: pl.DataFrame,
+    population: pl.DataFrame,
+    output_dir: Path = None,
+    countries: Optional[List[str]] = None
+):
+    """Export PNG charts for frontend.
+
+    Args:
+        births: DataFrame with all births data
+        population: DataFrame with all population data
+        output_dir: Output directory (defaults to OUTPUT_DIR/charts)
+        countries: Optional list of countries to export (defaults to all)
+    """
     if output_dir is None:
         output_dir = OUTPUT_DIR / 'charts'
 
     print(f"\nExporting charts to {output_dir}...")
-    export_all_charts(births, population, output_dir, include_heatmaps=True)
+    if countries:
+        print(f"  Exporting charts for {len(countries)} filtered countries")
+    export_all_charts(births, population, output_dir, countries=countries, include_heatmaps=True)
     print("  Chart export complete")
 
 
@@ -178,15 +210,21 @@ def main():
     parser.add_argument('--hmd-dir', type=Path, help='HMD data directory')
     parser.add_argument('--un-dir', type=Path, help='UN data directory')
     parser.add_argument('--output-dir', type=Path, help='Output directory')
+    parser.add_argument('--min-years', type=int, default=None,
+                        help=f'Minimum complete years required for country inclusion (default: {MIN_YEARS_DATA})')
     args = parser.parse_args()
 
     # Default to --all if no format specified
     if not args.csv and not args.json and not args.charts and not args.all:
         args.all = True
 
+    # Resolve min_years
+    min_years = args.min_years if args.min_years is not None else MIN_YEARS_DATA
+
     print("=" * 50)
     print("HMD Births Heatmap Data Pipeline")
     print("=" * 50)
+    print(f"Minimum complete years threshold: {min_years}")
 
     # Load data
     births, population = load_all_data(args.hmd_dir, args.un_dir)
@@ -197,15 +235,19 @@ def main():
     # Validate
     births, population, stats = validate_data(births, population, stats)
 
+    # Track filtered countries for chart export
+    filtered_countries = None
+
     # Export
     if args.csv or args.all:
         export_csv(births, population, stats, args.output_dir)
 
     if args.json or args.all:
-        export_json(births, args.output_dir)
+        filtered_countries = export_json(births, args.output_dir, min_years)
 
     if args.charts or args.all:
-        export_charts(births, population, args.output_dir)
+        # Use filtered countries from JSON export if available
+        export_charts(births, population, args.output_dir, countries=filtered_countries)
 
     print("\n" + "=" * 50)
     print("Pipeline complete!")

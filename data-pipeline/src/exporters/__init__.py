@@ -4,6 +4,8 @@ from .json_exporter import (
     export_fertility_data,
     export_seasonality_data,
     export_all_countries,
+    compute_complete_years,
+    filter_countries_by_min_years,
 )
 from .chart_exporter import (
     export_country_charts,
@@ -16,6 +18,8 @@ __all__ = [
     'export_fertility_data',
     'export_seasonality_data',
     'export_all_countries',
+    'compute_complete_years',
+    'filter_countries_by_min_years',
     'export_country_charts',
     'export_all_charts',
     'CHART_FILENAMES',

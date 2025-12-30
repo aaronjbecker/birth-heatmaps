@@ -21,28 +21,100 @@ from config import (
     FRONTEND_ASSETS_DATA_DIR,
     FRONTEND_ASSETS_FERTILITY_DIR,
     FRONTEND_ASSETS_SEASONALITY_DIR,
+    MIN_YEARS_DATA,
     ensure_output_dirs,
 )
 
 
+def compute_complete_years(births: pl.DataFrame, country_name: str) -> int:
+    """
+    Count the number of complete years (all 12 months have data) for a country.
+
+    Args:
+        births: DataFrame with all births data
+        country_name: Name of the country
+
+    Returns:
+        Number of complete years
+    """
+    country_data = births.filter(pl.col('Country') == country_name)
+
+    # Group by year and count unique months per year
+    year_month_counts = (
+        country_data
+        .group_by('Year')
+        .agg(pl.col('Month').n_unique().alias('month_count'))
+    )
+
+    # Count years with exactly 12 months
+    complete_years = year_month_counts.filter(pl.col('month_count') == 12).height
+
+    return complete_years
+
+
+def filter_countries_by_min_years(
+    births: pl.DataFrame,
+    min_years: int = MIN_YEARS_DATA
+) -> tuple[List[str], List[tuple[str, int]]]:
+    """
+    Filter countries based on minimum years of complete data.
+
+    Args:
+        births: DataFrame with all births data
+        min_years: Minimum number of complete years required
+
+    Returns:
+        Tuple of (included_countries, excluded_countries_with_counts)
+        - included_countries: List of country names that pass the filter
+        - excluded_countries_with_counts: List of (country_name, complete_years) for excluded countries
+    """
+    all_countries = sorted(births['Country'].unique().to_list())
+    included = []
+    excluded = []
+
+    for country_name in all_countries:
+        complete_years = compute_complete_years(births, country_name)
+        if complete_years >= min_years:
+            included.append(country_name)
+        else:
+            excluded.append((country_name, complete_years))
+
+    return included, excluded
+
+
 def export_countries_index(
     births: pl.DataFrame,
-    output_dir: Optional[Path] = None
-) -> None:
+    output_dir: Optional[Path] = None,
+    min_years: int = MIN_YEARS_DATA
+) -> List[str]:
     """
     Export countries.json with metadata about available countries.
+
+    Countries with fewer than min_years complete years of data are excluded.
 
     Args:
         births: DataFrame with all births data
         output_dir: Output directory (defaults to JSON_OUTPUT_DIR)
+        min_years: Minimum number of complete years required (default: MIN_YEARS_DATA)
+
+    Returns:
+        List of country names that were included (passed the filter)
     """
     if output_dir is None:
         output_dir = JSON_OUTPUT_DIR
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Filter countries by minimum years
+    included_countries, excluded_countries = filter_countries_by_min_years(births, min_years)
+
+    if excluded_countries:
+        print(f"Excluding {len(excluded_countries)} countries with fewer than {min_years} complete years:")
+        for country_name, years in excluded_countries:
+            print(f"  - {country_name}: {years} complete years")
+
     countries = []
-    for country_name in sorted(births['Country'].unique().to_list()):
+    for country_name in included_countries:
         country_data = births.filter(pl.col('Country') == country_name)
 
         # Get year range
@@ -52,10 +124,14 @@ def export_countries_index(
         # Get sources used
         sources = country_data['Source'].unique().to_list()
 
+        # Get complete years count for metadata
+        complete_years = compute_complete_years(births, country_name)
+
         countries.append({
             'code': get_country_slug(country_name),
             'name': country_name,
             'sources': sources,
+            'completeYears': complete_years,
             'fertility': {
                 'yearRange': [min_year, max_year],
                 'hasData': True
@@ -75,6 +151,7 @@ def export_countries_index(
             }
             for source in ['HMD', 'UN', 'JPOP']
         },
+        'minYearsThreshold': min_years,
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
     }
 
@@ -88,7 +165,9 @@ def export_countries_index(
     with open(frontend_assets_path, 'w') as f:
         json.dump(output, f, indent=2)
 
-    print(f"Exported countries index to {output_path} and {frontend_assets_path}")
+    print(f"Exported {len(included_countries)} countries to {output_path} and {frontend_assets_path}")
+
+    return included_countries
 
 
 def export_fertility_data(
@@ -319,7 +398,12 @@ def _export_country_json(args: tuple) -> str:
     return country_name
 
 
-def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None, max_workers: Optional[int] = None) -> None:
+def export_all_countries(
+    births: pl.DataFrame,
+    output_dir: Optional[Path] = None,
+    max_workers: Optional[int] = None,
+    min_years: int = MIN_YEARS_DATA
+) -> List[str]:
     """
     Export all data for all countries in parallel.
 
@@ -327,6 +411,10 @@ def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None
         births: DataFrame with all births data
         output_dir: Base output directory (defaults to JSON_OUTPUT_DIR)
         max_workers: Maximum number of parallel workers (defaults to CPU count)
+        min_years: Minimum number of complete years required (default: MIN_YEARS_DATA)
+
+    Returns:
+        List of country names that were exported (passed the filter)
     """
     if output_dir is None:
         output_dir = JSON_OUTPUT_DIR
@@ -337,11 +425,10 @@ def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None
     # Ensure output directories exist
     ensure_output_dirs()
 
-    # Export countries index (quick, do first)
-    export_countries_index(births, output_dir)
+    # Export countries index and get filtered country list
+    countries = export_countries_index(births, output_dir, min_years)
 
-    # Prepare for parallel export
-    countries = births['Country'].unique().to_list()
+    # Prepare for parallel export (only for filtered countries)
     fertility_dir = output_dir / 'fertility'
     seasonality_dir = output_dir / 'seasonality'
 
@@ -371,3 +458,5 @@ def export_all_countries(births: pl.DataFrame, output_dir: Optional[Path] = None
                 print(f"  Error exporting {country_name}: {e}")
 
     print(f"\nExported data for {len(countries)} countries")
+
+    return countries
