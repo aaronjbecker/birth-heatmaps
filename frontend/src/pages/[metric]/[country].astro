@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { HeatmapD3 } from '../../components/HeatmapD3';
 import { CountryDropdown } from '../../components/CountryDropdown';
 import ChartGallery from '../../components/ChartGallery.astro';
+import ShareButtons from '../../components/ShareButtons.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../lib/metrics';
 
@@ -86,15 +87,22 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
   canonicalPath={canonicalPath}
   ogImage={ogImageUrl}
 >
-  <nav class="breadcrumb">
-    <a href="/">Countries</a> / <CountryDropdown
-      client:load
-      countries={allCountries}
-      currentCountry={country}
-      metric={metric}
-      variant="inline"
+  <div class="page-header">
+    <nav class="breadcrumb">
+      <a href="/">Countries</a> / <CountryDropdown
+        client:load
+        countries={allCountries}
+        currentCountry={country}
+        metric={metric}
+        variant="inline"
+      />
+    </nav>
+    <ShareButtons
+      url={`https://birth-heatmaps.aaronjbecker.com${canonicalPath}`}
+      title={pageTitle}
+      description={pageDescription}
     />
-  </nav>
+  </div>
 
   <h1>{countryMeta.name}</h1>
   <p class="subtitle">{metricConfig.subtitle}</p>
@@ -136,8 +144,16 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
 </BaseLayout>
 
 <style>
-  .breadcrumb {
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .breadcrumb {
     font-size: 0.875rem;
     color: var(--color-text-muted);
   }

@@ -13,11 +13,10 @@
 * Compare countries by plotting multiple heatmaps, stacked vertically, with a shared color scale.
 
 ## Misc TODO Items
-* Manually define the list of countries to include based on manual verification of data quality.
-* Add conception heatmap that rolls births back 10 months to illustrate conception patterns.
+* ✅ Add conception heatmap that rolls births back 10 months to illustrate conception patterns.
 * Deployment script. Add traefik labels to docker containers in compose file.
-* Re-arrange chart gallery on country pages
+* ✅ Re-arrange chart gallery on country pages
 * Add umami analytics script in base layout/header.
-* Basic SEO metadata for statically generated pages.
-* dynamic OG images for each page
+* ✅ Basic SEO metadata for statically generated pages.
+* ✅ dynamic OG images for each page
 * Source state population data to incorporate state-level fertility rates (US states).

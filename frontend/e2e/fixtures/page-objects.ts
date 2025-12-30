@@ -345,6 +345,44 @@ export class CountryPage {
     return this.page.locator('.metadata, [class*="meta"]');
   }
 
+  // --- Share Buttons Methods ---
+
+  getShareButtons(): Locator {
+    return this.page.locator('.share-buttons');
+  }
+
+  getShareButton(platform: 'x' | 'bluesky' | 'facebook' | 'reddit' | 'email' | 'copy'): Locator {
+    const ariaLabels: Record<string, string> = {
+      x: 'Share on X',
+      bluesky: 'Share on Bluesky',
+      facebook: 'Share on Facebook',
+      reddit: 'Share on Reddit',
+      email: 'Share via email',
+      copy: 'Copy link',
+    };
+    return this.page.locator(`.share-btn[aria-label="${ariaLabels[platform]}"]`);
+  }
+
+  async getShareButtonCount(): Promise<number> {
+    return await this.page.locator('.share-btn').count();
+  }
+
+  getCopyLinkButton(): Locator {
+    return this.page.locator('.copy-link-btn');
+  }
+
+  async clickCopyLink() {
+    await this.getCopyLinkButton().click();
+    // Small delay for clipboard operation
+    await this.page.waitForTimeout(100);
+  }
+
+  async isCopyButtonShowingSuccess(): Promise<boolean> {
+    const button = this.getCopyLinkButton();
+    const classes = await button.getAttribute('class');
+    return classes?.includes('copied') || false;
+  }
+
   // --- Error State Methods ---
 
   getErrorMessage(): Locator {
