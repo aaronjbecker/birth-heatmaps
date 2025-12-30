@@ -31,6 +31,7 @@ from .countries import (
     HMD_COUNTRIES,
     CODE_TO_NAME,
     NAME_TO_CODE,
+    EXCLUDED_COUNTRIES,
     normalize_country_name,
     get_country_slug,
 )
@@ -65,6 +66,7 @@ __all__ = [
     'HMD_COUNTRIES',
     'CODE_TO_NAME',
     'NAME_TO_CODE',
+    'EXCLUDED_COUNTRIES',
     'normalize_country_name',
     'get_country_slug',
 ]

@@ -17,7 +17,13 @@ from typing import List, Optional
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 import polars as pl
-from config import HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR, MIN_YEARS_DATA, MIN_MONTHLY_BIRTHS
+import shutil
+from config import (
+    HMD_DATA_DIR, UN_DATA_DIR, CSV_OUTPUT_DIR, OUTPUT_DIR, MIN_YEARS_DATA, MIN_MONTHLY_BIRTHS,
+    JSON_OUTPUT_DIR, FERTILITY_OUTPUT_DIR, SEASONALITY_OUTPUT_DIR, CONCEPTION_OUTPUT_DIR,
+    CHARTS_OUTPUT_DIR, FRONTEND_ASSETS_DATA_DIR, FRONTEND_ASSETS_FERTILITY_DIR,
+    FRONTEND_ASSETS_SEASONALITY_DIR, FRONTEND_ASSETS_CONCEPTION_DIR, FRONTEND_CONTENT_CHARTS_DIR
+)
 from loaders import hmd, un, japan
 from processors import (
     interpolate_population,
@@ -142,6 +148,114 @@ def validate_data(births: pl.DataFrame, population: pl.DataFrame, stats: pl.Data
     return births, population, stats
 
 
+def clear_directory_contents(directory: Path, description: str = None):
+    """
+    Clear all contents of a directory while preserving the directory itself.
+    
+    Args:
+        directory: Directory to clear
+        description: Optional description for logging
+    """
+    if not directory.exists():
+        return
+    
+    desc = description or str(directory)
+    print(f"  Clearing {desc}...")
+    
+    # Remove all contents
+    for item in directory.iterdir():
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            shutil.rmtree(item)
+    
+    print(f"    Cleared {desc}")
+
+
+def clear_csv_output(output_dir: Path = None):
+    """Clear CSV output files."""
+    if output_dir is None:
+        output_dir = CSV_OUTPUT_DIR
+    
+    print(f"\nClearing CSV output directory ({output_dir})...")
+    
+    # Clear specific CSV files that will be regenerated (matching export_csv logic)
+    csv_files = [
+        'births_heatmap_data.csv',
+        'population_heatmap_data.csv',
+        'stats_heatmap_data.csv'
+    ]
+    
+    for csv_file in csv_files:
+        file_path = output_dir / csv_file
+        if file_path.exists():
+            file_path.unlink()
+            print(f"  Removed {csv_file}")
+    
+    print("  CSV output cleared")
+
+
+def clear_json_output(output_dir: Path = None):
+    """Clear JSON output directories."""
+    if output_dir is None:
+        output_dir = JSON_OUTPUT_DIR
+    
+    print(f"\nClearing JSON output directories...")
+    
+    # Clear main JSON output subdirectories (matching export_all_countries logic)
+    directories_to_clear = [
+        (output_dir / 'fertility', "fertility data"),
+        (output_dir / 'seasonality', "seasonality data"),
+        (output_dir / 'conception', "conception data"),
+    ]
+    
+    for directory, desc in directories_to_clear:
+        clear_directory_contents(directory, desc)
+    
+    # Clear countries.json from main output
+    countries_json = output_dir / 'countries.json'
+    if countries_json.exists():
+        countries_json.unlink()
+        print(f"  Removed countries.json from {output_dir}")
+    
+    # Clear frontend assets directories (always cleared regardless of output_dir)
+    frontend_dirs_to_clear = [
+        (FRONTEND_ASSETS_FERTILITY_DIR, "frontend fertility assets"),
+        (FRONTEND_ASSETS_SEASONALITY_DIR, "frontend seasonality assets"),
+        (FRONTEND_ASSETS_CONCEPTION_DIR, "frontend conception assets"),
+    ]
+    
+    for directory, desc in frontend_dirs_to_clear:
+        clear_directory_contents(directory, desc)
+    
+    # Clear countries.json from frontend assets
+    frontend_countries_json = FRONTEND_ASSETS_DATA_DIR / 'countries.json'
+    if frontend_countries_json.exists():
+        frontend_countries_json.unlink()
+        print(f"  Removed countries.json from frontend assets")
+    
+    print("  JSON output cleared")
+
+
+def clear_charts_output(output_dir: Path = None):
+    """Clear charts output directories."""
+    if output_dir is None:
+        output_dir = OUTPUT_DIR / 'charts'
+    else:
+        output_dir = output_dir / 'charts'
+    
+    print(f"\nClearing charts output directories...")
+    
+    # Clear charts output directory (contains country subdirectories)
+    # Matching export_charts logic: uses OUTPUT_DIR / 'charts' or output_dir / 'charts'
+    clear_directory_contents(output_dir, "charts output")
+    
+    # Clear frontend content charts directory (always cleared regardless of output_dir)
+    clear_directory_contents(FRONTEND_CONTENT_CHARTS_DIR, "frontend charts content")
+    
+    print("  Charts output cleared")
+
+
 def export_csv(births: pl.DataFrame, population: pl.DataFrame, stats: pl.DataFrame, output_dir: Path = None):
     """Export to CSV files (legacy format)."""
     if output_dir is None:
@@ -250,6 +364,16 @@ def main():
 
     # Track filtered countries for chart export
     filtered_countries = None
+
+    # Clear output directories before exporting (only for formats that will be generated)
+    if args.csv or args.all:
+        clear_csv_output(args.output_dir)
+
+    if args.json or args.all:
+        clear_json_output(args.output_dir)
+
+    if args.charts or args.all:
+        clear_charts_output(args.output_dir)
 
     # Export
     if args.csv or args.all:

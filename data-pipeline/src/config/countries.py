@@ -67,6 +67,25 @@ HMD_COUNTRIES = [
 CODE_TO_NAME = {c.code: c.name for c in HMD_COUNTRIES}
 NAME_TO_CODE = {c.name: c.code for c in HMD_COUNTRIES}
 
+# Countries to exclude from exports (by slug)
+# Use this to manually exclude countries with low quality data or sporadic coverage
+EXCLUDED_COUNTRIES: list[str] = [
+    'albania',
+    'egypt',
+    'el-salvador',
+    'guadeloupe',
+    'kazakhstan',
+    'kuwait',
+    'kyrgyzstan',
+    'martinique',
+    'philippines',
+    'republic-of-moldova',
+    'romania',
+    'sri-lanka',
+    'uruguay',
+    'venezuela-bolivarian-republic-of'
+]
+
 
 def normalize_country_name(country_name: str) -> str:
     """

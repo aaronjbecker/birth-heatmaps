@@ -15,6 +15,7 @@ from config import (
     MONTH_NAMES,
     DATA_SOURCE_URLS,
     get_country_slug,
+    EXCLUDED_COUNTRIES,
     FERTILITY_OUTPUT_DIR,
     SEASONALITY_OUTPUT_DIR,
     CONCEPTION_OUTPUT_DIR,
@@ -182,6 +183,7 @@ def export_countries_index(
     Countries are excluded if they have:
     - Fewer than min_years complete years of data
     - Any month with fewer than min_monthly_births births
+    - Their slug is in EXCLUDED_COUNTRIES (manual exclusion)
 
     Args:
         births: DataFrame with all births data
@@ -216,6 +218,25 @@ def export_countries_index(
         print(f"Excluding {len(excluded_by_births)} countries with months below {min_monthly_births} births:")
         for country_name, min_births in excluded_by_births:
             print(f"  - {country_name}: minimum {min_births} births in a month")
+
+    # Filter out manually excluded countries (by slug)
+    if EXCLUDED_COUNTRIES:
+        excluded_slugs = set(EXCLUDED_COUNTRIES)
+        excluded_by_manual = []
+        remaining_countries = []
+        for country_name in included_countries:
+            country_slug = get_country_slug(country_name)
+            if country_slug in excluded_slugs:
+                excluded_by_manual.append(country_name)
+            else:
+                remaining_countries.append(country_name)
+        
+        if excluded_by_manual:
+            print(f"Excluding {len(excluded_by_manual)} manually excluded countries:")
+            for country_name in excluded_by_manual:
+                print(f"  - {country_name} (slug: {get_country_slug(country_name)})")
+        
+        included_countries = remaining_countries
 
     countries = []
     for country_name in included_countries:
