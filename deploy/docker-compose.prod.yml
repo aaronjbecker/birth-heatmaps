@@ -1,0 +1,20 @@
+# Production Docker Compose for HMD Birth Heatmaps
+# Deployed via Traefik reverse proxy with automatic SSL
+
+networks:
+  traefik:
+    external: true
+
+services:
+  birth-heatmaps:
+    container_name: birth-heatmaps
+    restart: unless-stopped
+    image: localhost:5000/birth-heatmaps:latest
+    networks:
+      - traefik
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.birth-heatmaps.rule=Host(`birth-heatmaps.aaronjbecker.com`)
+      - traefik.http.routers.birth-heatmaps.entrypoints=websecure
+      - traefik.http.routers.birth-heatmaps.tls.certResolver=myResolver
+      - traefik.http.routers.birth-heatmaps.middlewares=compress-gzip@file

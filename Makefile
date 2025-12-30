@@ -1,4 +1,4 @@
-.PHONY: pipeline pipeline-json build dev jupyter clean help test smoke-test nginx copy-charts
+.PHONY: pipeline pipeline-json build dev jupyter clean help test smoke-test nginx copy-charts build-prod test-prod deploy tunnel
 
 help:
 	@echo "Available commands:"
@@ -16,6 +16,10 @@ help:
 	@echo "    make build        - Build static frontend"
 	@echo "    make nginx        - Start nginx data server"
 	@echo "    make nginx-prod   - Build production nginx with data"
+	@echo "    make build-prod   - Build production Docker image"
+	@echo "    make test-prod    - Test production build locally"
+	@echo "    make deploy       - Deploy to production server"
+	@echo "    make tunnel       - SSH tunnel to private registry"
 	@echo ""
 	@echo "  Testing:"
 	@echo "    make test         - Run all tests"
@@ -79,6 +83,24 @@ nginx-prod:
 	fi
 	docker compose build nginx-prod
 	docker compose up nginx-prod
+
+# Build production frontend Docker image
+build-prod:
+	cd frontend && docker build -t birth-heatmaps:latest -f Dockerfile.prod .
+
+# Test production build locally (http://localhost:8422)
+test-prod:
+	cd frontend && docker compose -f docker-compose.dev.yml up --build
+
+# Deploy to production server
+deploy:
+	./deploy/deploy.sh
+
+# SSH tunnel to private registry (for manual operations)
+tunnel:
+	@echo "Starting SSH tunnel to registry on localhost:5000..."
+	@echo "Press Ctrl+C to close the tunnel."
+	ssh -L 5000:localhost:5000 root@152.53.169.131
 
 # ============================================
 # Testing

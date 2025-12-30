@@ -63,6 +63,33 @@ Available debug configurations in `.vscode/launch.json`:
 - **"Vitest: Run Tests"** - Debug frontend tests
 - **"Full Stack: Pipeline + Frontend"** - Run both simultaneously
 
+### Production Deployment
+
+```bash
+# Build production Docker image
+make build-prod
+
+# Test production build locally (http://localhost:8422)
+make test-prod
+
+# Deploy to production server
+make deploy
+
+# SSH tunnel to private registry (for manual operations)
+make tunnel
+```
+
+**Prerequisites:**
+1. Add `localhost:5000` to Docker insecure registries
+2. Copy `deploy/.env.example` to `deploy/.env` and configure
+3. Ensure SSH access to production server
+
+**Key Files:**
+- `frontend/Dockerfile.prod` - Multi-stage production build
+- `frontend/nginx/default.conf` - Nginx site configuration
+- `deploy/docker-compose.prod.yml` - Traefik deployment config
+- `deploy/deploy.sh` - Deployment automation script
+
 ## Architecture
 
 ### Data Pipeline Flow

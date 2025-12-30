@@ -89,6 +89,66 @@ npm run dev
 npm run build
 ```
 
+## Makefile Commands
+
+All common operations are available via the Makefile:
+
+```bash
+make help         # Show all available commands
+
+# Development
+make dev          # Start frontend dev server
+make jupyter      # Start Jupyter notebook server
+
+# Data Pipeline
+make pipeline     # Run full pipeline (JSON + charts)
+make pipeline-json # Run pipeline (JSON only, faster)
+
+# Build & Deploy
+make build        # Build static frontend
+make build-prod   # Build production Docker image
+make test-prod    # Test production build locally (http://localhost:8422)
+make deploy       # Deploy to production server
+
+# Testing
+make test         # Run all tests
+make smoke-test   # Run smoke tests against nginx
+```
+
+## Production Deployment
+
+The frontend is deployed as a Docker container with Nginx serving pre-compressed static files via Traefik reverse proxy.
+
+### Prerequisites
+
+1. **Docker Desktop/Linux**: Add `localhost:5000` to insecure registries in Docker daemon config
+2. **SSH Access**: Configure SSH key access to the production server
+3. **Deploy Config**: Copy `deploy/.env.example` to `deploy/.env` and configure
+
+### Deploying
+
+```bash
+# Test production build locally first
+make test-prod
+
+# Deploy to production
+make deploy
+```
+
+The deploy script will:
+1. Establish SSH tunnel to private registry
+2. Build production Docker image (multi-stage with Nginx + Brotli)
+3. Push to private registry
+4. Deploy via docker compose on the server
+5. Close tunnel on exit
+
+### Production Architecture
+
+- **Dockerfile**: `frontend/Dockerfile.prod` (multi-stage: Node.js build → Nginx with Brotli)
+- **Nginx Config**: `frontend/nginx/default.conf`
+- **Docker Compose**: `deploy/docker-compose.prod.yml`
+- **URL**: https://birth-heatmaps.aaronjbecker.com
+
 ## Data Loading Pattern
 
 **IMPORTANT**: This project follows best practices for loading JSON data in Astro/Vite projects.

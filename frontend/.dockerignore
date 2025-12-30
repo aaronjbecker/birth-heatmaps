@@ -1,0 +1,9 @@
+node_modules
+dist
+.astro
+*.log
+.DS_Store
+e2e
+playwright-report
+test-results
+coverage

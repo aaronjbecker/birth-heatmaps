@@ -1,0 +1,13 @@
+# Docker Compose for local testing of production build
+# Usage: docker compose -f docker-compose.dev.yml up --build
+services:
+  birth-heatmaps-test:
+    container_name: birth-heatmaps-test
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        NGINX_TAG: 1.27.3-alpine
+        NGINX_VERSION: 1.27.3
+    ports:
+      - "8422:80"
