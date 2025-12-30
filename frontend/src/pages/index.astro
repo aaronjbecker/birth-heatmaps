@@ -1,12 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { CountryDropdown } from '../components/CountryDropdown';
-import type { CountryMeta } from '../lib/types';
+import { HeatmapD3 } from '../components/HeatmapD3';
+import type { CountryMeta, CountryHeatmapData } from '../lib/types';
 
 // Import countries data from src/assets - Vite will handle cache-busting
 import countriesData from '../assets/data/countries.json';
 
+// Import US fertility data for demo heatmap
+import usaFertilityData from '../assets/data/fertility/united-states-of-america.json';
+
 const countries = (countriesData.countries || []) as CountryMeta[];
+const demoData = usaFertilityData as CountryHeatmapData;
 
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;
@@ -19,10 +24,25 @@ function formatYearRange(range: [number, number]): string {
   canonicalPath="/"
 >
   <h1>Birth Seasonality Heatmaps</h1>
-  <p style="margin-bottom: var(--space-xl); color: var(--color-text-muted);">
+  <p style="margin-bottom: var(--space-lg); color: var(--color-text-muted);">
     Explore fertility rates and birth seasonality patterns across {countries.length} countries.
-    Data from the Human Mortality Database and UN Population Division.
+    Data from the Human Mortality Database, UN Population Division, and country-specific sources.
   </p>
+
+  <div class="demo-heatmap">
+    <div class="demo-header">
+      <h2>United States of America</h2>
+      <a href="/fertility/united-states-of-america" class="view-full">View full page →</a>
+    </div>
+    <HeatmapD3
+      client:load
+      data={demoData}
+      height={400}
+      showLegend={true}
+      showYearFilter={true}
+      showControls={true}
+    />
+  </div>
 
   <div style="margin-bottom: var(--space-xl); display: flex; justify-content: center;">
     <CountryDropdown
@@ -62,5 +82,34 @@ python data-pipeline/scripts/run_pipeline.py --json
 <style>
   h1 {
     margin-bottom: var(--space-sm);
+  }
+
+  .demo-heatmap {
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+  }
+
+  .demo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-md);
+  }
+
+  .demo-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .view-full {
+    font-size: 0.875rem;
+    color: var(--color-primary);
+  }
+
+  .view-full:hover {
+    text-decoration: underline;
   }
 </style>

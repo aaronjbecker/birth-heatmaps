@@ -9,7 +9,7 @@ interface Props {
 }
 
 const site = 'https://birth-heatmaps.aaronjbecker.com';
-const defaultDescription = 'Interactive visualization of birth seasonality patterns using Human Mortality Database and UN Population Division data';
+const defaultDescription = 'Interactive visualization of birth seasonality patterns using Human Mortality Database and UN Population Division data.';
 const defaultOgImage = `${site}/og/default.png`;
 
 const {
@@ -21,7 +21,7 @@ const {
   noindex = false,
 } = Astro.props;
 
-const fullTitle = `${title} | HMD Births Heatmaps`;
+const fullTitle = `${title} | Birth Heatmaps`;
 const canonicalUrl = `${site}${canonicalPath}`;
 ---
 
@@ -30,7 +30,7 @@ const canonicalUrl = `${site}${canonicalPath}`;
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{fullTitle}</title>
 <meta name="description" content={description} />
-<meta name="author" content="Aaron Becker" />
+<meta name="author" content="Aaron J Becker" />
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 
 <!-- Canonical URL -->
@@ -45,7 +45,7 @@ const canonicalUrl = `${site}${canonicalPath}`;
 <meta property="og:title" content={fullTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImage} />
-<meta property="og:site_name" content="HMD Births Heatmaps" />
+<meta property="og:site_name" content="Birth Heatmaps" />
 <meta property="og:locale" content="en_US" />
 
 <!-- Twitter -->
