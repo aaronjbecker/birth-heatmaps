@@ -12,7 +12,11 @@ function formatYearRange(range: [number, number]): string {
 }
 ---
 
-<BaseLayout title="Countries">
+<BaseLayout
+  title="Countries"
+  description={`Explore fertility rates and birth seasonality patterns across ${countries.length} countries. Data from the Human Mortality Database and UN Population Division.`}
+  canonicalPath="/"
+>
   <h1>Birth Seasonality Heatmaps</h1>
   <p style="margin-bottom: var(--space-xl); color: var(--color-text-muted);">
     Explore fertility rates and birth seasonality patterns across {countries.length} countries.

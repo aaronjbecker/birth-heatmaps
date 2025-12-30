@@ -70,9 +70,18 @@ const metricData = countryMeta[metric];
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;
 }
+
+// SEO metadata
+const pageTitle = `${countryMeta.name} - ${metricConfig.label}`;
+const pageDescription = `${metricConfig.label} data for ${countryMeta.name} from ${metricData.yearRange[0]} to ${metricData.yearRange[1]}. ${metricConfig.subtitle} Data sources: ${countryMeta.sources.join(', ')}.`;
+const canonicalPath = `/${metric}/${country}`;
 ---
 
-<BaseLayout title={`${countryMeta.name} - ${metricConfig.label}`}>
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonicalPath={canonicalPath}
+>
   <nav class="breadcrumb">
     <a href="/">Countries</a> / <CountryDropdown
       client:load

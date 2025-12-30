@@ -19,5 +19,5 @@
 * Re-arrange chart gallery on country pages
 * Add umami analytics script in base layout/header.
 * Basic SEO metadata for statically generated pages.
-* Sitemap for statically generated pages.
+* dynamic OG images for each page
 * Source state population data to incorporate state-level fertility rates (US states).
