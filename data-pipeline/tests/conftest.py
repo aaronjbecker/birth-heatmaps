@@ -83,6 +83,7 @@ def sample_country_meta() -> dict:
         'sources': ['HMD'],
         'fertility': {'yearRange': [1946, 2023], 'hasData': True},
         'seasonality': {'yearRange': [1946, 2023], 'hasData': True},
+        'conception': {'yearRange': [1946, 2023], 'hasData': True},
     }
 
 

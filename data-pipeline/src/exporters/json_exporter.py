@@ -29,6 +29,47 @@ from config import (
 )
 
 
+def trim_leading_trailing_nulls(data: List[Dict[str, Any]], value_key: str = 'value') -> List[Dict[str, Any]]:
+    """
+    Remove leading and trailing entries with null values from data array.
+
+    Like stripping whitespace from a string - null values in the middle are preserved,
+    but null values at the beginning or end are removed.
+
+    Args:
+        data: List of data dictionaries sorted by year/month
+        value_key: The key to check for null values (default: 'value')
+
+    Returns:
+        Trimmed list with leading/trailing nulls removed
+    """
+    if not data:
+        return data
+
+    # Sort by year and month to ensure correct order
+    sorted_data = sorted(data, key=lambda x: (x['year'], x['month']))
+
+    # Find first non-null index
+    first_valid = None
+    for i, item in enumerate(sorted_data):
+        if item.get(value_key) is not None:
+            first_valid = i
+            break
+
+    if first_valid is None:
+        # All values are null
+        return []
+
+    # Find last non-null index
+    last_valid = None
+    for i in range(len(sorted_data) - 1, -1, -1):
+        if sorted_data[i].get(value_key) is not None:
+            last_valid = i
+            break
+
+    return sorted_data[first_valid:last_valid + 1]
+
+
 def compute_complete_years(births: pl.DataFrame, country_name: str) -> int:
     """
     Count the number of complete years (all 12 months have valid fertility rate data) for a country.
@@ -294,6 +335,12 @@ def export_fertility_data(
             'source': row['Source']
         })
 
+    # Trim leading/trailing null values
+    data = trim_leading_trailing_nulls(data, 'value')
+
+    # Update years list to only include years present in trimmed data
+    trimmed_years = sorted(set(item['year'] for item in data)) if data else years
+
     output = {
         'country': {
             'code': get_country_slug(country_name),
@@ -306,7 +353,7 @@ def export_fertility_data(
             'domain': [round(min_val, 1), round(max_val, 1)],
             'scheme': 'turbo'
         },
-        'years': [int(y) for y in years],
+        'years': [int(y) for y in trimmed_years],
         'months': MONTH_NAMES,
         'data': data,
         'sources': sources,
@@ -372,6 +419,12 @@ def export_seasonality_data(
             'source': row['Source']
         })
 
+    # Trim leading/trailing null values
+    data = trim_leading_trailing_nulls(data, 'value')
+
+    # Update years list to only include years present in trimmed data
+    trimmed_years = sorted(set(item['year'] for item in data)) if data else years
+
     output = {
         'country': {
             'code': get_country_slug(country_name),
@@ -385,7 +438,7 @@ def export_seasonality_data(
             'domain': [round(min_val, 4), round(center_val, 4), round(max_val, 4)],
             'scheme': 'RdBu'
         },
-        'years': [int(y) for y in years],
+        'years': [int(y) for y in trimmed_years],
         'months': MONTH_NAMES,
         'data': data,
         'sources': sources,
@@ -512,12 +565,18 @@ def _export_country_json(args: tuple) -> str:
             'source': row['Source']
         })
 
+    # Trim leading/trailing null values
+    fertility_data = trim_leading_trailing_nulls(fertility_data, 'value')
+
+    # Update years list to only include years present in trimmed data
+    fertility_years = sorted(set(item['year'] for item in fertility_data)) if fertility_data else years
+
     fertility_output = {
         'country': {'code': get_country_slug(country_name), 'name': country_name},
         'metric': 'daily_fertility_rate',
         'title': 'Daily Births Per 100k Women (Age 15-44)',
         'colorScale': {'type': 'sequential', 'domain': [round(min_val, 1), round(max_val, 1)], 'scheme': 'turbo'},
-        'years': [int(y) for y in years],
+        'years': [int(y) for y in fertility_years],
         'months': MONTH_NAMES,
         'data': fertility_data,
         'sources': sources,
@@ -562,6 +621,12 @@ def _export_country_json(args: tuple) -> str:
             'source': row['Source']
         })
 
+    # Trim leading/trailing null values
+    seasonality_data = trim_leading_trailing_nulls(seasonality_data, 'value')
+
+    # Update years list to only include years present in trimmed data
+    seasonality_years = sorted(set(item['year'] for item in seasonality_data)) if seasonality_data else years
+
     seasonality_output = {
         'country': {'code': get_country_slug(country_name), 'name': country_name},
         'metric': 'seasonality_percentage_normalized',
@@ -576,7 +641,7 @@ def _export_country_json(args: tuple) -> str:
             ],
             'scheme': 'RdBu'
         },
-        'years': [int(y) for y in years],
+        'years': [int(y) for y in seasonality_years],
         'months': MONTH_NAMES,
         'data': seasonality_data,
         'sources': sources,

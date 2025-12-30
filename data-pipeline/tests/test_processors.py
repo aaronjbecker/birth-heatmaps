@@ -6,6 +6,7 @@ from processors import (
     create_births_monthly_index,
     compute_fertility_rates,
     compute_seasonality,
+    compute_conception_rates,
 )
 
 
@@ -136,3 +137,79 @@ class TestComputeSeasonality:
                 if len(year_data) == 12:
                     total = year_data['seasonality_percentage_annual'].sum()
                     assert 0.99 <= total <= 1.01
+
+
+class TestComputeConceptionRates:
+    """Tests for conception rate computation."""
+
+    def test_computes_conception_columns(self, sample_births_data, sample_population_data):
+        """Should compute conception rate columns."""
+        births = create_births_monthly_index(sample_births_data)
+        population = interpolate_population(sample_population_data)
+        births = compute_fertility_rates(births, population)
+        births = compute_seasonality(births)
+
+        result = compute_conception_rates(births)
+
+        assert 'future_births' in result.columns
+        assert 'future_days_in_month' in result.columns
+        assert 'future_births_per_day' in result.columns
+        assert 'daily_conception_rate' in result.columns
+
+    def test_conception_rate_is_positive_where_valid(self, sample_births_data, sample_population_data):
+        """Conception rate should be positive where data exists."""
+        births = create_births_monthly_index(sample_births_data)
+        population = interpolate_population(sample_population_data)
+        births = compute_fertility_rates(births, population)
+        births = compute_seasonality(births)
+        result = compute_conception_rates(births)
+
+        valid = result.filter(pl.col('daily_conception_rate').is_not_null())
+        if len(valid) > 0:
+            assert valid['daily_conception_rate'].min() > 0
+
+    def test_future_births_align_correctly(self, sample_births_data, sample_population_data):
+        """Future births should align with births 10 months later."""
+        births = create_births_monthly_index(sample_births_data)
+        population = interpolate_population(sample_population_data)
+        births = compute_fertility_rates(births, population)
+        births = compute_seasonality(births)
+        result = compute_conception_rates(births)
+
+        # For France Jan 2020, future births should be Nov 2020 births
+        jan_2020 = result.filter(
+            (pl.col('Country') == 'France') &
+            (pl.col('Year') == 2020) &
+            (pl.col('Month') == 1)
+        )
+
+        nov_2020 = result.filter(
+            (pl.col('Country') == 'France') &
+            (pl.col('Year') == 2020) &
+            (pl.col('Month') == 11)
+        )
+
+        if len(jan_2020) > 0 and len(nov_2020) > 0:
+            future_births = jan_2020['future_births'][0]
+            actual_births = nov_2020['Births'][0]
+            if future_births is not None:
+                assert future_births == actual_births
+
+    def test_last_months_have_null_conception_rate(self, sample_births_data, sample_population_data):
+        """Months without 10-month-future data should have null conception rate."""
+        births = create_births_monthly_index(sample_births_data)
+        population = interpolate_population(sample_population_data)
+        births = compute_fertility_rates(births, population)
+        births = compute_seasonality(births)
+        result = compute_conception_rates(births)
+
+        # The last 10 months should have null conception rate (no future data)
+        # For data ending Dec 2021, Mar-Dec 2021 should have no future births
+        france_late_2021 = result.filter(
+            (pl.col('Country') == 'France') &
+            (pl.col('Year') == 2021) &
+            (pl.col('Month') >= 3)  # Mar 2021 + 10 months = Jan 2022 (doesn't exist)
+        )
+
+        # All should have null conception rate
+        assert france_late_2021['daily_conception_rate'].is_null().all()

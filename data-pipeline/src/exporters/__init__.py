@@ -7,6 +7,7 @@ from .json_exporter import (
     export_all_countries,
     compute_complete_years,
     filter_countries_by_min_years,
+    trim_leading_trailing_nulls,
 )
 from .chart_exporter import (
     export_country_charts,
@@ -22,6 +23,7 @@ __all__ = [
     'export_all_countries',
     'compute_complete_years',
     'filter_countries_by_min_years',
+    'trim_leading_trailing_nulls',
     'export_country_charts',
     'export_all_charts',
     'CHART_FILENAMES',
