@@ -3,6 +3,8 @@ Configuration settings for the HMD births heatmap data pipeline.
 """
 from pathlib import Path
 import os
+import re
+from typing import Optional
 
 # ===============================
 # DIRECTORY SETTINGS
@@ -15,12 +17,65 @@ DATA_PIPELINE_ROOT = Path(os.environ.get('DATA_PIPELINE_ROOT', Path(__file__).pa
 # Project root (parent of data-pipeline, for accessing frontend directory)
 PROJECT_ROOT = DATA_PIPELINE_ROOT.parent
 
-# Raw data directories (can be overridden via environment variables)
-# Default paths work for Docker (data mounted to /app/hmd_data and /app/data)
-# For local development, set HMD_DATA_DIR and UN_DATA_DIR env vars to point to project root
-# (e.g., in .vscode/launch.json or shell: export HMD_DATA_DIR=/path/to/project/hmd_data)
-HMD_DATA_DIR = Path(os.environ.get('HMD_DATA_DIR', DATA_PIPELINE_ROOT / 'hmd_data'))
-UN_DATA_DIR = Path(os.environ.get('UN_DATA_DIR', DATA_PIPELINE_ROOT / 'data'))
+
+def find_latest_hmd_bulk_dir(data_dir: Path) -> Optional[Path]:
+    """
+    Find the latest HMD bulk download directory.
+
+    Looks for directories named 'hmd_countries_YYYYMMDD' and returns
+    the one with the most recent date.
+
+    Returns None if no matching directory is found.
+    """
+    pattern = re.compile(r'^hmd_countries_(\d{8})$')
+    matching_dirs = []
+
+    if not data_dir.exists():
+        return None
+
+    for item in data_dir.iterdir():
+        if item.is_dir():
+            match = pattern.match(item.name)
+            if match:
+                date_str = match.group(1)
+                matching_dirs.append((date_str, item))
+
+    if not matching_dirs:
+        return None
+
+    # Sort by date string (YYYYMMDD sorts correctly as string)
+    matching_dirs.sort(key=lambda x: x[0], reverse=True)
+    return matching_dirs[0][1]
+
+
+def _get_hmd_data_dir() -> Path:
+    """
+    Determine the HMD data directory.
+
+    Priority:
+    1. HMD_DATA_DIR environment variable (if set)
+    2. Latest bulk download in PROJECT_ROOT/data (hmd_countries_YYYYMMDD)
+    3. Legacy: PROJECT_ROOT/hmd_data (flat file structure)
+    """
+    # Check environment variable first
+    env_dir = os.environ.get('HMD_DATA_DIR')
+    if env_dir:
+        return Path(env_dir)
+
+    # Look for bulk download in PROJECT_ROOT/data
+    data_dir = PROJECT_ROOT / 'data'
+    bulk_dir = find_latest_hmd_bulk_dir(data_dir)
+    if bulk_dir:
+        return bulk_dir
+
+    # Fall back to legacy location
+    return PROJECT_ROOT / 'hmd_data'
+
+
+# Raw data directories
+# HMD data: prefers bulk download structure, falls back to legacy flat files
+HMD_DATA_DIR = _get_hmd_data_dir()
+UN_DATA_DIR = Path(os.environ.get('UN_DATA_DIR', PROJECT_ROOT / 'data'))
 
 # Output directory (git-ignored, contains all generated files)
 # Can be overridden via OUTPUT_DIR environment variable

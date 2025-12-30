@@ -19,6 +19,7 @@ HMD_COUNTRIES = [
     Country('AUS', 'Australia'),
     Country('AUT', 'Austria'),
     Country('BEL', 'Belgium'),
+    Country('BLR', 'Belarus'),
     Country('BGR', 'Bulgaria'),
     Country('CAN', 'Canada'),
     Country('CHE', 'Switzerland'),

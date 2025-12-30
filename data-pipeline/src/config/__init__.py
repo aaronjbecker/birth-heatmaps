@@ -21,6 +21,7 @@ from .settings import (
     DATA_SOURCE_LABELS,
     DATA_SOURCE_URLS,
     ensure_output_dirs,
+    find_latest_hmd_bulk_dir,
 )
 from .countries import (
     Country,
@@ -53,6 +54,7 @@ __all__ = [
     'DATA_SOURCE_LABELS',
     'DATA_SOURCE_URLS',
     'ensure_output_dirs',
+    'find_latest_hmd_bulk_dir',
     'Country',
     'HMD_COUNTRIES',
     'CODE_TO_NAME',

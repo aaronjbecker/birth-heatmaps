@@ -2,7 +2,7 @@
 Human Mortality Database data loaders.
 
 These loaders make assumptions about the file structure.
-HMD files need to be manually downloaded due to terms of use.
+HMD files can be downloaded in bulk from the HMD website.
 """
 import polars as pl
 from pathlib import Path
@@ -11,19 +11,42 @@ from typing import Optional
 from config import HMD_DATA_DIR, HMD_COUNTRIES
 
 
-def load_births_file(country_code: str, data_dir: Optional[Path] = None) -> pl.DataFrame:
-    """Load raw births data for a single country from HMD."""
+def get_hmd_file_path(country_code: str, file_suffix: str, data_dir: Optional[Path] = None) -> Path:
+    """
+    Get the path to an HMD data file for a country.
+
+    Checks for bulk download structure first (InputDB subdirectory),
+    falls back to flat file structure for backwards compatibility.
+
+    Args:
+        country_code: HMD country code (e.g., 'USA', 'FRATNP')
+        file_suffix: File suffix like 'birthbymonth.txt' or 'pop.txt'
+        data_dir: Optional override for data directory
+
+    Returns:
+        Path to the data file
+    """
     if data_dir is None:
         data_dir = HMD_DATA_DIR
-    file_path = data_dir / f'{country_code}birthbymonth.txt'
+
+    # Check for bulk download structure: {data_dir}/{country_code}/InputDB/{country_code}{suffix}
+    bulk_path = data_dir / country_code / 'InputDB' / f'{country_code}{file_suffix}'
+    if bulk_path.exists():
+        return bulk_path
+
+    # Fall back to flat structure: {data_dir}/{country_code}{suffix}
+    return data_dir / f'{country_code}{file_suffix}'
+
+
+def load_births_file(country_code: str, data_dir: Optional[Path] = None) -> pl.DataFrame:
+    """Load raw births data for a single country from HMD."""
+    file_path = get_hmd_file_path(country_code, 'birthbymonth.txt', data_dir)
     return pl.read_csv(file_path, infer_schema_length=100000)
 
 
 def load_population_file(country_code: str, data_dir: Optional[Path] = None) -> pl.DataFrame:
     """Load raw population data for a single country from HMD."""
-    if data_dir is None:
-        data_dir = HMD_DATA_DIR
-    file_path = data_dir / f'{country_code}pop.txt'
+    file_path = get_hmd_file_path(country_code, 'pop.txt', data_dir)
     return pl.read_csv(file_path, infer_schema_length=100000)
 
 
