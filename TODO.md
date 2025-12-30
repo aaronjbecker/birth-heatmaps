@@ -9,7 +9,7 @@
 * For accessibility reasons, add an expandable table underneath the main heatmap that shows the same raw data in a scrollable HTML table (height capped).
 
 ## Comparison View
-* Create interactive line chart route (can be static page using search params to identify countries to include? or just local state since Astro isn't an SPA?). Fetch data from nginx static JSON files based on a multi-selection combobox type input.
+* Create interactive line chart route (can be static page using search params to identify countries to include? or just local state since Astro isn't an SPA?). Fetch data from nginx static JSON files based on a multi-selection combobox type input (like current country dropdown but with "tiles" indicating selected countries).
 * Compare countries by plotting multiple heatmaps, stacked vertically, with a shared color scale.
 
 ## Misc TODO Items
