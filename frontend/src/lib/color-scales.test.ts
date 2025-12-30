@@ -42,6 +42,33 @@ describe('Color scale utilities', () => {
       expect(color).toMatch(/^rgb/);
     });
 
+    it('should invert domain for seasonality metrics', () => {
+      const config: ColorScaleConfig = {
+        type: 'diverging',
+        domain: [0.065, 0.0833, 0.10], // [min, center, max]
+        scheme: 'RdBu',
+      };
+
+      // Without metric (normal behavior)
+      const normalScale = createColorScale(config);
+      const normalColorLow = normalScale(0.065); // Should map to red (warm)
+      const normalColorHigh = normalScale(0.10); // Should map to blue (cool)
+
+      // With seasonality metric (inverted)
+      const invertedScale = createColorScale(config, 'seasonality_percentage_normalized');
+      const invertedColorLow = invertedScale(0.065); // Should map to blue (cool)
+      const invertedColorHigh = invertedScale(0.10); // Should map to red (warm)
+
+      // Colors should be different (inverted)
+      expect(invertedColorLow).not.toBe(normalColorLow);
+      expect(invertedColorHigh).not.toBe(normalColorHigh);
+      
+      // Low value should get cool color (blue) when inverted
+      expect(invertedColorLow).toMatch(/rgb/);
+      // High value should get warm color (red) when inverted
+      expect(invertedColorHigh).toMatch(/rgb/);
+    });
+
     it('should fall back to turbo for unknown scheme', () => {
       const config: ColorScaleConfig = {
         type: 'sequential',

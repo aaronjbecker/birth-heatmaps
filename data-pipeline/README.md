@@ -39,6 +39,14 @@ The pipeline generates the following outputs:
 - `fertility/{country}.json` - Fertility rate data per country
 - `seasonality/{country}.json` - Seasonality data per country
 
+**Color Scale Calculation:**
+- Color scales are calculated dynamically from the actual data values in each country's dataset
+- Only non-null values are used for color scale domain calculation (provisional data excluded)
+- **Fertility**: Sequential scale with domain `[min, max]` computed from `daily_fertility_rate` values
+- **Seasonality**: Diverging scale with domain `[min, center, max]` computed from `seasonality_percentage_normalized` values
+  - Center point is 0.0833 (1/12, representing equal monthly distribution)
+  - Ensures the color scale accurately reflects the actual data range, excluding any filtered provisional data
+
 **Usage:** These files are imported directly by the Astro/Vite frontend:
 ```typescript
 import countriesData from '../assets/data/countries.json';

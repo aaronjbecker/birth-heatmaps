@@ -89,8 +89,8 @@ export function createHeatmap(
   // State for scroll information
   let currentScrollInfo: ScrollInfo | null = null;
 
-  // Create color scale
-  let colorScale = createColorScale(data.colorScale);
+  // Create color scale (invert for seasonality metrics)
+  let colorScale = createColorScale(data.colorScale, data.metric);
 
   // Create scales
   let xScale = d3.scaleBand<number>()
@@ -133,7 +133,7 @@ export function createHeatmap(
    */
   function update(newData: CountryHeatmapData, yearRange?: [number, number]) {
     currentData = newData;
-    colorScale = createColorScale(newData.colorScale);
+    colorScale = createColorScale(newData.colorScale, newData.metric);
 
     if (yearRange) {
       currentYearRange = yearRange;

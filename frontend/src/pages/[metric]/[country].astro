@@ -4,6 +4,7 @@ import { HeatmapD3 } from '../../components/HeatmapD3';
 import { CountryDropdown } from '../../components/CountryDropdown';
 import ChartGallery from '../../components/ChartGallery.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
+import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../lib/metrics';
 
 // Import countries data at module level for use in page
 const countriesData = await import('../../assets/data/countries.json');
@@ -14,28 +15,37 @@ export async function getStaticPaths() {
   const countriesData = await import('../../assets/data/countries.json');
   const countries = countriesData.countries as CountryMeta[];
 
-  // Use Vite's import.meta.glob to load all seasonality data files at build time
+  // Load all data files for each metric using import.meta.glob
+  const fertilityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/fertility/*.json');
   const seasonalityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/seasonality/*.json');
 
-  // For each country, load seasonality data
+  const dataFilesByMetric: Record<MetricSlug, Record<string, () => Promise<CountryHeatmapData>>> = {
+    fertility: fertilityFiles,
+    seasonality: seasonalityFiles,
+  };
+
+  // Generate paths for all metric × country combinations
   const paths = await Promise.all(
-    countries.map(async (country) => {
-      let heatmapData: CountryHeatmapData | null = null;
-      const filePath = `../../assets/data/seasonality/${country.code}.json`;
+    METRIC_SLUGS.flatMap((metric) =>
+      countries.map(async (country) => {
+        let heatmapData: CountryHeatmapData | null = null;
+        const filePath = `../../assets/data/${metric}/${country.code}.json`;
+        const metricFiles = dataFilesByMetric[metric];
 
-      if (seasonalityFiles[filePath]) {
-        try {
-          heatmapData = await seasonalityFiles[filePath]() as CountryHeatmapData;
-        } catch (e) {
-          console.warn(`Failed to load seasonality data for ${country.name}:`, e);
+        if (metricFiles[filePath]) {
+          try {
+            heatmapData = await metricFiles[filePath]() as CountryHeatmapData;
+          } catch (e) {
+            console.warn(`Failed to load ${metric} data for ${country.name}:`, e);
+          }
         }
-      }
 
-      return {
-        params: { country: country.code },
-        props: { countryMeta: country, heatmapData },
-      };
-    })
+        return {
+          params: { metric, country: country.code },
+          props: { countryMeta: country, heatmapData, metric },
+        };
+      })
+    )
   );
 
   return paths;
@@ -44,38 +54,50 @@ export async function getStaticPaths() {
 interface Props {
   countryMeta: CountryMeta;
   heatmapData: CountryHeatmapData | null;
+  metric: MetricSlug;
 }
 
 const { country } = Astro.params;
-const { countryMeta, heatmapData } = Astro.props;
+const { countryMeta, heatmapData, metric } = Astro.props;
+
+const metricConfig = METRICS[metric];
+
+// Access the metric-specific data from countryMeta
+const metricData = countryMeta[metric];
 
 function formatYearRange(range: [number, number]): string {
   return `${range[0]}–${range[1]}`;
 }
 ---
 
-<BaseLayout title={`${countryMeta.name} - Seasonality`}>
+<BaseLayout title={`${countryMeta.name} - ${metricConfig.label}`}>
   <nav class="breadcrumb">
     <a href="/">Countries</a> / <CountryDropdown
       client:load
       countries={allCountries}
       currentCountry={country}
-      metric="seasonality"
+      metric={metric}
       variant="inline"
     />
   </nav>
 
   <h1>{countryMeta.name}</h1>
-  <p class="subtitle">Percentage of Annual Births by Month (normalized)</p>
+  <p class="subtitle">{metricConfig.subtitle}</p>
 
   <div class="meta">
-    <span class="year-range">{formatYearRange(countryMeta.seasonality.yearRange)}</span>
+    <span class="year-range">{formatYearRange(metricData.yearRange)}</span>
     <span class="sources">Sources: {countryMeta.sources.join(', ')}</span>
   </div>
 
   <div class="tabs">
-    <a href={`/fertility/${country}`} class="tab">Fertility</a>
-    <a href={`/seasonality/${country}`} class="tab active">Seasonality</a>
+    {METRIC_SLUGS.map((m) => (
+      <a
+        href={`/${m}/${country}`}
+        class:list={['tab', { active: m === metric }]}
+      >
+        {METRICS[m].label}
+      </a>
+    ))}
   </div>
 
   <div class="heatmap-wrapper">
@@ -89,7 +111,7 @@ function formatYearRange(range: [number, number]): string {
         showControls={true}
       />
     ) : (
-      <div id="heatmap-container" class="heatmap-container" data-country={country} data-metric="seasonality">
+      <div id="heatmap-container" class="heatmap-container" data-country={country} data-metric={metric}>
         <p class="loading">Loading heatmap data...</p>
       </div>
     )}

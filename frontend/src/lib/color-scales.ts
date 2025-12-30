@@ -31,15 +31,29 @@ const colorSchemes: Record<string, (t: number) => string> = {
 
 /**
  * Create a color scale from configuration
+ * 
+ * @param config - Color scale configuration
+ * @param metric - Optional metric name (e.g., 'seasonality_percentage_normalized')
+ *                 If provided and metric is seasonality, inverts the domain so cool colors
+ *                 represent lower values and warm colors represent higher values
  */
 export function createColorScale(
-  config: ColorScaleConfig
+  config: ColorScaleConfig,
+  metric?: string
 ): d3.ScaleSequential<string, never> | d3.ScaleDiverging<string, never> {
   const interpolator = colorSchemes[config.scheme] || d3.interpolateTurbo;
 
   if (config.type === 'diverging' && config.domain.length === 3) {
+    // For seasonality metrics, invert the domain so cool colors (blue) represent
+    // lower values and warm colors (red) represent higher values
+    let domain = config.domain as [number, number, number];
+    if (metric && metric.includes('seasonality')) {
+      // Swap min and max, keeping center the same: [max, center, min]
+      domain = [domain[2], domain[1], domain[0]];
+    }
+    
     return d3.scaleDiverging<string>()
-      .domain(config.domain as [number, number, number])
+      .domain(domain)
       .interpolator(interpolator);
   }
 

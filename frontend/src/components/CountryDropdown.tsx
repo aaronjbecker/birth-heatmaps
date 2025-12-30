@@ -3,11 +3,12 @@
  */
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import type { CountryMeta } from '../lib/types';
+import type { MetricSlug } from '../lib/metrics';
 
 export interface CountryDropdownProps {
   countries: CountryMeta[];
   currentCountry?: string;
-  metric?: 'fertility' | 'seasonality';
+  metric?: MetricSlug;
   variant?: 'header' | 'inline';
 }
 

@@ -327,6 +327,22 @@ def export_seasonality_data(
     years = sorted(country_data['Year'].unique().to_list())
     sources = country_data['Source'].unique().to_list()
 
+    # Compute color scale domain from actual non-null values (excluding provisional data)
+    # This ensures the color scale matches the actual data range
+    valid_values = country_data.filter(pl.col('seasonality_percentage_normalized').is_not_null())
+    if len(valid_values) > 0:
+        min_val = float(valid_values['seasonality_percentage_normalized'].min())
+        max_val = float(valid_values['seasonality_percentage_normalized'].max())
+        center_val = 0.0833  # ~8.33% is expected for equal distribution (1/12)
+        # Ensure center is between min and max for proper diverging scale
+        if center_val < min_val:
+            center_val = min_val
+        elif center_val > max_val:
+            center_val = max_val
+    else:
+        # Fallback to default values if no valid data
+        min_val, center_val, max_val = 0.065, 0.0833, 0.10
+
     # Build data array
     data = []
     for row in country_data.iter_rows(named=True):
@@ -349,7 +365,7 @@ def export_seasonality_data(
         'subtitle': 'Normalized to 30-day months and 360-day years',
         'colorScale': {
             'type': 'diverging',
-            'domain': [0.065, 0.0833, 0.10],  # ~8.33% is expected for equal distribution
+            'domain': [round(min_val, 4), round(center_val, 4), round(max_val, 4)],
             'scheme': 'RdBu'
         },
         'years': [int(y) for y in years],
@@ -423,6 +439,22 @@ def _export_country_json(args: tuple) -> str:
 
     # Export seasonality data inline
     seasonality_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Compute color scale domain from actual non-null values (excluding provisional data)
+    valid_seasonality_values = country_data.filter(pl.col('seasonality_percentage_normalized').is_not_null())
+    if len(valid_seasonality_values) > 0:
+        seasonality_min_val = float(valid_seasonality_values['seasonality_percentage_normalized'].min())
+        seasonality_max_val = float(valid_seasonality_values['seasonality_percentage_normalized'].max())
+        seasonality_center_val = 0.0833  # ~8.33% is expected for equal distribution (1/12)
+        # Ensure center is between min and max for proper diverging scale
+        if seasonality_center_val < seasonality_min_val:
+            seasonality_center_val = seasonality_min_val
+        elif seasonality_center_val > seasonality_max_val:
+            seasonality_center_val = seasonality_max_val
+    else:
+        # Fallback to default values if no valid data
+        seasonality_min_val, seasonality_center_val, seasonality_max_val = 0.065, 0.0833, 0.10
+    
     seasonality_data = []
     for row in country_data.iter_rows(named=True):
         value = row['seasonality_percentage_normalized']
@@ -439,7 +471,15 @@ def _export_country_json(args: tuple) -> str:
         'metric': 'seasonality_percentage_normalized',
         'title': 'Percentage of Annual Live Births',
         'subtitle': 'Normalized to 30-day months and 360-day years',
-        'colorScale': {'type': 'diverging', 'domain': [0.065, 0.0833, 0.10], 'scheme': 'RdBu'},
+        'colorScale': {
+            'type': 'diverging',
+            'domain': [
+                round(seasonality_min_val, 4),
+                round(seasonality_center_val, 4),
+                round(seasonality_max_val, 4)
+            ],
+            'scheme': 'RdBu'
+        },
         'years': [int(y) for y in years],
         'months': MONTH_NAMES,
         'data': seasonality_data,

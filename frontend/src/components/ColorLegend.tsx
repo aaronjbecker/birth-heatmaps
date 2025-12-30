@@ -133,7 +133,7 @@ export function ColorLegend({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const colorScale = createColorScale(colorScaleConfig);
+    const colorScale = createColorScale(colorScaleConfig, metric);
     const domain = colorScaleConfig.domain;
     const min = domain[0];
     const max = domain[domain.length - 1];
