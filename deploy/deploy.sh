@@ -24,7 +24,17 @@ fi
 
 SERVER="$DEPLOY_SERVER"
 IMAGE_NAME="birth-heatmaps"
-REGISTRY="localhost:5000"
+LOCAL_REGISTRY_PORT="${LOCAL_REGISTRY_PORT:-5001}"  # Use 5001 to avoid macOS AirPlay conflict on port 5000
+
+# Registry host: Docker Desktop (macOS/Windows) needs host.docker.internal; Linux uses localhost
+if [ -z "$REGISTRY_HOST" ]; then
+    if [ "$(uname)" = "Darwin" ] || [ -n "$DOCKER_HOST" ]; then
+        REGISTRY_HOST="host.docker.internal"
+    else
+        REGISTRY_HOST="localhost"
+    fi
+fi
+REGISTRY="$REGISTRY_HOST:$LOCAL_REGISTRY_PORT"
 REMOTE_PATH="~/deployments/birth-heatmaps"
 SSH_CONTROL_SOCKET="$SCRIPT_DIR/deploy_tunnel.sock"
 
@@ -37,15 +47,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Step 1: Checking for SSH tunnel..."
-if ! lsof -i :5000 > /dev/null 2>&1; then
-    echo "Establishing SSH tunnel to $SERVER on port 5000..."
-    ssh -M -S "$SSH_CONTROL_SOCKET" -f -N -L 5000:localhost:5000 "$SERVER"
+echo "Using registry: $REGISTRY"
+echo "Step 1: Checking for SSH tunnel on port $LOCAL_REGISTRY_PORT..."
+
+# Check if our control socket exists (indicates our tunnel is running)
+if [ -S "$SSH_CONTROL_SOCKET" ]; then
+    echo "Existing SSH tunnel detected (control socket found)."
+# Check if port is free or if something else is using it
+elif lsof -i :$LOCAL_REGISTRY_PORT > /dev/null 2>&1; then
+    echo "Error: Port $LOCAL_REGISTRY_PORT is already in use by another process."
+    echo "Check with: lsof -i :$LOCAL_REGISTRY_PORT"
+    echo "You can set LOCAL_REGISTRY_PORT in .env to use a different port."
+    exit 1
+else
+    echo "Establishing SSH tunnel to $SERVER on port $LOCAL_REGISTRY_PORT..."
+    ssh -M -S "$SSH_CONTROL_SOCKET" -f -N -L $LOCAL_REGISTRY_PORT:localhost:5000 "$SERVER"
 
     # Wait for the tunnel to stabilize
     MAX_RETRIES=10
     COUNT=0
-    until lsof -i :5000 > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
+    until lsof -i :$LOCAL_REGISTRY_PORT > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
         sleep 0.5
         ((COUNT++))
     done
@@ -54,8 +75,7 @@ if ! lsof -i :5000 > /dev/null 2>&1; then
         echo "Error: Failed to establish SSH tunnel."
         exit 1
     fi
-else
-    echo "Existing tunnel detected on port 5000."
+    echo "SSH tunnel established."
 fi
 
 echo "Step 2: Building image locally..."

@@ -98,9 +98,10 @@ deploy:
 
 # SSH tunnel to private registry (for manual operations)
 tunnel:
-	@echo "Starting SSH tunnel to registry on localhost:5000..."
+	@echo "Starting SSH tunnel to registry on localhost:5001..."
+	@echo "(Using port 5001 to avoid macOS AirPlay conflict on port 5000)"
 	@echo "Press Ctrl+C to close the tunnel."
-	ssh -L 5000:localhost:5000 root@152.53.169.131
+	ssh -L 5001:localhost:5000 root@152.53.169.131
 
 # ============================================
 # Testing
