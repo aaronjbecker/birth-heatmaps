@@ -3,6 +3,8 @@
 services:
   birth-heatmaps-test:
     container_name: birth-heatmaps-test
+    environment:
+      - PUBLIC_TESTING=true
     build:
       context: .
       dockerfile: Dockerfile.prod
