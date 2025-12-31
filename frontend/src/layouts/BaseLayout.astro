@@ -42,7 +42,7 @@ const countries = countriesData.countries as CountryMeta[];
     </script>
     {
       import.meta.env.PROD && !import.meta.env.PUBLIC_TESTING && (
-      <script defer src="https://stats.nameplay.org/fetch.js" data-website-id="97a3fa6d-f78d-466f-8275-d9fb6688ca06"></script>
+      <script is:inline defer src="https://stats.nameplay.org/fetch.js" data-website-id="97a3fa6d-f78d-466f-8275-d9fb6688ca06"></script>
       )
     }
   </head>

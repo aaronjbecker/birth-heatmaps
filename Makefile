@@ -92,7 +92,7 @@ build-prod:
 test-prod:
 	cd frontend && docker compose -f docker-compose.dev.yml up --build
 
-# Deploy to production server
+# Deploy to production server (also builds production image locally)
 deploy:
 	./deploy/deploy.sh
 
