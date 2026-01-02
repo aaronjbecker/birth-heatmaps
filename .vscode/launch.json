@@ -10,7 +10,7 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
+      "python": "${command:python.interpreterPath}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
         "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
@@ -26,7 +26,7 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
+      "python": "${command:python.interpreterPath}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
         "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
@@ -42,7 +42,7 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
+      "python": "${command:python.interpreterPath}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/data-pipeline/src",
         "HMD_DATA_DIR": "${workspaceFolder}/hmd_data",
@@ -58,7 +58,7 @@
       "cwd": "${workspaceFolder}/data-pipeline",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "python": "/Users/aaronbecker/opt/anaconda3/envs/hmd-pipeline/bin/python",
+      "python": "${command:python.interpreterPath}",
       "env": {
         "PYTHONPATH": "${workspaceFolder}/data-pipeline/src"
       }
