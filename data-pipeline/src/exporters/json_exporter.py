@@ -24,6 +24,10 @@ from config import (
     FRONTEND_ASSETS_FERTILITY_DIR,
     FRONTEND_ASSETS_SEASONALITY_DIR,
     FRONTEND_ASSETS_CONCEPTION_DIR,
+    FRONTEND_PUBLIC_DATA_DIR,
+    FRONTEND_PUBLIC_FERTILITY_DIR,
+    FRONTEND_PUBLIC_SEASONALITY_DIR,
+    FRONTEND_PUBLIC_CONCEPTION_DIR,
     MIN_YEARS_DATA,
     MIN_MONTHLY_BIRTHS,
     ensure_output_dirs,
@@ -305,7 +309,13 @@ def export_countries_index(
     with open(frontend_assets_path, 'w') as f:
         json.dump(output, f, indent=2)
 
-    print(f"Exported {len(included_countries)} countries to {output_path} and {frontend_assets_path}")
+    # Also export to frontend public for client-side fetch (Compare page)
+    frontend_public_path = FRONTEND_PUBLIC_DATA_DIR / 'countries.json'
+    frontend_public_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(frontend_public_path, 'w') as f:
+        json.dump(output, f, indent=2)
+
+    print(f"Exported {len(included_countries)} countries to {output_path}, {frontend_assets_path}, and {frontend_public_path}")
 
     return included_countries
 
@@ -554,7 +564,8 @@ def export_conception_data(
 def _export_country_json(args: tuple) -> str:
     """Helper function to export JSON data for a single country (for parallel execution)."""
     (births_dict, country_name, fertility_dir, seasonality_dir, conception_dir,
-     frontend_fertility_dir, frontend_seasonality_dir, frontend_conception_dir) = args
+     frontend_fertility_dir, frontend_seasonality_dir, frontend_conception_dir,
+     public_fertility_dir, public_seasonality_dir, public_conception_dir) = args
 
     # Reconstruct DataFrame from dict for this country
     births = pl.DataFrame(births_dict)
@@ -611,6 +622,11 @@ def _export_country_json(args: tuple) -> str:
     # Also export to frontend assets
     frontend_fertility_dir.mkdir(parents=True, exist_ok=True)
     with open(frontend_fertility_dir / fertility_filename, 'w') as f:
+        json.dump(fertility_output, f)
+
+    # Also export to frontend public for client-side fetch
+    public_fertility_dir.mkdir(parents=True, exist_ok=True)
+    with open(public_fertility_dir / fertility_filename, 'w') as f:
         json.dump(fertility_output, f)
 
     # Export seasonality data inline
@@ -678,6 +694,11 @@ def _export_country_json(args: tuple) -> str:
     with open(frontend_seasonality_dir / seasonality_filename, 'w') as f:
         json.dump(seasonality_output, f)
 
+    # Also export to frontend public for client-side fetch
+    public_seasonality_dir.mkdir(parents=True, exist_ok=True)
+    with open(public_seasonality_dir / seasonality_filename, 'w') as f:
+        json.dump(seasonality_output, f)
+
     # Export conception data inline (only for rows with valid conception rate)
     valid_conception_data = country_data.filter(pl.col('daily_conception_rate').is_not_null())
 
@@ -727,6 +748,11 @@ def _export_country_json(args: tuple) -> str:
         with open(frontend_conception_dir / conception_filename, 'w') as f:
             json.dump(conception_output, f)
 
+        # Also export to frontend public for client-side fetch
+        public_conception_dir.mkdir(parents=True, exist_ok=True)
+        with open(public_conception_dir / conception_filename, 'w') as f:
+            json.dump(conception_output, f)
+
     return country_name
 
 
@@ -770,10 +796,11 @@ def export_all_countries(
     # Convert DataFrame to dict for pickling (needed for multiprocessing)
     births_dict = births.to_dict()
 
-    # Create args for each country (including frontend assets directories)
+    # Create args for each country (including frontend assets and public directories)
     export_args = [
         (births_dict, country_name, fertility_dir, seasonality_dir, conception_dir,
-         FRONTEND_ASSETS_FERTILITY_DIR, FRONTEND_ASSETS_SEASONALITY_DIR, FRONTEND_ASSETS_CONCEPTION_DIR)
+         FRONTEND_ASSETS_FERTILITY_DIR, FRONTEND_ASSETS_SEASONALITY_DIR, FRONTEND_ASSETS_CONCEPTION_DIR,
+         FRONTEND_PUBLIC_FERTILITY_DIR, FRONTEND_PUBLIC_SEASONALITY_DIR, FRONTEND_PUBLIC_CONCEPTION_DIR)
         for country_name in countries
     ]
 

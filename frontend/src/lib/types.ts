@@ -2,6 +2,8 @@
  * TypeScript interfaces for HMD births heatmap data
  */
 
+import type { MetricSlug } from './metrics';
+
 /** Country metadata in the countries index */
 export interface CountryMeta {
   code: string;
@@ -99,4 +101,38 @@ export interface YearRangeState {
 export interface ScrollInfo {
   needsScroll: boolean;
   scrollWidth: number;
+}
+
+// =====================================
+// Compare Page Types
+// =====================================
+
+/** Scale mode for comparison view */
+export type ScaleMode = 'unified' | 'per-country';
+
+/** Query parameters for compare page */
+export interface CompareQueryParams {
+  countries: string[];
+  metric: MetricSlug;
+  scale: ScaleMode;
+  yearStart?: number;
+  yearEnd?: number;
+}
+
+/** Result of loading multiple countries with status tracking */
+export interface LoadedCountryData {
+  data: CountryHeatmapData;
+  code: string;
+  error?: string;
+}
+
+/** Comparison state for managing multiple country datasets */
+export interface CompareState {
+  selectedCountries: string[];
+  loadedData: Map<string, CountryHeatmapData>;
+  loading: boolean;
+  error: string | null;
+  scaleMode: ScaleMode;
+  yearRange: [number, number] | null;
+  commonYearRange: [number, number] | null;
 }

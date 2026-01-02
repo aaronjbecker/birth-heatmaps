@@ -110,6 +110,9 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
   <div class="meta">
     <span class="year-range">{formatYearRange(metricData.yearRange)}</span>
     <span class="sources">Sources: {countryMeta.sources.join(', ')}</span>
+    <a href={`/compare?countries=${country}&metric=${metric}`} class="compare-link">
+      Compare with other countries →
+    </a>
   </div>
 
   <div class="tabs">
@@ -181,6 +184,17 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
     margin-bottom: var(--space-lg);
     font-size: 0.875rem;
     color: var(--color-text-muted);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .compare-link {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .compare-link:hover {
+    text-decoration: underline;
   }
 
   .tabs {

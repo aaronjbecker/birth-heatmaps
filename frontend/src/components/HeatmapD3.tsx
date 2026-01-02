@@ -1,8 +1,8 @@
 /**
  * React wrapper component for D3 heatmap visualization
  */
-import React, { useRef, useEffect, useState, useCallback } from 'react';
-import type { CountryHeatmapData, HeatmapCell, TooltipState } from '../lib/types';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import type { CountryHeatmapData, HeatmapCell, TooltipState, ColorScaleConfig } from '../lib/types';
 import { createHeatmap, type HeatmapInstance } from '../lib/d3-heatmap';
 import { Tooltip } from './Tooltip';
 import { ColorLegend } from './ColorLegend';
@@ -15,6 +15,10 @@ export interface HeatmapD3Props {
   showLegend?: boolean;
   showYearFilter?: boolean;
   showControls?: boolean;
+  /** Override the color scale from data (used for unified scale in Compare view) */
+  colorScaleOverride?: ColorScaleConfig;
+  /** Callback when cell hover state changes (used for synchronized legends in Compare view) */
+  onCellHover?: (value: number | null) => void;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -100,6 +104,8 @@ export function HeatmapD3({
   showLegend = true,
   showYearFilter = true,
   showControls = true,
+  colorScaleOverride,
+  onCellHover: onCellHoverCallback,
 }: HeatmapD3Props): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
@@ -128,6 +134,15 @@ export function HeatmapD3({
     atEnd: false,     // Whether scrolled to rightmost position
   });
 
+  // Create effective data with colorScaleOverride applied (for Compare view)
+  const effectiveData = useMemo(() => {
+    if (!colorScaleOverride) return data;
+    return {
+      ...data,
+      colorScale: colorScaleOverride,
+    };
+  }, [data, colorScaleOverride]);
+
   // Handle cell hover
   const handleCellHover = useCallback((cell: HeatmapCell | null, event: MouseEvent) => {
     if (cell) {
@@ -138,11 +153,26 @@ export function HeatmapD3({
         cell,
       });
       setHoveredValue(cell.value);
+      onCellHoverCallback?.(cell.value);
     } else {
       setTooltip((prev) => ({ ...prev, visible: false }));
       setHoveredValue(null);
+      onCellHoverCallback?.(null);
     }
-  }, []);
+  }, [onCellHoverCallback]);
+
+  // Dismiss tooltip and clear active cell
+  const dismissTooltip = useCallback(() => {
+    setTooltip((prev) => ({ ...prev, visible: false }));
+    setHoveredValue(null);
+    onCellHoverCallback?.(null);
+    heatmapRef.current?.clearActiveCell();
+  }, [onCellHoverCallback]);
+
+  // Handle mouse leaving the heatmap container
+  const handleContainerMouseLeave = useCallback(() => {
+    dismissTooltip();
+  }, [dismissTooltip]);
 
   // Handle year range change
   const handleYearRangeChange = useCallback((start: number, end: number) => {
@@ -184,16 +214,16 @@ export function HeatmapD3({
     const rect = container.getBoundingClientRect();
     setContainerWidth(rect.width);
 
-    // Create new heatmap
+    // Create new heatmap with effectiveData (includes colorScaleOverride if provided)
     heatmapRef.current = createHeatmap(
       container,
-      data,
+      effectiveData,
       {},
       handleCellHover
     );
 
     // Apply initial year range
-    heatmapRef.current.update(data, yearRange);
+    heatmapRef.current.update(effectiveData, yearRange);
 
     // Update scroll state
     const scrollInfo = heatmapRef.current.getScrollInfo();
@@ -205,7 +235,7 @@ export function HeatmapD3({
         heatmapRef.current = null;
       }
     };
-  }, [data]); // Only re-create on data change
+  }, [effectiveData]); // Re-create on data or colorScaleOverride change
 
   // Handle resize
   useEffect(() => {
@@ -259,6 +289,44 @@ export function HeatmapD3({
     }
   }, [scrollEnabled, updateScrollState]);
 
+  // Dismiss tooltip on click/tap outside heatmap
+  useEffect(() => {
+    if (!tooltip.visible) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      // Check if click is outside the heatmap container
+      if (scrollWrapperRef.current && !scrollWrapperRef.current.contains(target)) {
+        dismissTooltip();
+      }
+    };
+
+    // Use capture phase to catch clicks before they bubble
+    document.addEventListener('mousedown', handleClickOutside, true);
+    document.addEventListener('touchstart', handleClickOutside, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+      document.removeEventListener('touchstart', handleClickOutside, true);
+    };
+  }, [tooltip.visible, dismissTooltip]);
+
+  // Dismiss tooltip on page scroll
+  useEffect(() => {
+    if (!tooltip.visible) return;
+
+    const handleScroll = () => {
+      dismissTooltip();
+    };
+
+    // Listen to scroll on window (page scroll)
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [tooltip.visible, dismissTooltip]);
+
   if (!data || !data.data || data.data.length === 0) {
     return (
       <div style={styles.error}>
@@ -297,6 +365,7 @@ export function HeatmapD3({
             height,
             overflowX: scrollEnabled ? 'auto' : 'hidden',
           }}
+          onMouseLeave={handleContainerMouseLeave}
         >
           {/* D3 will render into this container */}
           <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
@@ -326,9 +395,9 @@ export function HeatmapD3({
       {showControls && showLegend && (
         <div style={styles.controlsBottom}>
           <ColorLegend
-            colorScale={data.colorScale}
+            colorScale={effectiveData.colorScale}
             width={containerWidth - 32}
-            metric={data.metric}
+            metric={effectiveData.metric}
             hoveredValue={hoveredValue}
           />
         </div>
@@ -339,7 +408,7 @@ export function HeatmapD3({
         x={tooltip.x}
         y={tooltip.y}
         visible={tooltip.visible}
-        metric={data.metric}
+        metric={effectiveData.metric}
       />
     </div>
   );

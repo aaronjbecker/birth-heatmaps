@@ -1,0 +1,59 @@
+---
+/**
+ * Compare Countries page
+ * Allows users to compare birth patterns across multiple countries.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ComparePageClient } from '../components/ComparePageClient';
+import countriesData from '../assets/data/countries.json';
+import type { CountryMeta } from '../lib/types';
+
+const countries = countriesData.countries as CountryMeta[];
+
+// Use default OG image
+const ogImageUrl = '/og/default.png';
+---
+
+<BaseLayout
+  title="Compare Countries - Birth Heatmaps"
+  description="Compare birth seasonality patterns across multiple countries side by side. Explore fertility rates, birth timing, and seasonal trends."
+  canonicalPath="/compare"
+  ogImage={ogImageUrl}
+>
+  <div class="compare-page">
+    <header class="page-header">
+      <h1>Compare Countries</h1>
+      <p class="subtitle">
+        Select multiple countries to compare their birth patterns side by side.
+        Toggle between unified and per-country color scales.
+      </p>
+    </header>
+
+    <ComparePageClient client:load countries={countries} />
+  </div>
+</BaseLayout>
+
+<style>
+  .compare-page {
+    padding: var(--space-lg) 0;
+  }
+
+  .page-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .page-header h1 {
+    margin: 0 0 var(--space-sm) 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+    max-width: 600px;
+  }
+</style>

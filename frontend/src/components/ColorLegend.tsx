@@ -1,7 +1,7 @@
 /**
  * Color legend component for heatmap visualization
  */
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import type { ColorScaleConfig } from '../lib/types';
 import { createColorScale, generateLegendTicks, formatValue } from '../lib/color-scales';
@@ -20,7 +20,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '8px 16px',
+    padding: '4px 8px',
+    width: '100%',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
   },
   title: {
     fontSize: '12px',
@@ -37,7 +41,23 @@ export function ColorLegend({
   title,
   hoveredValue,
 }: ColorLegendProps): React.ReactElement {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [actualWidth, setActualWidth] = useState(width);
+
+  // Track container width for responsive sizing
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        // Use container width, capped at specified max width
+        setActualWidth(Math.min(entry.contentRect.width, width));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [width]);
 
   // Render hover indicator when hoveredValue changes (Stage 7)
   useEffect(() => {
@@ -60,7 +80,7 @@ export function ColorLegend({
 
     // Create scale to position indicator
     const margin = { top: 30, left: 40, right: 40 }; // Increased top margin
-    const barWidth = width - margin.left - margin.right;
+    const barWidth = actualWidth - margin.left - margin.right;
     const indicatorScale = d3.scaleLinear()
       .domain([min, max])
       .range([margin.left, margin.left + barWidth]);
@@ -125,7 +145,7 @@ export function ColorLegend({
       .attr('fill', '#000000') // Black text on amber
       .attr('opacity', 1);
 
-  }, [hoveredValue, colorScaleConfig, width, height, metric]);
+  }, [hoveredValue, colorScaleConfig, actualWidth, height, metric]);
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -140,7 +160,7 @@ export function ColorLegend({
 
     // Margin and layout
     const margin = { top: 30, left: 40, right: 40 }; // Increased top margin
-    const barWidth = width - margin.left - margin.right;
+    const barWidth = actualWidth - margin.left - margin.right;
     const g = svg.append('g').attr('transform', `translate(0, ${margin.top})`);
 
     // Create gradient
@@ -218,7 +238,7 @@ export function ColorLegend({
 
     // Max label (right edge)
     edgeLabelsGroup.append('text')
-      .attr('x', width)
+      .attr('x', actualWidth)
       .attr('y', -8)
       .attr('text-anchor', 'end')
       .attr('font-size', '12px')
@@ -226,14 +246,14 @@ export function ColorLegend({
       .style('fill', 'var(--color-text)')
       .attr('data-testid', 'legend-max-label')
       .text(formatValue(max, metric));
-  }, [colorScaleConfig, width, height, metric]);
+  }, [colorScaleConfig, actualWidth, height, metric]);
 
   const totalHeight = height + 75; // Increased to account for top and bottom spacing
 
   return (
-    <div style={styles.container}>
+    <div ref={containerRef} style={styles.container}>
       {title && <div style={styles.title}>{title}</div>}
-      <svg ref={svgRef} width={width} height={totalHeight} />
+      <svg ref={svgRef} width={actualWidth} height={totalHeight} />
     </div>
   );
 }
