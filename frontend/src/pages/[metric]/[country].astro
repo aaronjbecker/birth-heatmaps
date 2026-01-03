@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { HeatmapD3 } from '../../components/HeatmapD3';
+import Heatmap from '../../components/svelte/Heatmap.svelte';
 import { CountryDropdown } from '../../components/CountryDropdown';
 import ChartGallery from '../../components/ChartGallery.astro';
 import ShareButtons from '../../components/ShareButtons.astro';
@@ -128,7 +128,7 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
 
   <div class="heatmap-wrapper">
     {heatmapData ? (
-      <HeatmapD3
+      <Heatmap
         client:load
         data={heatmapData}
         height={500}

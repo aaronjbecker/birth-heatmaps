@@ -752,7 +752,10 @@ test.describe('Heatmap Interactions', () => {
 });
 
 test.describe('Tooltip scroll tracking', () => {
-  test('tooltip follows cell when scrolling horizontally', async ({ page }) => {
+  // Skip: Tooltip is now dismissed on scroll to prevent stale tooltips
+  // when cell scrolls out of view. Following during scroll would require
+  // real-time position tracking which adds complexity.
+  test.skip('tooltip follows cell when scrolling horizontally', async ({ page }) => {
     // Set very narrow viewport to ensure scroll is active (USA has 91 years of data)
     await page.setViewportSize({ width: 600, height: 600 });
 

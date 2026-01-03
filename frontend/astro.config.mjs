@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import svelte from '@astrojs/svelte';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
@@ -22,6 +23,7 @@ export default defineConfig({
   site: 'https://birth-heatmaps.aaronjbecker.com',
   output: 'static',
   integrations: [
+    svelte(),
     react(),
     sitemap(),
     icon(),

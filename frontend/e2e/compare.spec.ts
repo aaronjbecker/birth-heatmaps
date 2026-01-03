@@ -195,14 +195,17 @@ test.describe('Compare Page', () => {
     const comparePage = new ComparePage(page);
     await comparePage.goto(`countries=${TEST_COUNTRY.code}`);
 
-    await page.waitForTimeout(1000);
+    // Wait for initial heatmap to load
+    await expect(comparePage.getHeatmapSVGs().first()).toBeVisible({ timeout: 10000 });
 
     // Switch to seasonality
     await comparePage.selectMetric('seasonality');
-    await page.waitForTimeout(500);
 
     // URL should update
     expect(comparePage.getQueryParam('metric')).toBe('seasonality');
+
+    // Wait for heatmap to reload with new metric data
+    await expect(comparePage.getHeatmapSVGs().first()).toBeVisible({ timeout: 10000 });
 
     // Heatmap should still be visible
     const heatmapCount = await comparePage.getHeatmapCount();

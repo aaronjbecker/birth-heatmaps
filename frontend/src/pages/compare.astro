@@ -2,9 +2,15 @@
 /**
  * Compare Countries page
  * Allows users to compare birth patterns across multiple countries.
+ *
+ * Uses a hybrid React + Svelte architecture:
+ * - React: ComparePageClient handles controls, URL sync, and data loading
+ * - Svelte: ComparePageHeatmaps renders the heatmaps for better performance
+ * - Communication via nanostores
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { ComparePageClient } from '../components/ComparePageClient';
+import ComparePageHeatmaps from '../components/svelte/ComparePageHeatmaps.svelte';
 import countriesData from '../assets/data/countries.json';
 import type { CountryMeta } from '../lib/types';
 
@@ -29,7 +35,11 @@ const ogImageUrl = '/og/default.png';
       </p>
     </header>
 
+    <!-- React controls: country selection, metric tabs, scale toggle, share buttons -->
     <ComparePageClient client:load countries={countries} />
+
+    <!-- Svelte heatmaps: reads from nanostores, renders heatmap stack -->
+    <ComparePageHeatmaps client:load />
   </div>
 </BaseLayout>
 

@@ -94,9 +94,9 @@ export class CountryPage {
   // --- Scroll Methods ---
 
   getHeatmapContainer(): Locator {
-    // The heatmap container is the div that is the direct parent of the SVG
-    // It should have border styling
-    return this.page.locator('.heatmap-svg').locator('..');
+    // The heatmap container is the scrollable wrapper with overflow-x styling
+    // It contains .d3-container which in turn contains the SVG
+    return this.page.locator('.heatmap-container');
   }
 
   async isHeatmapScrollable(): Promise<boolean> {

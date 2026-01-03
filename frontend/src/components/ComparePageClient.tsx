@@ -1,8 +1,12 @@
 /**
  * Client-side component for the Compare Countries page.
  * Handles state management, URL sync, and data loading.
+ *
+ * This component writes to nanostores which are read by the Svelte
+ * ComparePageHeatmaps component for rendering the heatmaps.
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useStore } from '@nanostores/react';
 import type { CountryMeta, CountryHeatmapData, ScaleMode } from '../lib/types';
 import type { MetricSlug } from '../lib/metrics';
 import { METRICS, METRIC_SLUGS } from '../lib/metrics';
@@ -10,8 +14,14 @@ import { loadMultipleCountries } from '../lib/compare-data';
 import { parseCompareParams, updateBrowserUrl, buildCompareUrl } from '../lib/url-params';
 import { CountryMultiSelect } from './CountryMultiSelect';
 import { ScaleModeToggle } from './ScaleModeToggle';
-import { CompareHeatmapStack } from './CompareHeatmapStack';
 import { CompareShareButtons } from './CompareShareButtons';
+import {
+  loadedDataStore,
+  scaleModeStore,
+  selectedCountriesStore,
+  loadingStore,
+  errorStore,
+} from '../lib/stores/heatmap-stores';
 
 export interface ComparePageClientProps {
   countries: CountryMeta[];
@@ -81,33 +91,6 @@ const styles: Record<string, React.CSSProperties> = {
     paddingTop: '8px',
     borderTop: '1px solid var(--color-border)',
   },
-  loadingContainer: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '48px 24px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderRadius: '4px',
-    border: '1px solid var(--color-border)',
-  },
-  loadingText: {
-    fontSize: '0.875rem',
-    color: 'var(--color-text-muted)',
-  },
-  errorContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '48px 24px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderRadius: '4px',
-    border: '1px solid var(--color-border)',
-  },
-  errorText: {
-    fontSize: '0.875rem',
-    color: 'var(--color-error, #ef4444)',
-  },
 };
 
 const tabStyles = `
@@ -120,22 +103,23 @@ const tabStyles = `
 export function ComparePageClient({
   countries,
 }: ComparePageClientProps): React.ReactElement {
-  // State
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  // Read from nanostores (for local component state that syncs to stores)
+  const selectedCountries = useStore(selectedCountriesStore);
+  const scaleMode = useStore(scaleModeStore);
+  const loading = useStore(loadingStore);
+  const error = useStore(errorStore);
+
+  // Local state for metric (not needed in Svelte side)
   const [metric, setMetric] = useState<MetricSlug>('fertility');
-  const [scaleMode, setScaleMode] = useState<ScaleMode>('unified');
-  const [loadedData, setLoadedData] = useState<Map<string, CountryHeatmapData>>(new Map());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Parse URL on mount
   useEffect(() => {
     const params = parseCompareParams(new URLSearchParams(window.location.search));
     if (params.countries.length > 0) {
-      setSelectedCountries(params.countries);
+      selectedCountriesStore.set(params.countries);
     }
     setMetric(params.metric);
-    setScaleMode(params.scale);
+    scaleModeStore.set(params.scale);
   }, []);
 
   // Update URL when state changes
@@ -151,21 +135,26 @@ export function ComparePageClient({
   // Load data when selected countries or metric changes
   useEffect(() => {
     if (selectedCountries.length === 0) {
-      setLoadedData(new Map());
+      loadedDataStore.set({});
       return;
     }
 
     let cancelled = false;
 
     async function loadData() {
-      setLoading(true);
-      setError(null);
+      loadingStore.set(true);
+      errorStore.set(null);
 
       try {
         const data = await loadMultipleCountries(selectedCountries, metric);
 
         if (!cancelled) {
-          setLoadedData(data);
+          // Convert Map to Record for nanostore
+          const dataRecord: Record<string, CountryHeatmapData> = {};
+          data.forEach((value, key) => {
+            dataRecord[key] = value;
+          });
+          loadedDataStore.set(dataRecord);
 
           if (data.size < selectedCountries.length) {
             const failed = selectedCountries.filter((c) => !data.has(c));
@@ -174,11 +163,11 @@ export function ComparePageClient({
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to load data');
+          errorStore.set(err instanceof Error ? err.message : 'Failed to load data');
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          loadingStore.set(false);
         }
       }
     }
@@ -192,7 +181,7 @@ export function ComparePageClient({
 
   // Handlers
   const handleCountriesChange = useCallback((codes: string[]) => {
-    setSelectedCountries(codes);
+    selectedCountriesStore.set(codes);
   }, []);
 
   const handleMetricChange = useCallback((newMetric: MetricSlug) => {
@@ -200,15 +189,8 @@ export function ComparePageClient({
   }, []);
 
   const handleScaleModeChange = useCallback((mode: ScaleMode) => {
-    setScaleMode(mode);
+    scaleModeStore.set(mode);
   }, []);
-
-  // Get ordered list of loaded country data (preserving selection order)
-  const orderedCountryData = useMemo(() => {
-    return selectedCountries
-      .map((code) => loadedData.get(code))
-      .filter((d): d is CountryHeatmapData => d !== undefined);
-  }, [selectedCountries, loadedData]);
 
   // Current share URL
   const shareUrl = useMemo(() => {
@@ -273,21 +255,8 @@ export function ComparePageClient({
         )}
       </div>
 
-      {/* Content */}
-      {loading ? (
-        <div style={styles.loadingContainer}>
-          <span style={styles.loadingText}>Loading heatmap data...</span>
-        </div>
-      ) : error ? (
-        <div style={styles.errorContainer}>
-          <span style={styles.errorText}>{error}</span>
-        </div>
-      ) : (
-        <CompareHeatmapStack
-          countries={orderedCountryData}
-          scaleMode={scaleMode}
-        />
-      )}
+      {/* Heatmaps are rendered by a separate Svelte component (ComparePageHeatmaps)
+          that reads from nanostores. This component only renders the controls. */}
     </div>
   );
 }
