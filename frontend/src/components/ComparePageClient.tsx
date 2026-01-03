@@ -31,7 +31,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '24px',
+    gap: '0',
     width: '100%',
   },
   controls: {
@@ -46,13 +46,13 @@ const styles: Record<string, React.CSSProperties> = {
   controlsRow: {
     display: 'flex',
     alignItems: 'flex-start',
-    gap: '24px',
+    gap: '32px',
     flexWrap: 'wrap',
   },
   controlGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '8px',
+    gap: '10px',
   },
   controlLabel: {
     fontSize: '0.8125rem',

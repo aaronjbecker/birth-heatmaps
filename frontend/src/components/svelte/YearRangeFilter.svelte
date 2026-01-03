@@ -413,47 +413,56 @@
   .container {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 12px 0;
+    gap: 4px;
+    padding: 0;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 13px;
-    height: 24px;
+    font-size: 14px;
   }
 
   .label-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
   }
 
   .label {
     color: var(--color-text-muted);
     font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    letter-spacing: 0.05em;
   }
 
   .input-group {
     display: flex;
     align-items: center;
-    margin-left: 8px;
+    gap: 4px;
   }
 
   .year-input {
-    width: 60px;
-    padding: 2px 4px;
-    font-size: 13px;
+    width: 70px;
+    padding: 6px 6px;
+    font-size: 14px;
     border: 1px solid var(--color-border);
     border-radius: 4px;
-    background-color: var(--color-bg-alt);
+    background-color: var(--color-bg);
     color: var(--color-text);
     font-weight: 600;
     text-align: center;
     appearance: none;
     -moz-appearance: textfield;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .year-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
   }
 
   .year-input::-webkit-inner-spin-button,
@@ -463,36 +472,43 @@
   }
 
   .input-separator {
-    padding: 0 4px;
+    padding: 0 8px;
     color: var(--color-text-muted);
+    font-weight: 500;
   }
 
   .reset-container {
-    min-height: 24px;
+    min-height: 32px;
     display: flex;
     align-items: center;
   }
 
   .reset-button {
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 6px 12px;
+    font-size: 12px;
     border: 1px solid var(--color-border);
-    border-radius: 3px;
-    background-color: var(--color-bg-alt);
+    border-radius: 4px;
+    background-color: var(--color-bg);
     color: var(--color-text-muted);
     cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .reset-button:hover {
+    border-color: var(--color-primary);
+    color: var(--color-text);
   }
 
   .slider-container {
     position: relative;
-    height: 24px;
-    margin-bottom: 18px;
+    height: 28px;
+    margin-bottom: 12px;
     cursor: pointer;
   }
 
   .zone {
     position: absolute;
-    top: 10px;
+    top: 12px;
     height: 4px;
   }
 
@@ -506,7 +522,7 @@
 
   .slider-range {
     position: absolute;
-    top: 10px;
+    top: 12px;
     height: 4px;
     background-color: var(--color-primary);
     border-radius: 2px;
@@ -515,7 +531,7 @@
 
   .ticks-container {
     position: absolute;
-    top: 14px;
+    top: 16px;
     left: 0;
     right: 0;
     height: 12px;
@@ -534,7 +550,7 @@
     position: absolute;
     top: 0;
     width: 100%;
-    height: 24px;
+    height: 28px;
     -webkit-appearance: none;
     appearance: none;
     background: transparent;
@@ -597,8 +613,8 @@
   .edge-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--color-text-muted);
-    margin-top: -6px;
+    margin-top: -4px;
   }
 </style>

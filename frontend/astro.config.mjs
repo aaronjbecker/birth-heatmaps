@@ -10,6 +10,8 @@ import playformCompress from '@playform/compress';
 // compressor creates .br files, cf. https://github.com/sondr3/astro-compressor
 import compressor from 'astro-compressor';
 
+import tailwindcss from '@tailwindcss/vite';
+
 // Environment detection
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -22,6 +24,7 @@ function prodOnly(integration) {
 export default defineConfig({
   site: 'https://birth-heatmaps.aaronjbecker.com',
   output: 'static',
+
   integrations: [
     svelte(),
     react(),
@@ -45,8 +48,13 @@ export default defineConfig({
       })
     ),
   ].filter(Boolean),
+
   build: {
     assets: 'assets',
     concurrency: 8,
   },
+
+  vite: {
+    plugins: [tailwindcss()]
+  }
 });

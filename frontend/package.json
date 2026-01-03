@@ -25,6 +25,7 @@
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.64",
     "@nanostores/react": "^1.0.0",
+    "@tailwindcss/vite": "^4.1.18",
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "canvas": "^3.2.0",
@@ -34,7 +35,8 @@
     "photoswipe": "^5.4.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "svelte": "^5.46.1"
+    "svelte": "^5.46.1",
+    "tailwindcss": "^4.1.18"
   },
   "devDependencies": {
     "@playform/compress": "^0.1.9",

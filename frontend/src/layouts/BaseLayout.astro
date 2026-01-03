@@ -5,6 +5,7 @@ import Logo from '../components/Logo.astro';
 import { CountryDropdown } from '../components/CountryDropdown';
 import countriesData from '../assets/data/countries.json';
 import type { CountryMeta } from '../lib/types';
+import '../styles/global.css';
 
 interface Props {
   title: string;
@@ -95,10 +96,6 @@ const countries = countriesData.countries as CountryMeta[];
     </footer>
   </body>
 </html>
-
-<style is:global>
-  @import '../styles/global.css';
-</style>
 
 <style>
   .header .container {

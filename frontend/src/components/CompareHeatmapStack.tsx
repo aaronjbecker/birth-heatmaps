@@ -23,25 +23,31 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '12px',
+    gap: '16px',
     width: '100%',
+    marginTop: '16px',
   },
   yearFilterContainer: {
-    padding: '0 16px',
-    marginBottom: '4px',
+    padding: '16px',
+    backgroundColor: 'var(--color-bg-alt)',
+    border: '1px solid var(--color-border)',
+    borderRadius: '8px',
   },
   countrySection: {
     display: 'flex',
     flexDirection: 'column',
     gap: '0',
+    border: '1px solid var(--color-border)',
+    borderRadius: '8px',
+    overflow: 'hidden',
+    backgroundColor: 'var(--color-bg-alt)',
   },
   countryHeader: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '8px 16px',
+    padding: '10px 16px',
     backgroundColor: 'var(--color-bg-alt)',
-    borderRadius: '4px 4px 0 0',
     borderBottom: '1px solid var(--color-border)',
   },
   countryName: {
@@ -55,13 +61,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--color-text-muted)',
   },
   heatmapWrapper: {
-    // Allow heatmap to take full width
+    backgroundColor: 'var(--color-bg-alt)',
   },
   legendContainer: {
-    padding: '4px 8px',
+    padding: '10px 16px',
     backgroundColor: 'var(--color-bg-alt)',
     borderTop: '1px solid var(--color-border)',
-    borderRadius: '0 0 4px 4px',
   },
   emptyState: {
     display: 'flex',

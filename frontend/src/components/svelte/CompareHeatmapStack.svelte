@@ -134,6 +134,7 @@
             showControls={true}
             colorScaleOverride={getColorScaleForCountry(country)}
             onCellHover={(value) => handleHeatmapHover(country.country.code, value)}
+            noBorder={true}
           />
         </div>
 
@@ -154,28 +155,35 @@
   .container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     width: 100%;
+    margin-top: 16px;
   }
 
   .year-filter-container {
-    padding: 0 16px;
-    margin-bottom: 4px;
+    padding-inline: 12px;
+    padding-block: 8px;
+    background-color: var(--color-bg-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
   }
 
   .country-section {
     display: flex;
     flex-direction: column;
     gap: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--color-bg-alt);
   }
 
   .country-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 16px;
+    padding: 10px 16px;
     background-color: var(--color-bg-alt);
-    border-radius: 4px 4px 0 0;
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -192,14 +200,13 @@
   }
 
   .heatmap-wrapper {
-    /* Allow heatmap to take full width */
+    background-color: var(--color-bg-alt);
   }
 
   .legend-container {
-    padding: 4px 8px;
+    padding: 10px 16px;
     background-color: var(--color-bg-alt);
     border-top: 1px solid var(--color-border);
-    border-radius: 0 0 4px 4px;
   }
 
   .empty-state {
@@ -209,9 +216,10 @@
     justify-content: center;
     padding: 48px 24px;
     background-color: var(--color-bg-alt);
-    border-radius: 4px;
+    border-radius: 8px;
     border: 1px dashed var(--color-border);
     text-align: center;
+    margin-top: 16px;
   }
 
   .empty-title {

@@ -20,6 +20,8 @@
     colorScaleOverride?: ColorScaleConfig;
     /** Callback when cell hover state changes (used for synchronized legends in Compare view) */
     onCellHover?: (value: number | null) => void;
+    /** Hide the border around the heatmap container (used in Compare view) */
+    noBorder?: boolean;
   }
 
   const {
@@ -31,6 +33,7 @@
     showControls = true,
     colorScaleOverride,
     onCellHover: onCellHoverCallback,
+    noBorder = false,
   }: Props = $props();
 
   // DOM refs
@@ -227,6 +230,7 @@
       <div
         bind:this={scrollWrapperRef}
         class="heatmap-container"
+        class:no-border={noBorder}
         style:height="{height}px"
         style:overflow-x={scrollEnabled ? 'auto' : 'hidden'}
         onpointerleave={handleContainerPointerLeave}
@@ -296,6 +300,11 @@
     border: 1px solid var(--color-border);
     border-radius: 4px;
     overflow: hidden;
+  }
+
+  .heatmap-container.no-border {
+    border: none;
+    border-radius: 0;
   }
 
   .d3-container {
