@@ -2,9 +2,8 @@
  * React wrapper component for D3 heatmap visualization
  */
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
-import type { CountryHeatmapData, HeatmapCell, TooltipState, ColorScaleConfig } from '../lib/types';
+import type { CountryHeatmapData, ColorScaleConfig } from '../lib/types';
 import { createHeatmap, type HeatmapInstance } from '../lib/d3-heatmap';
-import { Tooltip } from './Tooltip';
 import { ColorLegend } from './ColorLegend';
 import { YearRangeFilter } from './YearRangeFilter';
 
@@ -38,6 +37,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 16px',
   },
   heatmapContainer: {
+    position: 'relative',
     width: '100%',
     minHeight: '400px',
     border: '1px solid var(--color-border)',
@@ -111,13 +111,6 @@ export function HeatmapD3({
   const scrollWrapperRef = useRef<HTMLDivElement>(null);
   const heatmapRef = useRef<HeatmapInstance | null>(null);
 
-  const [tooltip, setTooltip] = useState<TooltipState>({
-    visible: false,
-    x: 0,
-    y: 0,
-    cell: null,
-  });
-
   const [yearRange, setYearRange] = useState<[number, number]>([
     Math.min(...data.years),
     Math.max(...data.years),
@@ -130,8 +123,8 @@ export function HeatmapD3({
   const [hoveredValue, setHoveredValue] = useState<number | null>(null);
 
   const [scrollState, setScrollState] = useState({
-    atStart: true,    // Whether scrolled to leftmost position
-    atEnd: false,     // Whether scrolled to rightmost position
+    atStart: true,
+    atEnd: false,
   });
 
   // Create effective data with colorScaleOverride applied (for Compare view)
@@ -143,44 +136,30 @@ export function HeatmapD3({
     };
   }, [data, colorScaleOverride]);
 
-  // Handle cell hover
-  const handleCellHover = useCallback((cell: HeatmapCell | null, event: MouseEvent) => {
-    if (cell) {
-      setTooltip({
-        visible: true,
-        x: event.clientX,
-        y: event.clientY,
-        cell,
-      });
-      setHoveredValue(cell.value);
-      onCellHoverCallback?.(cell.value);
-    } else {
-      setTooltip((prev) => ({ ...prev, visible: false }));
-      setHoveredValue(null);
-      onCellHoverCallback?.(null);
+  // Handle value hover from D3 (for ColorLegend sync)
+  const handleValueHover = useCallback((value: number | null) => {
+    setHoveredValue(value);
+    onCellHoverCallback?.(value);
+  }, [onCellHoverCallback]);
+
+  // Handle pointer leaving the heatmap container
+  const handleContainerPointerLeave = useCallback(() => {
+    heatmapRef.current?.hideTooltip();
+  }, []);
+
+  // Handle pointerdown on container - for touch dismissal when tapping outside cells
+  const handleContainerPointerDown = useCallback((event: React.PointerEvent) => {
+    const target = event.target as Element;
+    if (!target.closest('rect.cell')) {
+      heatmapRef.current?.hideTooltip();
     }
-  }, [onCellHoverCallback]);
-
-  // Dismiss tooltip and clear active cell
-  const dismissTooltip = useCallback(() => {
-    setTooltip((prev) => ({ ...prev, visible: false }));
-    setHoveredValue(null);
-    onCellHoverCallback?.(null);
-    heatmapRef.current?.clearActiveCell();
-  }, [onCellHoverCallback]);
-
-  // Handle mouse leaving the heatmap container
-  const handleContainerMouseLeave = useCallback(() => {
-    dismissTooltip();
-  }, [dismissTooltip]);
+  }, []);
 
   // Handle year range change
   const handleYearRangeChange = useCallback((start: number, end: number) => {
     setYearRange([start, end]);
     if (heatmapRef.current) {
       heatmapRef.current.update(data, [start, end]);
-
-      // Update scroll state
       const scrollInfo = heatmapRef.current.getScrollInfo();
       setScrollEnabled(scrollInfo?.needsScroll ?? false);
     }
@@ -194,16 +173,17 @@ export function HeatmapD3({
     const { scrollLeft, scrollWidth, clientWidth } = wrapper;
 
     setScrollState({
-      atStart: scrollLeft <= 1,  // Small threshold for rounding
+      atStart: scrollLeft <= 1,
       atEnd: scrollLeft + clientWidth >= scrollWidth - 1,
     });
   }, []);
 
   // Initialize D3 heatmap
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || !scrollWrapperRef.current) return;
 
     const container = containerRef.current;
+    const tooltipContainer = scrollWrapperRef.current;
 
     // Clean up previous instance
     if (heatmapRef.current) {
@@ -214,12 +194,13 @@ export function HeatmapD3({
     const rect = container.getBoundingClientRect();
     setContainerWidth(rect.width);
 
-    // Create new heatmap with effectiveData (includes colorScaleOverride if provided)
+    // Create new heatmap with D3-native tooltip
     heatmapRef.current = createHeatmap(
       container,
       effectiveData,
       {},
-      handleCellHover
+      tooltipContainer,
+      handleValueHover
     );
 
     // Apply initial year range
@@ -235,7 +216,7 @@ export function HeatmapD3({
         heatmapRef.current = null;
       }
     };
-  }, [effectiveData]); // Re-create on data or colorScaleOverride change
+  }, [effectiveData, handleValueHover]);
 
   // Handle resize
   useEffect(() => {
@@ -247,8 +228,6 @@ export function HeatmapD3({
         setContainerWidth(newWidth);
         if (heatmapRef.current && newWidth > 0 && newHeight > 0) {
           heatmapRef.current.resize(newWidth, newHeight);
-
-          // Update scroll state after resize
           const scrollInfo = heatmapRef.current.getScrollInfo();
           setScrollEnabled(scrollInfo?.needsScroll ?? false);
         }
@@ -267,11 +246,7 @@ export function HeatmapD3({
     if (!scrollWrapperRef.current) return;
 
     const wrapper = scrollWrapperRef.current;
-
-    // Update initial scroll state
     updateScrollState();
-
-    // Attach scroll listener
     wrapper.addEventListener('scroll', updateScrollState);
 
     return () => {
@@ -284,48 +259,9 @@ export function HeatmapD3({
     if (scrollEnabled) {
       updateScrollState();
     } else {
-      // Reset to default state when scrolling is disabled
       setScrollState({ atStart: true, atEnd: false });
     }
   }, [scrollEnabled, updateScrollState]);
-
-  // Dismiss tooltip on click/tap outside heatmap
-  useEffect(() => {
-    if (!tooltip.visible) return;
-
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      // Check if click is outside the heatmap container
-      if (scrollWrapperRef.current && !scrollWrapperRef.current.contains(target)) {
-        dismissTooltip();
-      }
-    };
-
-    // Use capture phase to catch clicks before they bubble
-    document.addEventListener('mousedown', handleClickOutside, true);
-    document.addEventListener('touchstart', handleClickOutside, true);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside, true);
-      document.removeEventListener('touchstart', handleClickOutside, true);
-    };
-  }, [tooltip.visible, dismissTooltip]);
-
-  // Dismiss tooltip on page scroll
-  useEffect(() => {
-    if (!tooltip.visible) return;
-
-    const handleScroll = () => {
-      dismissTooltip();
-    };
-
-    // Listen to scroll on window (page scroll)
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [tooltip.visible, dismissTooltip]);
 
   if (!data || !data.data || data.data.length === 0) {
     return (
@@ -357,7 +293,7 @@ export function HeatmapD3({
       )}
 
       <div style={{ position: 'relative' }}>
-        {/* Scrolling container */}
+        {/* Scrolling container - also serves as tooltip container */}
         <div
           ref={scrollWrapperRef}
           style={{
@@ -365,13 +301,14 @@ export function HeatmapD3({
             height,
             overflowX: scrollEnabled ? 'auto' : 'hidden',
           }}
-          onMouseLeave={handleContainerMouseLeave}
+          onPointerLeave={handleContainerPointerLeave}
+          onPointerDown={handleContainerPointerDown}
         >
-          {/* D3 will render into this container */}
+          {/* D3 will render SVG and tooltip into this container */}
           <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
         </div>
 
-        {/* Left scroll indicator - positioned outside scrolling context */}
+        {/* Left scroll indicator */}
         <div
           style={{
             ...styles.scrollIndicatorLeft,
@@ -381,7 +318,7 @@ export function HeatmapD3({
           ← more left
         </div>
 
-        {/* Right scroll indicator - positioned outside scrolling context */}
+        {/* Right scroll indicator */}
         <div
           style={{
             ...styles.scrollIndicatorRight,
@@ -402,14 +339,6 @@ export function HeatmapD3({
           />
         </div>
       )}
-
-      <Tooltip
-        cell={tooltip.cell}
-        x={tooltip.x}
-        y={tooltip.y}
-        visible={tooltip.visible}
-        metric={effectiveData.metric}
-      />
     </div>
   );
 }

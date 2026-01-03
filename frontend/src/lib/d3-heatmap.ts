@@ -4,6 +4,7 @@
 import * as d3 from 'd3';
 import type { CountryHeatmapData, HeatmapCell, ScrollInfo } from './types';
 import { createColorScale, getColor } from './color-scales';
+import { createTooltip, type TooltipInstance } from './tooltip';
 
 /**
  * Helper to get CSS variable value
@@ -27,7 +28,8 @@ export interface HeatmapInstance {
   resize: (width: number, height: number) => void;
   destroy: () => void;
   getScrollInfo: () => ScrollInfo | null;
-  clearActiveCell: () => void;
+  /** Hide the tooltip (for external dismissal triggers) */
+  hideTooltip: () => void;
 }
 
 const defaultConfig: HeatmapConfig = {
@@ -44,10 +46,14 @@ export function createHeatmap(
   container: HTMLElement,
   data: CountryHeatmapData,
   config: Partial<HeatmapConfig> = {},
-  onCellHover?: (cell: HeatmapCell | null, event: MouseEvent) => void
+  tooltipContainer: HTMLElement,
+  onValueHover?: (value: number | null) => void
 ): HeatmapInstance {
   const cfg = { ...defaultConfig, ...config };
   const { margin } = cfg;
+
+  // Create tooltip instance (D3-native, no React)
+  const tooltip: TooltipInstance = createTooltip(tooltipContainer);
 
   // Get container dimensions
   const containerRect = container.getBoundingClientRect();
@@ -80,6 +86,12 @@ export function createHeatmap(
   const yAxisGroup = g.append('g')
     .attr('class', 'y-axis');
 
+  // SVG-level pointerleave handler as fallback for fast mouse exit
+  // This catches cases where the mouse exits so quickly it misses individual cell handlers
+  svg.on('pointerleave', function () {
+    hideTooltipAndClearHighlight();
+  });
+
   // State for current data and year range
   let currentData = data;
   let currentYearRange: [number, number] = [
@@ -90,8 +102,41 @@ export function createHeatmap(
   // State for scroll information
   let currentScrollInfo: ScrollInfo | null = null;
 
-  // Track currently active (hovered/touched) cell element
-  let activeCellElement: SVGRectElement | null = null;
+  // Track if current interaction is touch (for pointerleave handling)
+  let isTouchInteraction = false;
+
+  // Track currently highlighted cell
+  let highlightedCellElement: SVGRectElement | null = null;
+
+  // Helper to hide tooltip and clear highlight
+  function hideTooltipAndClearHighlight(): void {
+    tooltip.hide();
+    if (highlightedCellElement) {
+      d3.select(highlightedCellElement).style('stroke', 'none');
+      highlightedCellElement = null;
+    }
+    onValueHover?.(null);
+  }
+
+  // Helper to show tooltip and set highlight
+  function showTooltipAndHighlight(cell: HeatmapCell, element: SVGRectElement): void {
+    // Clear previous highlight
+    if (highlightedCellElement && highlightedCellElement !== element) {
+      d3.select(highlightedCellElement).style('stroke', 'none');
+    }
+
+    // Set new highlight
+    highlightedCellElement = element;
+    d3.select(element)
+      .style('stroke', getCSSVariable('--color-text'))
+      .raise();
+
+    // Show tooltip
+    tooltip.show(cell, element, currentData.metric);
+
+    // Notify parent for ColorLegend sync
+    onValueHover?.(cell.value);
+  }
 
   // Create color scale (invert for seasonality metrics)
   let colorScale = createColorScale(data.colorScale, data.metric);
@@ -216,56 +261,22 @@ export function createHeatmap(
       .style('stroke', 'none')
       .style('stroke-width', 2)
       .style('cursor', 'pointer')
-      .on('mouseenter', function (event: MouseEvent, d: HeatmapCell) {
-        // Clear previous active cell stroke
-        if (activeCellElement && activeCellElement !== this) {
-          d3.select(activeCellElement).style('stroke', 'none');
-        }
-        activeCellElement = this as SVGRectElement;
-        d3.select(this)
-          .style('stroke', getCSSVariable('--color-text'))
-          .raise();
-        if (onCellHover) {
-          onCellHover(d, event);
-        }
+      .style('touch-action', 'none') // Prevent default touch behaviors
+      .on('pointerdown', function (event: PointerEvent) {
+        // Track if this is a touch interaction
+        isTouchInteraction = event.pointerType === 'touch';
       })
-      .on('mousemove', function (event: MouseEvent, d: HeatmapCell) {
-        if (onCellHover) {
-          onCellHover(d, event);
-        }
+      .on('pointerenter', function (_event: PointerEvent, d: HeatmapCell) {
+        // Show tooltip and highlight immediately (D3-native, no React delay)
+        showTooltipAndHighlight(d, this as SVGRectElement);
       })
-      .on('mouseleave', function () {
-        // Only clear if this is still the active cell
-        if (activeCellElement === this) {
-          d3.select(this).style('stroke', 'none');
-          activeCellElement = null;
+      .on('pointerleave', function (_event: PointerEvent) {
+        // For touch: ignore pointerleave - tooltip will be dismissed by tap-outside
+        // For mouse: dismiss tooltip immediately
+        if (!isTouchInteraction) {
+          hideTooltipAndClearHighlight();
         }
-        if (onCellHover) {
-          onCellHover(null, {} as MouseEvent);
-        }
-      })
-      .on('touchstart', function (event: TouchEvent, d: HeatmapCell) {
-        event.preventDefault(); // Prevent default touch behavior
-
-        // Clear previous active cell stroke
-        if (activeCellElement && activeCellElement !== this) {
-          d3.select(activeCellElement).style('stroke', 'none');
-        }
-        activeCellElement = this as SVGRectElement;
-        d3.select(this)
-          .style('stroke', getCSSVariable('--color-text'))
-          .raise();
-
-        if (onCellHover) {
-          // Use touch coordinates
-          const touch = event.touches[0];
-          const mouseEvent = {
-            clientX: touch.clientX,
-            clientY: touch.clientY,
-          } as MouseEvent;
-          onCellHover(d, mouseEvent);
-        }
-      }, { passive: false });
+      });
   }
 
   /**
@@ -296,6 +307,7 @@ export function createHeatmap(
     if (themeObserver) {
       themeObserver.disconnect();
     }
+    tooltip.destroy();
     svg.remove();
   }
 
@@ -333,13 +345,10 @@ export function createHeatmap(
   }
 
   /**
-   * Clear the currently active cell (remove stroke, reset state)
+   * Hide tooltip and clear highlight (for external dismissal triggers)
    */
-  function clearActiveCell(): void {
-    if (activeCellElement) {
-      d3.select(activeCellElement).style('stroke', 'none');
-      activeCellElement = null;
-    }
+  function hideTooltip(): void {
+    hideTooltipAndClearHighlight();
   }
 
   // Initial render
@@ -351,7 +360,7 @@ export function createHeatmap(
     resize,
     destroy,
     getScrollInfo,
-    clearActiveCell,
+    hideTooltip,
   };
 }
 

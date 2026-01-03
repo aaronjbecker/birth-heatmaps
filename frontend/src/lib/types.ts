@@ -78,15 +78,19 @@ export interface HeatmapProps {
   data: CountryHeatmapData;
   width?: number;
   height?: number;
-  onCellHover?: (cell: HeatmapCell | null, event: MouseEvent) => void;
+  /** Callback when cell hover state changes. Receives cell data and the SVG element. */
+  onCellHover?: (
+    cell: HeatmapCell | null,
+    element: SVGRectElement | null
+  ) => void;
 }
 
-/** Tooltip state */
+/** Tooltip state - simplified for @floating-ui/dom positioning */
 export interface TooltipState {
-  visible: boolean;
-  x: number;
-  y: number;
+  /** The hovered cell data (null when no cell is hovered) */
   cell: HeatmapCell | null;
+  /** Reference to the hovered SVG rect element for positioning */
+  referenceElement: SVGRectElement | null;
 }
 
 /** Year range filter state */

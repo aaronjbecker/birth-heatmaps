@@ -99,14 +99,14 @@ export function parseYearRange(rangeText: string): [number, number] {
  * @param timeout - Maximum wait time in ms (default: 2000)
  */
 export async function waitForTooltipVisible(page: Page, timeout: number = 2000): Promise<void> {
-  const tooltip = page.locator('div[style*="position: fixed"]').first();
+  const tooltip = page.locator('[data-testid="tooltip"]');
   await tooltip.waitFor({ state: 'visible', timeout });
 
   // Wait for opacity transition
   await page.waitForFunction(
     () => {
-      const el = document.querySelector('div[style*="position: fixed"]');
-      return el && getComputedStyle(el as HTMLElement).opacity === '1';
+      const el = document.querySelector('[data-testid="tooltip"]');
+      return el && parseFloat(getComputedStyle(el as HTMLElement).opacity) > 0.5;
     },
     { timeout }
   );

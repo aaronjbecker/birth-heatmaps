@@ -140,8 +140,8 @@ export class CountryPage {
   // --- Tooltip Methods ---
 
   getTooltip(): Locator {
-    // Tooltip renders with fixed positioning
-    return this.page.locator('div[style*="position: fixed"]').first();
+    // Tooltip renders with data-testid for reliable selection
+    return this.page.locator('[data-testid="tooltip"]');
   }
 
   async isTooltipVisible(): Promise<boolean> {
@@ -152,7 +152,7 @@ export class CountryPage {
     const opacity = await tooltip.evaluate((el) => {
       return getComputedStyle(el).opacity;
     });
-    return opacity === '1';
+    return parseFloat(opacity) > 0.5;
   }
 
   async getTooltipContent(): Promise<{
