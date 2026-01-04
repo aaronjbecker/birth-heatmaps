@@ -3,14 +3,13 @@ import svelte from '@astrojs/svelte';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
+import tailwind from '@astrojs/tailwind';
 
 // Production-only compression
 // playformCompress is minification, cf. https://github.com/PlayForm/Compress
 import playformCompress from '@playform/compress';
 // compressor creates .br files, cf. https://github.com/sondr3/astro-compressor
 import compressor from 'astro-compressor';
-
-import tailwindcss from '@tailwindcss/vite';
 
 // Environment detection
 const isProd = process.env.NODE_ENV === 'production';
@@ -30,6 +29,9 @@ export default defineConfig({
     react(),
     sitemap(),
     icon(),
+    tailwind({
+      applyBaseStyles: false, // We have our own global styles
+    }),
     // playformCompress is minification (HTML + SVG only since CSS/JS are already minified)
     prodOnly(
       playformCompress({
@@ -52,9 +54,5 @@ export default defineConfig({
   build: {
     assets: 'assets',
     concurrency: 8,
-  },
-
-  vite: {
-    plugins: [tailwindcss()]
   }
 });

@@ -698,7 +698,7 @@ def _copy_charts_to_frontend(source_dir: Path, dest_dir: Path) -> None:
 
     Args:
         source_dir: Source directory with generated charts (organized by country)
-        dest_dir: Destination directory (frontend/src/content/charts)
+        dest_dir: Destination directory (frontend/src/assets/charts)
     """
     if not source_dir.exists():
         print(f"  Warning: Source directory {source_dir} does not exist, skipping frontend copy")

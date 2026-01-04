@@ -144,7 +144,7 @@ End-to-end integration of the data pipeline with the frontend, production deploy
 │       ├── monthly_fertility_chart.png                        │
 │       └── ...                                                │
 │                                                              │
-│   frontend/src/content/charts/   →  Astro Image component   │
+│   frontend/src/assets/charts/   →  Astro Image component    │
 │   (copies from output for Vite optimization)                 │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -174,9 +174,8 @@ End-to-end integration of the data pipeline with the frontend, production deploy
    - Frontend build test
    - Nginx serving test
 
-5. **Astro Content Collection for Charts**
-   - Create `frontend/src/content/charts/` directory
-   - Define content collection schema
+5. **Astro Assets for Charts**
+   - Create `frontend/src/assets/charts/` directory
    - Copy charts from pipeline output during build
    - Use Astro `<Image>` component for optimization
 

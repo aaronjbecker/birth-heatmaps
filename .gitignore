@@ -48,8 +48,8 @@ frontend/src/assets/data/fertility/*.json
 frontend/src/assets/data/seasonality/*.json
 
 # Generated chart images (copied from pipeline output)
-frontend/src/content/charts/
-!frontend/src/content/charts/.gitkeep
+frontend/src/assets/charts/
+!frontend/src/assets/charts/.gitkeep
 
 # PyCharm project files
 .idea/

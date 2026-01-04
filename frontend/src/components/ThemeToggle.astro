@@ -2,7 +2,7 @@
 // Theme toggle component - vanilla JS with no props needed
 ---
 
-<button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme">
+<button id="theme-toggle" aria-label="Toggle theme">
   <!-- Sun icon (visible in dark mode) -->
   <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="5"/>
@@ -79,8 +79,8 @@
   });
 </script>
 
-<style>
-  .theme-toggle {
+<style is:inline>
+  #theme-toggle {
     position: relative;
     display: flex;
     align-items: center;
@@ -96,29 +96,29 @@
     transition: all 0.2s ease;
   }
 
-  .theme-toggle:hover {
+  #theme-toggle:hover {
     background: var(--color-bg);
     border-color: var(--color-primary);
   }
 
-  .theme-toggle:active {
+  #theme-toggle:active {
     transform: scale(0.95);
   }
 
-  .theme-toggle svg {
+  #theme-toggle svg {
     position: absolute;
     opacity: 0;
     transform: rotate(-90deg) scale(0.8);
     transition: opacity 0.3s ease, transform 0.3s ease;
   }
 
-  .theme-toggle svg.visible {
+  #theme-toggle svg.visible {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
 
   /* Initial state - show moon for light mode */
-  .moon-icon {
+  #theme-toggle .moon-icon {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }

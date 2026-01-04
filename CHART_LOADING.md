@@ -28,7 +28,7 @@ Data Pipeline                      Astro Frontend
          │                     │            │
          ▼                     ▼            ▼
 ┌────────────────┐    ┌──────────────────────────────┐
-│ output/charts/ │───▶│ src/content/charts/          │
+│ output/charts/ │───▶│ src/assets/charts/           │
 │ {country}/     │    │ {country-slug}/{chart}.png   │
 │ *.png          │    │                              │
 └────────────────┘    │ Imported via                 │
@@ -60,7 +60,7 @@ data-pipeline/output/charts/
 ### Frontend Assets (Used by Astro)
 
 ```
-frontend/src/content/charts/
+frontend/src/assets/charts/
 ├── USA/
 │   ├── fertility_heatmap.png
 │   ├── seasonality_heatmap.png
@@ -83,11 +83,11 @@ frontend/src/content/charts/
 ```typescript
 // ChartImage.astro uses Vite's glob import with eager loading
 const images = import.meta.glob<{ default: ImageMetadata }>(
-  '../content/charts/**/*.png',
+  '../assets/charts/**/*.png',
   { eager: true }
 );
 
-const imagePath = `../content/charts/${countrySlug}/${filename}`;
+const imagePath = `../assets/charts/${countrySlug}/${filename}`;
 if (images[imagePath]) {
   chartImage = images[imagePath].default;
 }
@@ -115,7 +115,7 @@ if (images[imagePath]) {
 
 ## Why This Approach?
 
-### Using `src/content/charts/` instead of `public/`
+### Using `src/assets/charts/` instead of `public/`
 
 **Advantages:**
 - ✅ **Vite Asset Handling**: Images are processed and optimized by Vite
@@ -134,7 +134,7 @@ if (images[imagePath]) {
 
 | Aspect | Development | Production |
 |--------|-------------|-----------|
-| **Location** | `src/content/charts/` | `src/content/charts/` |
+| **Location** | `src/assets/charts/` | `src/assets/charts/` |
 | **Loading** | `import.meta.glob()` | `import.meta.glob()` |
 | **Processing** | On-demand via Vite | Pre-processed at build |
 | **Optimization** | None (fast rebuilds) | Full optimization |
@@ -150,8 +150,8 @@ Both dev and prod use the **same source location** and **same import pattern**. 
 # Pipeline output (for archival and nginx serving)
 CHARTS_OUTPUT_DIR = OUTPUT_DIR / 'charts'
 
-# Frontend content (for Vite/Astro imports)
-FRONTEND_CONTENT_CHARTS_DIR = PROJECT_ROOT / 'frontend' / 'src' / 'content' / 'charts'
+# Frontend assets (for Vite/Astro imports)
+FRONTEND_CONTENT_CHARTS_DIR = PROJECT_ROOT / 'frontend' / 'src' / 'assets' / 'charts'
 ```
 
 ### Export Process (data-pipeline/src/exporters/chart_exporter.py)
@@ -164,7 +164,7 @@ def export_all_charts(...):
     # Generate to output/charts/{country}/
     # ... chart generation code ...
 
-    # Copy to frontend/src/content/charts/{country}/
+    # Copy to frontend/src/assets/charts/{country}/
     _copy_charts_to_frontend(CHARTS_OUTPUT_DIR, FRONTEND_CONTENT_CHARTS_DIR)
 ```
 
@@ -173,11 +173,11 @@ def export_all_charts(...):
 For Docker or custom deployments:
 
 ```bash
-# Override frontend content charts directory
-export FRONTEND_CONTENT_CHARTS_DIR=/app/frontend-content/charts
+# Override frontend assets charts directory
+export FRONTEND_CONTENT_CHARTS_DIR=/app/frontend-assets/charts
 
 # Default (local development)
-# FRONTEND_CONTENT_CHARTS_DIR=../frontend/src/content/charts
+# FRONTEND_CONTENT_CHARTS_DIR=../frontend/src/assets/charts
 ```
 
 ## Development Workflow
@@ -194,12 +194,12 @@ python data-pipeline/scripts/run_pipeline.py --json --charts
 
 This will:
 - Generate charts to `data-pipeline/output/charts/`
-- Copy charts to `frontend/src/content/charts/`
+- Copy charts to `frontend/src/assets/charts/`
 
 ### 2. Verify Charts
 
 ```bash
-ls frontend/src/content/charts/USA/
+ls frontend/src/assets/charts/USA/
 # Should show:
 # fertility_heatmap.png
 # seasonality_heatmap.png
@@ -226,7 +226,7 @@ docker compose run pipeline
 
 # This generates charts to both:
 # - /app/output/charts/ (container)
-# - /app/frontend-assets/ (mounted to frontend/src/content/charts)
+# - /app/frontend-assets/ (mounted to frontend/src/assets/charts)
 
 # Build frontend
 docker compose run frontend-build
@@ -245,7 +245,7 @@ npm run build
 ```
 
 The production build will:
-- Process all images in `src/content/charts/`
+- Process all images in `src/assets/charts/`
 - Optimize and compress them
 - Generate content-hashed filenames
 - Output to `dist/_astro/`
@@ -258,7 +258,7 @@ The production build will:
 
 **Causes:**
 1. Pipeline hasn't been run with `--charts` flag
-2. Charts weren't copied to `frontend/src/content/charts/`
+2. Charts weren't copied to `frontend/src/assets/charts/`
 3. Country slug mismatch (check `get_country_slug()` output)
 
 **Solution:**
@@ -267,7 +267,7 @@ The production build will:
 python data-pipeline/scripts/run_pipeline.py --charts
 
 # Verify charts exist
-ls frontend/src/content/charts/*/
+ls frontend/src/assets/charts/*/
 ```
 
 ### Stale Chart Images
@@ -314,4 +314,4 @@ The following chart types are generated (see `chart_exporter.py` for details):
 | Births Chart | `births_chart.png` | Total monthly births over time |
 | Daily Fertility Rate Chart | `daily_fertility_rate_chart.png` | Daily births per 100k women over time |
 
-All filenames match the `CHART_FILENAMES` constant in `chart_exporter.py` and the `CHART_TYPES` constant in `frontend/src/content/config.ts`.
+All filenames match the `CHART_FILENAMES` constant in `chart_exporter.py` and the `CHART_TYPES` constant in `frontend/src/lib/chart-config.ts`.

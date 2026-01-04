@@ -57,7 +57,7 @@ const files = import.meta.glob('../../assets/data/fertility/*.json');
 
 **Locations:**
 - `output/charts/{country-slug}/` - Pipeline output (for archival)
-- `../frontend/src/content/charts/{country-slug}/` - Frontend assets (for display)
+- `../frontend/src/assets/charts/{country-slug}/` - Frontend assets (for display)
 
 **Files per country:**
 - `fertility_heatmap.png` - Fertility rate heatmap

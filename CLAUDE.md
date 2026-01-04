@@ -130,7 +130,7 @@ output/                              frontend/src/assets/data/     frontend/publ
 └── conception/{country}.json ─────> └── conception/*.json  ────> └── conception/*.json
 ```
 
-Charts follow a similar pattern but use `src/content/charts/` (see CHART_LOADING.md).
+Charts follow a similar pattern but use `src/assets/charts/` (see CHART_LOADING.md).
 
 ### Frontend Architecture
 

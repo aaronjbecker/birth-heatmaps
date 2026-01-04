@@ -6,7 +6,7 @@
  * with graceful fallback when charts haven't been generated yet.
  */
 import { Image } from 'astro:assets';
-import { CHART_METADATA, type ChartType, getChartFilename } from '../content/config';
+import { CHART_METADATA, type ChartType, getChartFilename } from '../lib/chart-config';
 
 export interface Props {
   countrySlug: string;
@@ -25,11 +25,11 @@ let chartImage: ImageMetadata | null = null;
 try {
   // Use Vite's glob import to get all chart images
   const images = import.meta.glob<{ default: ImageMetadata }>(
-    '../content/charts/**/*.png',
+    '../assets/charts/**/*.png',
     { eager: true }
   );
 
-  const imagePath = `../content/charts/${countrySlug}/${filename}`;
+  const imagePath = `../assets/charts/${countrySlug}/${filename}`;
   if (images[imagePath]) {
     chartImage = images[imagePath].default;
   }

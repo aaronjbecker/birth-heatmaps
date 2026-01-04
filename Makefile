@@ -54,10 +54,10 @@ pipeline-json:
 
 # Copy charts from pipeline output to frontend content
 copy-charts:
-	@echo "Copying charts to frontend content collection..."
-	@mkdir -p frontend/src/content/charts
+	@echo "Copying charts to frontend assets..."
+	@mkdir -p frontend/src/assets/charts
 	@if [ -d "data-pipeline/output/charts" ]; then \
-		cp -r data-pipeline/output/charts/* frontend/src/content/charts/; \
+		cp -r data-pipeline/output/charts/* frontend/src/assets/charts/; \
 		echo "Charts copied successfully."; \
 	else \
 		echo "No charts found. Run 'make pipeline' first."; \
@@ -133,7 +133,7 @@ smoke-test:
 # Clean generated files
 clean:
 	rm -rf data-pipeline/output/
-	rm -rf frontend/src/content/charts/
+	rm -rf frontend/src/assets/charts/
 	rm -rf frontend/public/data/*.json
 	rm -rf frontend/public/data/fertility/*.json
 	rm -rf frontend/public/data/seasonality/*.json
