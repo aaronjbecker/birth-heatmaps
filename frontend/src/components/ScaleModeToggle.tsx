@@ -21,8 +21,10 @@ export function ScaleModeToggle({
       <div className="inline-flex items-center gap-1 p-0.5 bg-bg-alt border border-border rounded-md" data-testid="scale-mode-toggle">
         <button
           type="button"
-          className={`py-1.5 px-3 border-0 rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-sans font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
-            mode === 'unified' ? 'bg-primary text-white hover:bg-primary hover:text-white' : ''
+          className={`py-1.5 px-3 border-0 rounded cursor-pointer text-[0.8125rem] font-sans font-medium transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+            mode === 'unified'
+              ? 'bg-primary text-white hover:bg-primary hover:text-white'
+              : 'bg-transparent text-text-muted hover:bg-bg hover:text-text'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={() => onChange('unified')}
           disabled={disabled}
@@ -33,8 +35,10 @@ export function ScaleModeToggle({
         </button>
         <button
           type="button"
-          className={`py-1.5 px-3 border-0 rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-sans font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
-            mode === 'per-country' ? 'bg-primary text-white hover:bg-primary hover:text-white' : ''
+          className={`py-1.5 px-3 border-0 rounded cursor-pointer text-[0.8125rem] font-sans font-medium transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
+            mode === 'per-country'
+              ? 'bg-primary text-white hover:bg-primary hover:text-white'
+              : 'bg-transparent text-text-muted hover:bg-bg hover:text-text'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
           onClick={() => onChange('per-country')}
           disabled={disabled}

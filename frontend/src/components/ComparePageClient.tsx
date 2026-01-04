@@ -148,8 +148,10 @@ export function ComparePageClient({
                 <button
                   key={slug}
                   type="button"
-                  className={`py-1.5 px-3 border-0 rounded bg-transparent text-text-muted cursor-pointer text-sm font-sans font-medium transition-all duration-150 hover:bg-bg-alt hover:text-text ${
-                    metric === slug ? 'bg-primary text-white hover:bg-primary hover:text-white' : ''
+                  className={`py-1.5 px-3 border-0 rounded cursor-pointer text-sm font-sans font-medium transition-all duration-150 ${
+                    metric === slug
+                      ? 'bg-primary text-white hover:bg-primary hover:text-white'
+                      : 'bg-transparent text-text-muted hover:bg-bg-alt hover:text-text'
                   }`}
                   onClick={() => handleMetricChange(slug)}
                 >
