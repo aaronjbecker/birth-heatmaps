@@ -25,7 +25,6 @@
     "@floating-ui/dom": "^1.7.4",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify-json/simple-icons": "^1.2.64",
-    "@nanostores/react": "^1.0.0",
     "astro": "^5.16.6",
     "astro-icon": "^1.1.5",
     "canvas": "^3.2.0",
