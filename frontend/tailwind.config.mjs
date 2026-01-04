@@ -1,46 +1,69 @@
-/** @type {import('tailwindcss').Config} */
+/**
+ * Tailwind CSS Configuration
+ *
+ * THEMING MECHANISM:
+ * ------------------
+ * This project uses a CSS custom properties (CSS variables) approach for theming,
+ * which allows instant theme switching without CSS transitions.
+ *
+ * How it works:
+ * 1. CSS variables are defined in global.css for both light and dark themes
+ * 2. Tailwind colors reference these CSS variables (e.g., 'var(--color-bg)')
+ * 3. When data-theme attribute changes, CSS variables update automatically
+ * 4. NO dark: prefixes needed - colors automatically adapt to the current theme
+ *
+ * Example:
+ *   <div class="bg-bg text-text">  <!-- ✅ Correct - adapts automatically -->
+ *   <div class="bg-bg dark:bg-bg"> <!-- ❌ Redundant - don't use dark: for themed colors -->
+ *
+ * The darkMode config tells Tailwind to use [data-theme="dark"] selector for any
+ * remaining dark: variants (e.g., dark:bg-green-600 for Tailwind's default colors).
+ *
+ * @type {import('tailwindcss').Config}
+ */
 export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
   darkMode: ['selector', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Background colors
+        // Background colors - reference CSS custom properties defined in global.css
+        // These automatically update when data-theme attribute changes
         bg: {
-          DEFAULT: '#fafafa',
-          alt: '#ffffff',
-          elevated: '#ffffff',
+          DEFAULT: 'var(--color-bg)',
+          alt: 'var(--color-bg-alt)',
+          elevated: 'var(--color-bg-elevated)',
         },
         // Text colors
         text: {
-          DEFAULT: '#1a1a1a',
-          muted: '#666666',
+          DEFAULT: 'var(--color-text)',
+          muted: 'var(--color-text-muted)',
         },
         // Border colors
         border: {
-          DEFAULT: '#e5e5e5',
-          light: '#f0f0f0',
+          DEFAULT: 'var(--color-border)',
+          light: 'var(--color-border-light)',
         },
         // Primary brand colors
         primary: {
-          DEFAULT: '#2563eb',
-          hover: '#1d4ed8',
+          DEFAULT: 'var(--color-primary)',
+          hover: 'var(--color-primary-hover)',
         },
         // Component-specific colors
         card: {
-          bg: '#ffffff',
-          border: '#e5e5e5',
+          bg: 'var(--color-card-bg)',
+          border: 'var(--color-card-border)',
         },
         tooltip: {
-          bg: 'rgba(255, 255, 255, 0.98)',
-          border: '#cccccc',
+          bg: 'var(--color-tooltip-bg)',
+          border: 'var(--color-tooltip-border)',
         },
-        shadow: 'rgba(0, 0, 0, 0.1)',
+        shadow: 'var(--color-shadow)',
         // SVG/D3 visualization colors
         svg: {
-          text: '#333333',
-          axis: '#666666',
-          grid: '#e0e0e0',
+          text: 'var(--color-svg-text)',
+          axis: 'var(--color-svg-axis)',
+          grid: 'var(--color-svg-grid)',
         },
       },
       spacing: {

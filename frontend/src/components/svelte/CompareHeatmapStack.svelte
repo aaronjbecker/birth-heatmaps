@@ -89,16 +89,16 @@
 </script>
 
 {#if countries.length === 0}
-  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded-lg border border-dashed border-border text-center mt-4 dark:bg-bg-alt dark:border-border">
-    <h3 class="text-lg font-semibold text-text m-0 mb-2 dark:text-text">No countries selected</h3>
-    <p class="text-sm text-text-muted m-0 dark:text-text-muted">
+  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded-lg border border-dashed border-border text-center mt-4">
+    <h3 class="text-lg font-semibold text-text m-0 mb-2">No countries selected</h3>
+    <p class="text-sm text-text-muted m-0">
       Select two or more countries above to compare their birth patterns.
     </p>
   </div>
 {:else}
   <div class="flex flex-col gap-4 w-full mt-4">
     <!-- Year range filter at top -->
-    <div class="px-3 py-2 bg-bg-alt border border-border rounded-lg dark:bg-bg-alt dark:border-border">
+    <div class="px-3 py-2 bg-bg-alt border border-border rounded-lg">
       <YearRangeFilter
         min={commonYearRange[0]}
         max={commonYearRange[1]}
@@ -115,17 +115,17 @@
       {@const legendColorScale = getColorScaleForCountry(country) || country.colorScale}
       {@const legendHoveredValue = getLegendHoveredValue(country)}
 
-      <div class="flex flex-col gap-0 border border-border rounded-lg overflow-hidden bg-bg-alt dark:bg-bg-alt dark:border-border">
+      <div class="flex flex-col gap-0 border border-border rounded-lg overflow-hidden bg-bg-alt">
         <!-- Country header -->
-        <div class="flex items-center justify-between px-4 py-2.5 bg-bg-alt border-b border-border dark:bg-bg-alt dark:border-border">
-          <h3 class="text-lg font-semibold text-text m-0 dark:text-text">{country.country.name}</h3>
-          <span class="text-[0.8125rem] text-text-muted dark:text-text-muted">
+        <div class="flex items-center justify-between px-4 py-2.5 bg-bg-alt border-b border-border">
+          <h3 class="text-lg font-semibold text-text m-0">{country.country.name}</h3>
+          <span class="text-[0.8125rem] text-text-muted">
             {Math.min(...country.years)}–{Math.max(...country.years)}
           </span>
         </div>
 
         <!-- Heatmap -->
-        <div class="bg-bg-alt dark:bg-bg-alt">
+        <div class="bg-bg-alt">
           <Heatmap
             data={alignedData}
             {height}
@@ -139,7 +139,7 @@
         </div>
 
         <!-- Color legend below heatmap -->
-        <div class="px-4 py-2.5 bg-bg-alt border-t border-border dark:bg-bg-alt dark:border-border">
+        <div class="px-4 py-2.5 bg-bg-alt border-t border-border">
           <ColorLegend
             colorScale={legendColorScale}
             metric={country.metric}

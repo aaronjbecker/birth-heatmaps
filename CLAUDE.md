@@ -161,6 +161,45 @@ Charts follow a similar pattern but use `src/assets/charts/` (see CHART_LOADING.
 
 **State Management:** React hooks within components; no global state management needed.
 
+### Theming System
+
+The project uses a **CSS custom properties approach** for instant theme switching without transitions:
+
+**How it works:**
+1. CSS variables defined in `frontend/src/styles/global.css` for both themes:
+   ```css
+   :root[data-theme="light"] { --color-bg: #fafafa; }
+   :root[data-theme="dark"]  { --color-bg: #0f0f0f; }
+   ```
+
+2. Tailwind config (`frontend/tailwind.config.mjs`) references these variables:
+   ```js
+   colors: { bg: { DEFAULT: 'var(--color-bg)' } }
+   ```
+
+3. JavaScript sets `data-theme` attribute on `<html>`:
+   - `ThemeToggle.astro` - User toggle button
+   - `BaseLayout.astro` - Inline script prevents FOUC (Flash of Unstyled Content)
+
+4. When `data-theme` changes, CSS variables update **instantly** (no transitions)
+
+**Usage in components:**
+```tsx
+// ✅ Correct - automatically theme-aware
+<div className="bg-bg text-text border-border">
+
+// ❌ Wrong - redundant dark: prefix
+<div className="bg-bg dark:bg-bg-alt">
+```
+
+**Key files:**
+- `frontend/src/styles/global.css` - CSS variable definitions
+- `frontend/tailwind.config.mjs` - Tailwind color mappings
+- `frontend/src/components/ThemeToggle.astro` - Theme toggle UI
+- `frontend/src/layouts/BaseLayout.astro` - Theme initialization
+
+**Design decision:** No CSS transitions on theme changes ensures instant, consistent switching across all components.
+
 ## Data Loading Patterns
 
 This project uses **two data loading patterns** depending on the use case:

@@ -139,7 +139,7 @@ test.describe('Theme Toggle', () => {
     await page.waitForTimeout(300); // Wait for transition
 
     // In dark mode, sun icon should be visible
-    await expect(sunIcon).toHaveClass(/visible/);
+    await expect(sunIcon).toHaveCSS('opacity', '1');
   });
 
   test('CSS variables change when theme switches', async ({ page }) => {
@@ -242,8 +242,8 @@ test.describe('Theme Toggle', () => {
     await page.reload();
 
     // Use more specific selectors to avoid Astro dev toolbar
-    await expect(page.locator('header.header h1').first()).toBeVisible();
-    await expect(page.locator('header.header nav').first()).toBeVisible();
+    await expect(page.locator('header h1').first()).toBeVisible();
+    await expect(page.locator('header nav').first()).toBeVisible();
     await expect(page.locator('#theme-toggle')).toBeVisible();
 
     // Toggle to dark theme
@@ -251,8 +251,8 @@ test.describe('Theme Toggle', () => {
     await page.waitForTimeout(100);
 
     // Check components still visible in dark theme
-    await expect(page.locator('header.header h1').first()).toBeVisible();
-    await expect(page.locator('header.header nav').first()).toBeVisible();
+    await expect(page.locator('header h1').first()).toBeVisible();
+    await expect(page.locator('header nav').first()).toBeVisible();
     await expect(page.locator('#theme-toggle')).toBeVisible();
   });
 

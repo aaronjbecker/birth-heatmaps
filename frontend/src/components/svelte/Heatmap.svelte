@@ -243,7 +243,7 @@
 
       <!-- Left scroll indicator -->
       <div
-        class="absolute bottom-0 left-0 h-7 w-[90px] pointer-events-none flex items-center text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10 bg-gradient-to-r from-bg to-transparent pl-2.5 dark:from-bg"
+        class="absolute bottom-0 left-0 h-7 w-[90px] pointer-events-none flex items-center text-[11px] font-medium text-text-muted z-10 bg-gradient-to-r from-bg to-transparent pl-2.5"
         style:opacity={scrollEnabled && !scrollState.atStart ? 1 : 0}
       >
         ← more left
@@ -251,7 +251,7 @@
 
       <!-- Right scroll indicator -->
       <div
-        class="absolute bottom-0 right-0 h-7 w-[110px] pointer-events-none flex items-center justify-end text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10 bg-gradient-to-l from-bg to-transparent pr-2.5 dark:from-bg"
+        class="absolute bottom-0 right-0 h-7 w-[110px] pointer-events-none flex items-center justify-end text-[11px] font-medium text-text-muted z-10 bg-gradient-to-l from-bg to-transparent pr-2.5"
         style:opacity={scrollEnabled && !scrollState.atEnd ? 1 : 0}
       >
         more right →

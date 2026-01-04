@@ -45,11 +45,11 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border dark:bg-bg-alt dark:border-border">
-    <span class="text-sm text-text-muted dark:text-text-muted">Loading heatmap data...</span>
+  <div class="flex items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border">
+    <span class="text-sm text-text-muted">Loading heatmap data...</span>
   </div>
 {:else if error}
-  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border dark:bg-bg-alt dark:border-border">
+  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border">
     <span class="text-sm text-red-500">{error}</span>
   </div>
 {:else}

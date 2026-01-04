@@ -36,12 +36,12 @@ export function CompareShareButtons({
 
   return (
     <div className="flex items-center gap-2 flex-wrap" data-testid="compare-share-buttons">
-      <span className="text-sm text-text-muted mr-1 dark:text-text-muted">Share:</span>
+      <span className="text-sm text-text-muted mr-1">Share:</span>
 
       {/* Copy Link */}
       <button
         type="button"
-        className={`inline-flex items-center justify-center gap-1 py-1.5 px-3 border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline transition-all duration-150 hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 dark:bg-bg-alt dark:text-text dark:border-border dark:hover:bg-bg ${
+        className={`inline-flex items-center justify-center gap-1 py-1.5 px-3 border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 ${
           copied ? 'bg-[var(--color-success,#10b981)] border-[var(--color-success,#10b981)] text-white dark:bg-green-600 dark:border-green-600' : 'border-border'
         }`}
         onClick={handleCopyLink}
@@ -75,7 +75,7 @@ export function CompareShareButtons({
         href={getTwitterShareUrl(url, shareText)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline transition-all duration-150 hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 dark:bg-bg-alt dark:text-text dark:border-border dark:hover:bg-bg"
+        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-label="Share on X (Twitter)"
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -89,7 +89,7 @@ export function CompareShareButtons({
         href={getFacebookShareUrl(url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline transition-all duration-150 hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 dark:bg-bg-alt dark:text-text dark:border-border dark:hover:bg-bg"
+        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-label="Share on Facebook"
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -103,7 +103,7 @@ export function CompareShareButtons({
         href={getLinkedInShareUrl(url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline transition-all duration-150 hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 dark:bg-bg-alt dark:text-text dark:border-border dark:hover:bg-bg"
+        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-label="Share on LinkedIn"
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -117,7 +117,7 @@ export function CompareShareButtons({
         href={getRedditShareUrl(url, title)}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline transition-all duration-150 hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 dark:bg-bg-alt dark:text-text dark:border-border dark:hover:bg-bg"
+        className="inline-flex items-center justify-center gap-1 py-1.5 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-[0.8125rem] font-sans no-underline hover:border-primary hover:bg-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-label="Share on Reddit"
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">

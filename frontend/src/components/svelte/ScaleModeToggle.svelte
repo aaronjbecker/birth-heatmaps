@@ -16,10 +16,10 @@
 
 <div class="flex items-center gap-2 text-sm text-text-muted">
   <span>Color scale:</span>
-  <div class="inline-flex items-center gap-1 p-0.5 bg-bg-alt border border-border rounded-md dark:bg-bg-alt dark:border-border" data-testid="scale-mode-toggle">
+  <div class="inline-flex items-center gap-1 p-0.5 bg-bg-alt border border-border rounded-md" data-testid="scale-mode-toggle">
     <button
       type="button"
-      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-bg dark:hover:text-text"
+      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       class:bg-primary={mode === 'unified'}
       class:text-white={mode === 'unified'}
       class:hover:bg-primary={mode === 'unified'}
@@ -33,7 +33,7 @@
     </button>
     <button
       type="button"
-      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-bg dark:hover:text-text"
+      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
       class:bg-primary={mode === 'per-country'}
       class:text-white={mode === 'per-country'}
       class:hover:bg-primary={mode === 'per-country'}

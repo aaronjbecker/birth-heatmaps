@@ -245,7 +245,7 @@
 
 <div bind:this={containerRef} class="flex flex-col items-center px-2 py-1 w-full max-w-full overflow-hidden box-border">
   {#if title}
-    <div class="text-xs text-text mb-1.5 dark:text-text">{title}</div>
+    <div class="text-xs text-text mb-1.5">{title}</div>
   {/if}
   <svg bind:this={svgRef} width={actualWidth} height={totalHeight}></svg>
 </div>

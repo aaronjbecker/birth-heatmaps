@@ -299,7 +299,7 @@
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:bg-bg dark:text-text dark:border-border"
+          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           value={startInput}
           oninput={handleStartInputChange}
           onfocus={handleStartFocus}
@@ -313,7 +313,7 @@
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:bg-bg dark:text-text dark:border-border"
+          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           value={endInput}
           oninput={handleEndInputChange}
           onfocus={handleEndFocus}
@@ -327,7 +327,7 @@
     <div class="min-h-8 flex items-center">
       {#if !isReset}
         <button
-          class="px-3 py-1.5 text-xs border border-border rounded bg-bg text-text-muted cursor-pointer transition-all duration-150 hover:border-primary hover:text-text dark:bg-bg dark:border-border dark:text-text-muted dark:hover:border-primary dark:hover:text-text"
+          class="px-3 py-1.5 text-xs border border-border rounded bg-bg text-text-muted cursor-pointer hover:border-primary hover:text-text"
           onclick={handleReset}
           type="button"
           data-testid="year-range-reset"
