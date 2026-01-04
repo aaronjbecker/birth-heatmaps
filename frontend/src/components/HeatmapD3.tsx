@@ -20,83 +20,6 @@ export interface HeatmapD3Props {
   onCellHover?: (value: number | null) => void;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '100%',
-  },
-  controlsTop: {
-    width: '100%',
-    marginBottom: '16px',
-    padding: '0 16px',
-  },
-  controlsBottom: {
-    width: '100%',
-    marginTop: '16px',
-    padding: '0 16px',
-  },
-  heatmapContainer: {
-    position: 'relative',
-    width: '100%',
-    minHeight: '400px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    overflow: 'hidden',
-  },
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '400px',
-    color: 'var(--color-text-muted)',
-  },
-  error: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '400px',
-    color: '#d32f2f',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  scrollIndicatorLeft: {
-    position: 'absolute',
-    left: 0,
-    bottom: 0,
-    height: '28px',
-    width: '90px',
-    background: 'linear-gradient(to right, var(--color-bg), transparent)',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    paddingLeft: '10px',
-    fontSize: '11px',
-    fontWeight: 500,
-    color: 'var(--color-text-muted)',
-    transition: 'opacity 0.2s ease-in-out',
-    zIndex: 10,
-  },
-  scrollIndicatorRight: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    height: '28px',
-    width: '110px',
-    background: 'linear-gradient(to left, var(--color-bg), transparent)',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingRight: '10px',
-    fontSize: '11px',
-    fontWeight: 500,
-    color: 'var(--color-text-muted)',
-    transition: 'opacity 0.2s ease-in-out',
-    zIndex: 10,
-  },
-};
-
 export function HeatmapD3({
   data,
   width,
@@ -265,9 +188,9 @@ export function HeatmapD3({
 
   if (!data || !data.data || data.data.length === 0) {
     return (
-      <div style={styles.error}>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-2 text-red-600 dark:text-red-400">
         <span>No data available</span>
-        <span style={{ fontSize: '12px', color: '#888' }}>
+        <span className="text-xs text-text-muted">
           Run the data pipeline to generate JSON files
         </span>
       </div>
@@ -278,9 +201,9 @@ export function HeatmapD3({
   const maxYear = Math.max(...data.years);
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col w-full">
       {showControls && showYearFilter && (
-        <div style={styles.controlsTop}>
+        <div className="w-full mb-4 px-4">
           <YearRangeFilter
             min={minYear}
             max={maxYear}
@@ -292,12 +215,12 @@ export function HeatmapD3({
         </div>
       )}
 
-      <div style={{ position: 'relative' }}>
+      <div className="relative">
         {/* Scrolling container - also serves as tooltip container */}
         <div
           ref={scrollWrapperRef}
+          className="relative w-full min-h-[400px] border border-border rounded overflow-hidden"
           style={{
-            ...styles.heatmapContainer,
             height,
             overflowX: scrollEnabled ? 'auto' : 'hidden',
           }}
@@ -305,13 +228,14 @@ export function HeatmapD3({
           onPointerDown={handleContainerPointerDown}
         >
           {/* D3 will render SVG and tooltip into this container */}
-          <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+          <div ref={containerRef} className="w-full h-full" />
         </div>
 
         {/* Left scroll indicator */}
         <div
+          className="absolute left-0 bottom-0 h-7 w-[90px] pointer-events-none flex items-center pl-2.5 text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10"
           style={{
-            ...styles.scrollIndicatorLeft,
+            background: 'linear-gradient(to right, var(--color-bg), transparent)',
             opacity: scrollEnabled && !scrollState.atStart ? 1 : 0,
           }}
         >
@@ -320,8 +244,9 @@ export function HeatmapD3({
 
         {/* Right scroll indicator */}
         <div
+          className="absolute right-0 bottom-0 h-7 w-[110px] pointer-events-none flex items-center justify-end pr-2.5 text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10"
           style={{
-            ...styles.scrollIndicatorRight,
+            background: 'linear-gradient(to left, var(--color-bg), transparent)',
             opacity: scrollEnabled && !scrollState.atEnd ? 1 : 0,
           }}
         >
@@ -330,7 +255,7 @@ export function HeatmapD3({
       </div>
 
       {showControls && showLegend && (
-        <div style={styles.controlsBottom}>
+        <div className="w-full mt-4 px-4">
           <ColorLegend
             colorScale={effectiveData.colorScale}
             width={containerWidth - 32}

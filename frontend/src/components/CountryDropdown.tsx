@@ -12,136 +12,6 @@ export interface CountryDropdownProps {
   variant?: 'header' | 'inline';
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    position: 'relative',
-    display: 'inline-block',
-  },
-  trigger: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 8px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    backgroundColor: 'var(--color-bg-alt)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontFamily: 'inherit',
-    lineHeight: 1.4,
-  },
-  triggerInline: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '2px 6px',
-    border: '1px solid transparent',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    fontSize: 'inherit',
-    fontFamily: 'inherit',
-    lineHeight: 'inherit',
-  },
-  arrow: {
-    fontSize: '0.625rem',
-    marginLeft: '2px',
-    transition: 'transform 0.15s ease',
-  },
-  arrowOpen: {
-    transform: 'rotate(180deg)',
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 'calc(100% + 4px)',
-    left: 0,
-    minWidth: '250px',
-    maxHeight: '400px',
-    backgroundColor: 'var(--color-bg-alt)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    boxShadow: '0 4px 12px var(--color-shadow)',
-    zIndex: 1000,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  dropdownRight: {
-    left: 'auto',
-    right: 0,
-  },
-  searchContainer: {
-    padding: '8px',
-    borderBottom: '1px solid var(--color-border)',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '6px 10px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    fontSize: '0.875rem',
-    backgroundColor: 'var(--color-bg)',
-    color: 'var(--color-text)',
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  list: {
-    flex: 1,
-    overflowY: 'auto',
-    margin: 0,
-    padding: '4px 0',
-    listStyle: 'none',
-  },
-  option: {
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    color: 'var(--color-text)',
-    backgroundColor: 'transparent',
-    transition: 'background-color 0.1s ease',
-  },
-  optionHighlighted: {
-    backgroundColor: 'var(--color-bg)',
-  },
-  optionCurrent: {
-    fontWeight: 600,
-    color: 'var(--color-primary)',
-  },
-  noResults: {
-    padding: '12px',
-    textAlign: 'center',
-    color: 'var(--color-text-muted)',
-    fontSize: '0.875rem',
-  },
-  count: {
-    padding: '6px 12px',
-    borderTop: '1px solid var(--color-border)',
-    fontSize: '0.75rem',
-    color: 'var(--color-text-muted)',
-    textAlign: 'center',
-  },
-};
-
-// Focus styles for the search input (pseudo-selectors need CSS string)
-const dropdownStyles = `
-  .country-dropdown-search:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-  }
-  .country-dropdown-trigger:hover {
-    border-color: var(--color-primary);
-  }
-  .country-dropdown-trigger-inline:hover {
-    background-color: var(--color-bg);
-    border-color: var(--color-border);
-  }
-  .country-dropdown-option:hover {
-    background-color: var(--color-bg);
-  }
-`;
-
 export function CountryDropdown({
   countries,
   currentCountry,
@@ -276,18 +146,16 @@ export function CountryDropdown({
   );
 
   const isInline = variant === 'inline';
-  const triggerStyle = isInline ? styles.triggerInline : styles.trigger;
-  const triggerClass = isInline
-    ? 'country-dropdown-trigger-inline'
-    : 'country-dropdown-trigger';
 
   return (
-    <div style={styles.container} ref={containerRef}>
-      <style>{dropdownStyles}</style>
+    <div className="relative inline-block" ref={containerRef}>
       <button
         type="button"
-        className={triggerClass}
-        style={triggerStyle}
+        className={`flex items-center gap-1 rounded cursor-pointer font-sans ${
+          isInline
+            ? 'inline-flex py-0.5 px-1.5 border border-transparent bg-transparent text-text hover:bg-bg hover:border-border'
+            : 'py-1 px-2 border border-border bg-bg-alt text-text text-sm leading-[1.4] hover:border-primary'
+        }`}
         onClick={handleToggle}
         onKeyDown={handleKeyDown}
         aria-expanded={isOpen}
@@ -296,10 +164,7 @@ export function CountryDropdown({
       >
         <span>{currentCountryName ?? 'Go to country...'}</span>
         <span
-          style={{
-            ...styles.arrow,
-            ...(isOpen ? styles.arrowOpen : {}),
-          }}
+          className={`text-[0.625rem] ml-0.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
           aria-hidden="true"
         >
           ▼
@@ -308,20 +173,18 @@ export function CountryDropdown({
 
       {isOpen && (
         <div
-          style={{
-            ...styles.dropdown,
-            ...(isInline ? {} : styles.dropdownRight),
-          }}
+          className={`absolute top-[calc(100%+4px)] min-w-[250px] max-h-[400px] bg-bg-alt border border-border rounded shadow-[0_4px_12px_var(--color-shadow)] z-[1000] overflow-hidden flex flex-col ${
+            isInline ? 'left-0' : 'left-auto right-0'
+          }`}
           role="listbox"
           aria-label="Select a country"
           data-testid="country-dropdown-menu"
         >
-          <div style={styles.searchContainer}>
+          <div className="p-2 border-b border-border">
             <input
               ref={searchInputRef}
               type="text"
-              className="country-dropdown-search"
-              style={styles.searchInput}
+              className="w-full py-1.5 px-2.5 border border-border rounded text-sm bg-bg text-text font-sans outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               placeholder="Search countries..."
               value={searchQuery}
               onChange={handleSearchChange}
@@ -332,9 +195,9 @@ export function CountryDropdown({
           </div>
 
           {filteredCountries.length === 0 ? (
-            <div style={styles.noResults}>No countries found</div>
+            <div className="p-3 text-center text-text-muted text-sm">No countries found</div>
           ) : (
-            <ul style={styles.list} ref={listRef}>
+            <ul className="flex-1 overflow-y-auto m-0 py-1 px-0 list-none" ref={listRef}>
               {filteredCountries.map((country, index) => {
                 const isCurrent = country.code === currentCountry;
                 const isHighlighted = index === highlightedIndex;
@@ -342,12 +205,9 @@ export function CountryDropdown({
                 return (
                   <li
                     key={country.code}
-                    className="country-dropdown-option"
-                    style={{
-                      ...styles.option,
-                      ...(isHighlighted ? styles.optionHighlighted : {}),
-                      ...(isCurrent ? styles.optionCurrent : {}),
-                    }}
+                    className={`py-2 px-3 cursor-pointer text-sm text-text bg-transparent transition-colors duration-100 hover:bg-bg ${
+                      isHighlighted ? 'bg-bg' : ''
+                    } ${isCurrent ? 'font-semibold text-primary' : ''}`}
                     onClick={() => handleSelect(country.code)}
                     onMouseEnter={() => setHighlightedIndex(index)}
                     role="option"
@@ -362,7 +222,7 @@ export function CountryDropdown({
             </ul>
           )}
 
-          <div style={styles.count}>
+          <div className="py-1.5 px-3 border-t border-border text-xs text-text-muted text-center">
             {filteredCountries.length === countries.length
               ? `${countries.length} countries`
               : `${filteredCountries.length} of ${countries.length} countries`}

@@ -12,189 +12,6 @@ export interface CountryMultiSelectProps {
   maxDisplay?: number;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    position: 'relative',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px',
-  },
-  triggerRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    flexWrap: 'wrap',
-  },
-  trigger: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '8px 12px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    backgroundColor: 'var(--color-bg-alt)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontFamily: 'inherit',
-    lineHeight: 1.4,
-  },
-  arrow: {
-    fontSize: '0.625rem',
-    marginLeft: '2px',
-    transition: 'transform 0.15s ease',
-  },
-  arrowOpen: {
-    transform: 'rotate(180deg)',
-  },
-  chipsContainer: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '6px',
-  },
-  chip: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '4px',
-    padding: '4px 8px',
-    backgroundColor: 'var(--color-primary)',
-    color: 'white',
-    borderRadius: '16px',
-    fontSize: '0.8125rem',
-    fontWeight: 500,
-  },
-  chipRemove: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '16px',
-    height: '16px',
-    padding: 0,
-    border: 'none',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    color: 'white',
-    borderRadius: '50%',
-    cursor: 'pointer',
-    fontSize: '10px',
-    lineHeight: 1,
-  },
-  dropdown: {
-    position: 'absolute',
-    top: 'calc(100% + 4px)',
-    left: 0,
-    minWidth: '300px',
-    maxWidth: '400px',
-    maxHeight: '450px',
-    backgroundColor: 'var(--color-bg-alt)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    boxShadow: '0 4px 12px var(--color-shadow)',
-    zIndex: 1000,
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  searchContainer: {
-    padding: '8px',
-    borderBottom: '1px solid var(--color-border)',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '6px 10px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    fontSize: '0.875rem',
-    backgroundColor: 'var(--color-bg)',
-    color: 'var(--color-text)',
-    fontFamily: 'inherit',
-    outline: 'none',
-  },
-  actions: {
-    display: 'flex',
-    gap: '8px',
-    padding: '8px',
-    borderBottom: '1px solid var(--color-border)',
-  },
-  actionButton: {
-    flex: 1,
-    padding: '6px 12px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    backgroundColor: 'var(--color-bg)',
-    color: 'var(--color-text)',
-    cursor: 'pointer',
-    fontSize: '0.8125rem',
-    fontFamily: 'inherit',
-  },
-  list: {
-    flex: 1,
-    overflowY: 'auto',
-    margin: 0,
-    padding: '4px 0',
-    listStyle: 'none',
-  },
-  option: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    padding: '8px 12px',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    color: 'var(--color-text)',
-    backgroundColor: 'transparent',
-    transition: 'background-color 0.1s ease',
-  },
-  checkbox: {
-    width: '16px',
-    height: '16px',
-    accentColor: 'var(--color-primary)',
-    cursor: 'pointer',
-  },
-  noResults: {
-    padding: '12px',
-    textAlign: 'center',
-    color: 'var(--color-text-muted)',
-    fontSize: '0.875rem',
-  },
-  count: {
-    padding: '6px 12px',
-    borderTop: '1px solid var(--color-border)',
-    fontSize: '0.75rem',
-    color: 'var(--color-text-muted)',
-    textAlign: 'center',
-  },
-  moreChip: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '4px 8px',
-    backgroundColor: 'var(--color-bg-alt)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '16px',
-    fontSize: '0.8125rem',
-    color: 'var(--color-text-muted)',
-  },
-};
-
-const dropdownStyles = `
-  .country-multiselect-search:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-  }
-  .country-multiselect-trigger:hover {
-    border-color: var(--color-primary);
-  }
-  .country-multiselect-option:hover {
-    background-color: var(--color-bg);
-  }
-  .country-multiselect-action:hover {
-    background-color: var(--color-bg-alt);
-    border-color: var(--color-primary);
-  }
-  .country-multiselect-chip-remove:hover {
-    background-color: rgba(255, 255, 255, 0.4);
-  }
-`;
-
 export function CountryMultiSelect({
   countries,
   selected,
@@ -304,19 +121,16 @@ export function CountryMultiSelect({
   const remainingCount = selectedCountries.length - maxDisplay;
 
   return (
-    <div style={styles.container} ref={containerRef}>
-      <style>{dropdownStyles}</style>
-
+    <div className="relative flex flex-col gap-2" ref={containerRef}>
       {/* Selected countries as chips */}
       {selectedCountries.length > 0 && (
-        <div style={styles.chipsContainer}>
+        <div className="flex flex-wrap gap-1.5">
           {visibleChips.map((country) => (
-            <span key={country.code} style={styles.chip}>
+            <span key={country.code} className="inline-flex items-center gap-1 py-1 px-2 bg-primary text-white rounded-full text-[0.8125rem] font-medium">
               {country.name}
               <button
                 type="button"
-                className="country-multiselect-chip-remove"
-                style={styles.chipRemove}
+                className="inline-flex items-center justify-center w-4 h-4 p-0 border-0 bg-white/20 text-white rounded-full cursor-pointer text-[10px] leading-none hover:bg-white/40"
                 onClick={(e) => handleRemove(country.code, e)}
                 aria-label={`Remove ${country.name}`}
               >
@@ -325,17 +139,18 @@ export function CountryMultiSelect({
             </span>
           ))}
           {remainingCount > 0 && (
-            <span style={styles.moreChip}>+{remainingCount} more</span>
+            <span className="inline-flex items-center py-1 px-2 bg-bg-alt border border-border rounded-full text-[0.8125rem] text-text-muted">
+              +{remainingCount} more
+            </span>
           )}
         </div>
       )}
 
       {/* Trigger button */}
-      <div style={styles.triggerRow}>
+      <div className="flex items-center gap-2 flex-wrap">
         <button
           type="button"
-          className="country-multiselect-trigger"
-          style={styles.trigger}
+          className="flex items-center gap-1 py-2 px-3 border border-border rounded bg-bg-alt text-text cursor-pointer text-sm font-sans leading-[1.4] hover:border-primary"
           onClick={handleToggle}
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -347,10 +162,7 @@ export function CountryMultiSelect({
               : `${selected.length} selected`}
           </span>
           <span
-            style={{
-              ...styles.arrow,
-              ...(isOpen ? styles.arrowOpen : {}),
-            }}
+            className={`text-[0.625rem] ml-0.5 transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`}
             aria-hidden="true"
           >
             ▼
@@ -360,13 +172,12 @@ export function CountryMultiSelect({
 
       {/* Dropdown */}
       {isOpen && (
-        <div style={styles.dropdown} role="listbox" aria-label="Select countries" data-testid="country-multiselect-menu">
-          <div style={styles.searchContainer}>
+        <div className="absolute top-[calc(100%+4px)] left-0 min-w-[300px] max-w-[400px] max-h-[450px] bg-bg-alt border border-border rounded shadow-[0_4px_12px_var(--color-shadow)] z-[1000] overflow-hidden flex flex-col" role="listbox" aria-label="Select countries" data-testid="country-multiselect-menu">
+          <div className="p-2 border-b border-border">
             <input
               ref={searchInputRef}
               type="text"
-              className="country-multiselect-search"
-              style={styles.searchInput}
+              className="w-full py-1.5 px-2.5 border border-border rounded text-sm bg-bg text-text font-sans outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               placeholder="Search countries..."
               value={searchQuery}
               onChange={handleSearchChange}
@@ -376,19 +187,17 @@ export function CountryMultiSelect({
             />
           </div>
 
-          <div style={styles.actions}>
+          <div className="flex gap-2 p-2 border-b border-border">
             <button
               type="button"
-              className="country-multiselect-action"
-              style={styles.actionButton}
+              className="flex-1 py-1.5 px-3 border border-border rounded bg-bg text-text cursor-pointer text-[0.8125rem] font-sans hover:bg-bg-alt hover:border-primary"
               onClick={handleSelectAll}
             >
               Select All{searchQuery ? ' Visible' : ''}
             </button>
             <button
               type="button"
-              className="country-multiselect-action"
-              style={styles.actionButton}
+              className="flex-1 py-1.5 px-3 border border-border rounded bg-bg text-text cursor-pointer text-[0.8125rem] font-sans hover:bg-bg-alt hover:border-primary"
               onClick={handleClearAll}
             >
               Clear{searchQuery ? ' Visible' : ' All'}
@@ -396,17 +205,16 @@ export function CountryMultiSelect({
           </div>
 
           {filteredCountries.length === 0 ? (
-            <div style={styles.noResults}>No countries found</div>
+            <div className="p-3 text-center text-text-muted text-sm">No countries found</div>
           ) : (
-            <ul style={styles.list}>
+            <ul className="flex-1 overflow-y-auto m-0 py-1 px-0 list-none">
               {filteredCountries.map((country) => {
                 const isSelected = selected.includes(country.code);
 
                 return (
                   <li
                     key={country.code}
-                    className="country-multiselect-option"
-                    style={styles.option}
+                    className="flex items-center gap-2 py-2 px-3 cursor-pointer text-sm text-text bg-transparent transition-colors duration-100 hover:bg-bg"
                     onClick={() => handleSelect(country.code)}
                     role="option"
                     aria-selected={isSelected}
@@ -414,7 +222,7 @@ export function CountryMultiSelect({
                   >
                     <input
                       type="checkbox"
-                      style={styles.checkbox}
+                      className="w-4 h-4 cursor-pointer accent-primary"
                       checked={isSelected}
                       onChange={() => handleSelect(country.code)}
                       onClick={(e) => e.stopPropagation()}
@@ -426,7 +234,7 @@ export function CountryMultiSelect({
             </ul>
           )}
 
-          <div style={styles.count}>
+          <div className="py-1.5 px-3 border-t border-border text-xs text-text-muted text-center">
             {selected.length} of {countries.length} countries selected
           </div>
         </div>

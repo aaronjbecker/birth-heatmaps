@@ -18,170 +18,6 @@ interface DataZone {
   hasData: boolean;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '12px',
-    padding: '0',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    fontSize: '14px',
-    minHeight: '32px',
-  },
-  labelGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-  },
-  label: {
-    color: 'var(--color-text-muted)',
-    fontWeight: 500,
-    textTransform: 'uppercase',
-    fontSize: '0.8125rem',
-    letterSpacing: '0.05em',
-  },
-  range: {
-    color: 'var(--color-text)',
-    fontWeight: 600,
-  },
-  yearInput: {
-    width: '70px',
-    padding: '6px 10px',
-    fontSize: '14px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    backgroundColor: 'var(--color-bg)',
-    color: 'var(--color-text)',
-    fontWeight: 600,
-    textAlign: 'center',
-    appearance: 'none',
-  },
-  inputSeparator: {
-    padding: '0 8px',
-    color: 'var(--color-text-muted)',
-    fontWeight: 500,
-  },
-  sliderContainer: {
-    position: 'relative',
-    height: '28px',
-    marginBottom: '20px',
-    cursor: 'pointer',
-  },
-  sliderTrack: {
-    position: 'absolute',
-    top: '12px',
-    left: 0,
-    right: 0,
-    height: '4px',
-    backgroundColor: 'var(--color-border)',
-    borderRadius: '2px',
-  },
-  sliderRange: {
-    position: 'absolute',
-    top: '12px',
-    height: '4px',
-    backgroundColor: 'var(--color-primary)',
-    borderRadius: '2px',
-  },
-  slider: {
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-    height: '28px',
-    WebkitAppearance: 'none',
-    appearance: 'none',
-    background: 'transparent',
-    pointerEvents: 'none',
-  },
-  ticksContainer: {
-    position: 'absolute',
-    top: '16px',
-    left: 0,
-    right: 0,
-    height: '12px',
-    pointerEvents: 'none',
-  },
-  tickMark: {
-    position: 'absolute',
-    width: '1px',
-    height: '8px', // Larger ticks
-    backgroundColor: 'var(--color-text-muted)', // More visible
-    opacity: 0.4,
-  },
-  edgeLabelsContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: '12px',
-    color: 'var(--color-text-muted)',
-    marginTop: '-4px',
-  },
-  resetButton: {
-    padding: '6px 12px',
-    fontSize: '12px',
-    border: '1px solid var(--color-border)',
-    borderRadius: '4px',
-    backgroundColor: 'var(--color-bg)',
-    color: 'var(--color-text-muted)',
-    cursor: 'pointer',
-    transition: 'all 0.15s ease',
-  },
-};
-
-// Inline CSS for range thumb styling (can't use pseudo-selectors in inline styles)
-const sliderStyles = `
-  .year-range-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    pointer-events: all;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-alt);
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .year-range-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-  }
-  .year-range-slider:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  }
-  .year-range-slider::-moz-range-thumb {
-    pointer-events: all;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-alt);
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  .year-range-slider::-moz-range-thumb:hover {
-    transform: scale(1.1);
-  }
-  .year-range-slider:focus {
-    outline: none;
-  }
-  .year-range-slider:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  }
-  /* Hide number input spinners */
-  input[type=number]::-webkit-inner-spin-button, 
-  input[type=number]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
-  }
-  input[type=number] {
-    -moz-appearance: textfield;
-  }
-`;
-
 /**
  * Calculate tick mark positions based on year range
  * Uses 5-year intervals for short ranges (≤ 30 years), 10-year intervals for longer ranges
@@ -449,17 +285,16 @@ export function YearRangeFilter({
   const dataZones = analyzeDataZones(effectiveMin, effectiveMax, dataYears);
 
   return (
-    <div style={styles.container}>
-      <style>{sliderStyles}</style>
-      <div style={styles.header}>
-        <div style={styles.labelGroup}>
-          <span style={styles.label}>Year Range</span>
-          <div style={{ display: 'flex', alignItems: 'center', marginLeft: '8px' }}>
+    <div className="flex flex-col gap-3 p-0">
+      <div className="flex justify-between items-center text-sm min-h-8">
+        <div className="flex items-center gap-3">
+          <span className="text-text-muted font-medium uppercase text-[0.8125rem] tracking-wider">Year Range</span>
+          <div className="flex items-center ml-2">
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              style={styles.yearInput}
+              className="w-[70px] px-2.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none"
               value={startInput}
               onChange={handleStartChange}
               onFocus={handleStartFocus}
@@ -468,12 +303,12 @@ export function YearRangeFilter({
               data-testid="year-input-start"
               aria-label="Start year"
             />
-            <span style={styles.inputSeparator}>–</span>
+            <span className="px-2 text-text-muted font-medium">–</span>
             <input
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
-              style={styles.yearInput}
+              className="w-[70px] px-2.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none"
               value={endInput}
               onChange={handleEndChange}
               onFocus={handleEndFocus}
@@ -484,10 +319,10 @@ export function YearRangeFilter({
             />
           </div>
         </div>
-        <div style={{ minHeight: '24px', display: 'flex', alignItems: 'center' }}>
+        <div className="min-h-6 flex items-center">
           {!isReset && (
             <button
-              style={styles.resetButton}
+              className="px-3 py-1.5 text-xs border border-border rounded bg-bg text-text-muted cursor-pointer transition-all duration-150 hover:bg-bg-alt hover:border-primary"
               onClick={handleReset}
               type="button"
               data-testid="year-range-reset"
@@ -497,8 +332,8 @@ export function YearRangeFilter({
           )}
         </div>
       </div>
-      <div 
-        style={styles.sliderContainer} 
+      <div
+        className="relative h-7 mb-5 cursor-pointer"
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
@@ -517,12 +352,10 @@ export function YearRangeFilter({
           return (
             <div
               key={index}
+              className="absolute top-2.5 h-1"
               style={{
-                position: 'absolute',
-                top: '10px',
                 left: `${zoneStart}%`,
                 width: `${zoneWidth}%`,
-                height: '4px',
                 backgroundColor: zone.hasData
                   ? 'var(--color-primary)'
                   : 'var(--color-border)',
@@ -535,22 +368,21 @@ export function YearRangeFilter({
           );
         })}
         <div
+          className="absolute top-3 h-1 bg-primary rounded-sm opacity-60"
           style={{
-            ...styles.sliderRange,
             left: `${rangePercent.left}%`,
             right: `${rangePercent.right}%`,
-            opacity: 0.6,
           }}
         />
         {/* Tick marks */}
-        <div style={styles.ticksContainer} data-testid="year-range-ticks">
+        <div className="absolute top-4 left-0 right-0 h-3 pointer-events-none" data-testid="year-range-ticks">
           {tickMarks.map((year) => {
             const position = ((year - effectiveMin) / totalRange) * 100;
             return (
               <div
                 key={year}
+                className="absolute w-px h-2 bg-text-muted opacity-40"
                 style={{
-                  ...styles.tickMark,
                   left: `${position}%`,
                 }}
                 data-year={year}
@@ -560,8 +392,7 @@ export function YearRangeFilter({
         </div>
         <input
           type="range"
-          className="year-range-slider"
-          style={{ ...styles.slider, zIndex: 2 }}
+          className="year-range-slider absolute top-0 w-full h-7 appearance-none bg-transparent pointer-events-none z-[2]"
           min={effectiveMin}
           max={effectiveMax}
           value={start}
@@ -570,8 +401,7 @@ export function YearRangeFilter({
         />
         <input
           type="range"
-          className="year-range-slider"
-          style={{ ...styles.slider, zIndex: 1 }}
+          className="year-range-slider absolute top-0 w-full h-7 appearance-none bg-transparent pointer-events-none z-[1]"
           min={effectiveMin}
           max={effectiveMax}
           value={end}
@@ -580,7 +410,7 @@ export function YearRangeFilter({
         />
       </div>
       {/* Edge labels */}
-      <div style={styles.edgeLabelsContainer}>
+      <div className="flex justify-between text-xs text-text-muted -mt-1">
         <span data-testid="year-range-min-label">{effectiveMin}</span>
         <span data-testid="year-range-max-label">{effectiveMax}</span>
       </div>

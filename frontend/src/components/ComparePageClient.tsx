@@ -27,79 +27,6 @@ export interface ComparePageClientProps {
   countries: CountryMeta[];
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0',
-    width: '100%',
-  },
-  controls: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    padding: '16px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderRadius: '8px',
-    border: '1px solid var(--color-border)',
-  },
-  controlsRow: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '32px',
-    flexWrap: 'wrap',
-  },
-  controlGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '10px',
-  },
-  controlLabel: {
-    fontSize: '0.8125rem',
-    fontWeight: 500,
-    color: 'var(--color-text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.05em',
-  },
-  metricTabs: {
-    display: 'flex',
-    gap: '4px',
-    padding: '2px',
-    backgroundColor: 'var(--color-bg)',
-    borderRadius: '6px',
-    border: '1px solid var(--color-border)',
-  },
-  metricTab: {
-    padding: '6px 12px',
-    border: 'none',
-    borderRadius: '4px',
-    backgroundColor: 'transparent',
-    color: 'var(--color-text-muted)',
-    cursor: 'pointer',
-    fontSize: '0.875rem',
-    fontFamily: 'inherit',
-    fontWeight: 500,
-    transition: 'all 0.15s ease',
-  },
-  metricTabActive: {
-    backgroundColor: 'var(--color-primary)',
-    color: 'white',
-  },
-  shareRow: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    paddingTop: '8px',
-    borderTop: '1px solid var(--color-border)',
-  },
-};
-
-const tabStyles = `
-  .metric-tab:hover:not(.active) {
-    background-color: var(--color-bg-alt);
-    color: var(--color-text);
-  }
-`;
-
 export function ComparePageClient({
   countries,
 }: ComparePageClientProps): React.ReactElement {
@@ -199,15 +126,13 @@ export function ComparePageClient({
   }, [selectedCountries, metric, scaleMode]);
 
   return (
-    <div style={styles.container}>
-      <style>{tabStyles}</style>
-
+    <div className="flex flex-col gap-0 w-full">
       {/* Controls */}
-      <div style={styles.controls}>
-        <div style={styles.controlsRow}>
+      <div className="flex flex-col gap-4 p-4 bg-bg-alt rounded-lg border border-border">
+        <div className="flex items-start gap-8 flex-wrap">
           {/* Country selector */}
-          <div style={styles.controlGroup}>
-            <label style={styles.controlLabel}>Countries</label>
+          <div className="flex flex-col gap-2.5">
+            <label className="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">Countries</label>
             <CountryMultiSelect
               countries={countries}
               selected={selectedCountries}
@@ -216,18 +141,16 @@ export function ComparePageClient({
           </div>
 
           {/* Metric tabs */}
-          <div style={styles.controlGroup}>
-            <label style={styles.controlLabel}>Metric</label>
-            <div style={styles.metricTabs}>
+          <div className="flex flex-col gap-2.5">
+            <label className="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">Metric</label>
+            <div className="flex gap-1 p-0.5 bg-bg rounded-md border border-border">
               {METRIC_SLUGS.map((slug) => (
                 <button
                   key={slug}
                   type="button"
-                  className={`metric-tab ${metric === slug ? 'active' : ''}`}
-                  style={{
-                    ...styles.metricTab,
-                    ...(metric === slug ? styles.metricTabActive : {}),
-                  }}
+                  className={`py-1.5 px-3 border-0 rounded bg-transparent text-text-muted cursor-pointer text-sm font-sans font-medium transition-all duration-150 hover:bg-bg-alt hover:text-text ${
+                    metric === slug ? 'bg-primary text-white hover:bg-primary hover:text-white' : ''
+                  }`}
                   onClick={() => handleMetricChange(slug)}
                 >
                   {METRICS[slug].label}
@@ -237,8 +160,8 @@ export function ComparePageClient({
           </div>
 
           {/* Scale mode toggle */}
-          <div style={styles.controlGroup}>
-            <label style={styles.controlLabel}>Display</label>
+          <div className="flex flex-col gap-2.5">
+            <label className="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">Display</label>
             <ScaleModeToggle
               mode={scaleMode}
               onChange={handleScaleModeChange}
@@ -249,7 +172,7 @@ export function ComparePageClient({
 
         {/* Share buttons */}
         {selectedCountries.length > 0 && (
-          <div style={styles.shareRow}>
+          <div className="flex justify-end pt-2 border-t border-border">
             <CompareShareButtons url={shareUrl} />
           </div>
         )}

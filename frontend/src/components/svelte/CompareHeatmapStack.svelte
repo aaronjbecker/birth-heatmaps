@@ -89,16 +89,16 @@
 </script>
 
 {#if countries.length === 0}
-  <div class="empty-state">
-    <h3 class="empty-title">No countries selected</h3>
-    <p class="empty-text">
+  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded-lg border border-dashed border-border text-center mt-4 dark:bg-bg-alt dark:border-border">
+    <h3 class="text-lg font-semibold text-text m-0 mb-2 dark:text-text">No countries selected</h3>
+    <p class="text-sm text-text-muted m-0 dark:text-text-muted">
       Select two or more countries above to compare their birth patterns.
     </p>
   </div>
 {:else}
-  <div class="container">
+  <div class="flex flex-col gap-4 w-full mt-4">
     <!-- Year range filter at top -->
-    <div class="year-filter-container">
+    <div class="px-3 py-2 bg-bg-alt border border-border rounded-lg dark:bg-bg-alt dark:border-border">
       <YearRangeFilter
         min={commonYearRange[0]}
         max={commonYearRange[1]}
@@ -115,17 +115,17 @@
       {@const legendColorScale = getColorScaleForCountry(country) || country.colorScale}
       {@const legendHoveredValue = getLegendHoveredValue(country)}
 
-      <div class="country-section">
+      <div class="flex flex-col gap-0 border border-border rounded-lg overflow-hidden bg-bg-alt dark:bg-bg-alt dark:border-border">
         <!-- Country header -->
-        <div class="country-header">
-          <h3 class="country-name">{country.country.name}</h3>
-          <span class="country-meta">
+        <div class="flex items-center justify-between px-4 py-2.5 bg-bg-alt border-b border-border dark:bg-bg-alt dark:border-border">
+          <h3 class="text-lg font-semibold text-text m-0 dark:text-text">{country.country.name}</h3>
+          <span class="text-[0.8125rem] text-text-muted dark:text-text-muted">
             {Math.min(...country.years)}–{Math.max(...country.years)}
           </span>
         </div>
 
         <!-- Heatmap -->
-        <div class="heatmap-wrapper">
+        <div class="bg-bg-alt dark:bg-bg-alt">
           <Heatmap
             data={alignedData}
             {height}
@@ -139,7 +139,7 @@
         </div>
 
         <!-- Color legend below heatmap -->
-        <div class="legend-container">
+        <div class="px-4 py-2.5 bg-bg-alt border-t border-border dark:bg-bg-alt dark:border-border">
           <ColorLegend
             colorScale={legendColorScale}
             metric={country.metric}
@@ -150,88 +150,3 @@
     {/each}
   </div>
 {/if}
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-    margin-top: 16px;
-  }
-
-  .year-filter-container {
-    padding-inline: 12px;
-    padding-block: 8px;
-    background-color: var(--color-bg-alt);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-  }
-
-  .country-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    overflow: hidden;
-    background-color: var(--color-bg-alt);
-  }
-
-  .country-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    background-color: var(--color-bg-alt);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .country-name {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin: 0;
-  }
-
-  .country-meta {
-    font-size: 0.8125rem;
-    color: var(--color-text-muted);
-  }
-
-  .heatmap-wrapper {
-    background-color: var(--color-bg-alt);
-  }
-
-  .legend-container {
-    padding: 10px 16px;
-    background-color: var(--color-bg-alt);
-    border-top: 1px solid var(--color-border);
-  }
-
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    background-color: var(--color-bg-alt);
-    border-radius: 8px;
-    border: 1px dashed var(--color-border);
-    text-align: center;
-    margin-top: 16px;
-  }
-
-  .empty-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-    margin: 0 0 8px 0;
-  }
-
-  .empty-text {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    margin: 0;
-  }
-</style>

@@ -14,13 +14,16 @@
   const { mode, onChange, disabled = false }: Props = $props();
 </script>
 
-<div class="label">
+<div class="flex items-center gap-2 text-sm text-text-muted">
   <span>Color scale:</span>
-  <div class="container" data-testid="scale-mode-toggle">
+  <div class="inline-flex items-center gap-1 p-0.5 bg-bg-alt border border-border rounded-md dark:bg-bg-alt dark:border-border" data-testid="scale-mode-toggle">
     <button
       type="button"
-      class="button"
-      class:active={mode === 'unified'}
+      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-bg dark:hover:text-text"
+      class:bg-primary={mode === 'unified'}
+      class:text-white={mode === 'unified'}
+      class:hover:bg-primary={mode === 'unified'}
+      class:hover:text-white={mode === 'unified'}
       onclick={() => onChange('unified')}
       {disabled}
       aria-pressed={mode === 'unified'}
@@ -30,8 +33,11 @@
     </button>
     <button
       type="button"
-      class="button"
-      class:active={mode === 'per-country'}
+      class="px-3 py-1.5 border-none rounded bg-transparent text-text-muted cursor-pointer text-[0.8125rem] font-medium transition-all duration-150 hover:bg-bg hover:text-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-bg dark:hover:text-text"
+      class:bg-primary={mode === 'per-country'}
+      class:text-white={mode === 'per-country'}
+      class:hover:bg-primary={mode === 'per-country'}
+      class:hover:text-white={mode === 'per-country'}
       onclick={() => onChange('per-country')}
       {disabled}
       aria-pressed={mode === 'per-country'}
@@ -41,56 +47,3 @@
     </button>
   </div>
 </div>
-
-<style>
-  .label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .container {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px;
-    background-color: var(--color-bg-alt);
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-  }
-
-  .button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 4px;
-    background-color: transparent;
-    color: var(--color-text-muted);
-    cursor: pointer;
-    font-size: 0.8125rem;
-    font-family: inherit;
-    font-weight: 500;
-    transition: all 0.15s ease;
-  }
-
-  .button:hover:not(.active):not(:disabled) {
-    background-color: var(--color-bg);
-    color: var(--color-text);
-  }
-
-  .button:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .button.active {
-    background-color: var(--color-primary);
-    color: white;
-  }
-
-  .button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-</style>

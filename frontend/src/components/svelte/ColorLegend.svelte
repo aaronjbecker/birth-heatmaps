@@ -243,28 +243,9 @@
   });
 </script>
 
-<div bind:this={containerRef} class="container">
+<div bind:this={containerRef} class="flex flex-col items-center px-2 py-1 w-full max-w-full overflow-hidden box-border">
   {#if title}
-    <div class="title">{title}</div>
+    <div class="text-xs text-text mb-1.5 dark:text-text">{title}</div>
   {/if}
   <svg bind:this={svgRef} width={actualWidth} height={totalHeight}></svg>
 </div>
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 4px 8px;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-    box-sizing: border-box;
-  }
-
-  .title {
-    font-size: 12px;
-    color: var(--color-text);
-    margin-bottom: 6px;
-  }
-</style>

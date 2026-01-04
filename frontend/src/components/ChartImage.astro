@@ -38,19 +38,19 @@ try {
 }
 ---
 
-<figure class:list={['chart-figure', className]}>
-  <figcaption>
-    <h3>{metadata.label}</h3>
-    <p>{metadata.description}</p>
+<figure class:list={['m-0 mb-xl', className]}>
+  <figcaption class="mb-sm">
+    <h3 class="m-0 mb-xs text-lg font-semibold text-text">{metadata.label}</h3>
+    <p class="m-0 text-sm text-text-muted">{metadata.description}</p>
   </figcaption>
 
-  <div class="chart-container">
+  <div class="bg-bg border border-border rounded overflow-hidden">
     {chartImage ? (
       <a
         href={chartImage.src}
         data-pswp-width={chartImage.width}
         data-pswp-height={chartImage.height}
-        class="lightbox-trigger"
+        class="lightbox-trigger block cursor-zoom-in no-underline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
         aria-label={`View full size: ${metadata.label}`}
       >
         <Image
@@ -59,82 +59,14 @@ try {
           width={800}
           quality={85}
           loading="lazy"
-          class="chart-image cursor-zoom-in transition-transform duration-200 ease-in-out hover:scale-[1.02]"
+          class="w-full h-auto block transition-transform duration-200 ease-in-out hover:scale-[1.02] focus-visible:rounded"
         />
       </a>
     ) : (
-      <div class="chart-placeholder">
-        <p>Chart not available</p>
-        <small>Run the data pipeline to generate charts</small>
+      <div class="p-xl text-center text-text-muted min-h-[200px] flex flex-col items-center justify-center">
+        <p class="m-0 mb-xs">Chart not available</p>
+        <small class="text-xs opacity-70">Run the data pipeline to generate charts</small>
       </div>
     )}
   </div>
 </figure>
-
-<style>
-  .chart-figure {
-    margin: 0 0 var(--space-xl) 0;
-  }
-
-  figcaption {
-    margin-bottom: var(--space-sm);
-  }
-
-  figcaption h3 {
-    margin: 0 0 var(--space-xs) 0;
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  figcaption p {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .chart-container {
-    background-color: #fafafa;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .chart-image {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  .chart-placeholder {
-    padding: var(--space-xl);
-    text-align: center;
-    color: var(--color-text-muted);
-    min-height: 200px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .chart-placeholder p {
-    margin: 0 0 var(--space-xs) 0;
-  }
-
-  .chart-placeholder small {
-    font-size: 0.75rem;
-    opacity: 0.7;
-  }
-
-  .lightbox-trigger {
-    display: block;
-    cursor: zoom-in;
-    text-decoration: none;
-  }
-
-  .lightbox-trigger:focus-visible .chart-image {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-    border-radius: 4px;
-  }
-</style>

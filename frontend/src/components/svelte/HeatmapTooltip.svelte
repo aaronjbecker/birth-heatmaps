@@ -55,99 +55,36 @@
 {#if visible && cell}
   <div
     bind:this={tooltipRef}
-    class="tooltip"
+    class="absolute top-0 left-0 pointer-events-none z-[1000] opacity-100 transition-opacity duration-100 ease-out"
     data-testid="tooltip"
   >
-    <div class="content">
-      <div class="header">
+    <div class="rounded min-w-[140px] max-w-[220px] text-[13px] leading-[1.4] px-3 py-2 border shadow-lg" style="background-color: var(--color-tooltip-bg); border-color: var(--color-tooltip-border); box-shadow: 0 2px 8px var(--color-shadow);">
+      <div class="font-semibold mb-1 text-text">
         {monthName} {cell.year}
       </div>
-      <div class="value">
+      <div class="text-lg font-bold text-text mb-1">
         {formattedValue}
       </div>
 
       {#if cell.births !== undefined && cell.births !== null}
-        <div class="detail-row">
+        <div class="flex justify-between mb-0.5 text-text-muted text-xs">
           <span>Births:</span>
           <span>{cell.births.toLocaleString()}</span>
         </div>
       {/if}
 
       {#if cell.population !== undefined && cell.population !== null}
-        <div class="detail-row">
+        <div class="flex justify-between mb-0.5 text-text-muted text-xs">
           <span>Population:</span>
           <span>{cell.population.toLocaleString()}</span>
         </div>
       {/if}
 
-      <div class="source">
+      <div class="mt-1.5 pt-1.5 border-t text-[11px] text-text-muted" style="border-color: var(--color-border-light);">
         Source: {sourceName}
       </div>
     </div>
 
-    <div bind:this={arrowRef} class="arrow"></div>
+    <div bind:this={arrowRef} class="absolute w-2 h-2 rotate-45 pointer-events-none border" style="background-color: var(--color-tooltip-bg); border-color: var(--color-tooltip-border);"></div>
   </div>
 {/if}
-
-<style>
-  .tooltip {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.1s ease-out;
-  }
-
-  .content {
-    background-color: var(--color-tooltip-bg);
-    border: 1px solid var(--color-tooltip-border);
-    border-radius: 4px;
-    padding: 8px 12px;
-    box-shadow: 0 2px 8px var(--color-shadow);
-    font-size: 13px;
-    line-height: 1.4;
-    min-width: 140px;
-    max-width: 220px;
-  }
-
-  .header {
-    font-weight: 600;
-    margin-bottom: 4px;
-    color: var(--color-text);
-  }
-
-  .value {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 4px;
-  }
-
-  .detail-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 2px;
-    color: var(--color-text-muted);
-    font-size: 12px;
-  }
-
-  .source {
-    margin-top: 6px;
-    padding-top: 6px;
-    border-top: 1px solid var(--color-border-light);
-    font-size: 11px;
-    color: var(--color-text-muted);
-  }
-
-  .arrow {
-    position: absolute;
-    background-color: var(--color-tooltip-bg);
-    border: 1px solid var(--color-tooltip-border);
-    width: 8px;
-    height: 8px;
-    transform: rotate(45deg);
-    pointer-events: none;
-  }
-</style>

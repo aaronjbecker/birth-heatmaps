@@ -290,16 +290,16 @@
   }
 </script>
 
-<div class="container">
-  <div class="header">
-    <div class="label-group">
-      <span class="label">Year Range</span>
-      <div class="input-group">
+<div class="flex flex-col gap-1 p-0">
+  <div class="flex justify-between items-center text-sm">
+    <div class="flex items-center gap-3">
+      <span class="text-text-muted font-medium uppercase text-[0.8125rem] tracking-wider">Year Range</span>
+      <div class="flex items-center gap-1">
         <input
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          class="year-input"
+          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:bg-bg dark:text-text dark:border-border"
           value={startInput}
           oninput={handleStartInputChange}
           onfocus={handleStartFocus}
@@ -308,12 +308,12 @@
           data-testid="year-input-start"
           aria-label="Start year"
         />
-        <span class="input-separator">–</span>
+        <span class="px-2 text-text-muted font-medium">–</span>
         <input
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          class="year-input"
+          class="w-[70px] px-1.5 py-1.5 text-sm border border-border rounded bg-bg text-text font-semibold text-center appearance-none transition-all duration-150 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none dark:bg-bg dark:text-text dark:border-border"
           value={endInput}
           oninput={handleEndInputChange}
           onfocus={handleEndFocus}
@@ -324,10 +324,10 @@
         />
       </div>
     </div>
-    <div class="reset-container">
+    <div class="min-h-8 flex items-center">
       {#if !isReset}
         <button
-          class="reset-button"
+          class="px-3 py-1.5 text-xs border border-border rounded bg-bg text-text-muted cursor-pointer transition-all duration-150 hover:border-primary hover:text-text dark:bg-bg dark:border-border dark:text-text-muted dark:hover:border-primary dark:hover:text-text"
           onclick={handleReset}
           type="button"
           data-testid="year-range-reset"
@@ -341,7 +341,7 @@
   <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     bind:this={containerRef}
-    class="slider-container"
+    class="relative h-7 mb-3 cursor-pointer"
     onmousedown={handleMouseDown}
     ontouchstart={handleTouchStart}
     data-testid="year-range-container"
@@ -356,9 +356,9 @@
       {@const isInSelection = zone.end >= start && zone.start <= end}
       {@const opacity = isInSelection ? 0.4 : 0.2}
       <div
-        class="zone"
-        class:zone-data={zone.hasData}
-        class:zone-no-data={!zone.hasData}
+        class="absolute top-3 h-1"
+        class:bg-primary={zone.hasData}
+        class:bg-border={!zone.hasData}
         style:left="{zoneStart}%"
         style:width="{zoneWidth}%"
         style:opacity={opacity}
@@ -369,22 +369,22 @@
     {/each}
 
     <div
-      class="slider-range"
+      class="absolute top-3 h-1 bg-primary rounded-sm opacity-60"
       style:left="{rangePercent.left}%"
       style:right="{rangePercent.right}%"
     ></div>
 
     <!-- Tick marks -->
-    <div class="ticks-container" data-testid="year-range-ticks">
+    <div class="absolute top-4 left-0 right-0 h-3 pointer-events-none" data-testid="year-range-ticks">
       {#each tickMarks as year}
         {@const position = ((year - effectiveMin) / totalRange) * 100}
-        <div class="tick-mark" style:left="{position}%" data-year={year}></div>
+        <div class="absolute w-px h-2 bg-text-muted opacity-40" style:left="{position}%" data-year={year}></div>
       {/each}
     </div>
 
     <input
       type="range"
-      class="year-range-slider start-slider"
+      class="year-range-slider absolute top-0 w-full h-7 appearance-none bg-transparent pointer-events-none z-[2]"
       min={effectiveMin}
       max={effectiveMax}
       value={start}
@@ -393,7 +393,7 @@
     />
     <input
       type="range"
-      class="year-range-slider end-slider"
+      class="year-range-slider absolute top-0 w-full h-7 appearance-none bg-transparent pointer-events-none z-[1]"
       min={effectiveMin}
       max={effectiveMax}
       value={end}
@@ -403,218 +403,8 @@
   </div>
 
   <!-- Edge labels -->
-  <div class="edge-labels">
+  <div class="flex justify-between text-xs text-text-muted -mt-1">
     <span data-testid="year-range-min-label">{effectiveMin}</span>
     <span data-testid="year-range-max-label">{effectiveMax}</span>
   </div>
 </div>
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 0;
-  }
-
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-  }
-
-  .label-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .label {
-    color: var(--color-text-muted);
-    font-weight: 500;
-    text-transform: uppercase;
-    font-size: 0.8125rem;
-    letter-spacing: 0.05em;
-  }
-
-  .input-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .year-input {
-    width: 70px;
-    padding: 6px 6px;
-    font-size: 14px;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    font-weight: 600;
-    text-align: center;
-    appearance: none;
-    -moz-appearance: textfield;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .year-input:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-  }
-
-  .year-input::-webkit-inner-spin-button,
-  .year-input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  .input-separator {
-    padding: 0 8px;
-    color: var(--color-text-muted);
-    font-weight: 500;
-  }
-
-  .reset-container {
-    min-height: 32px;
-    display: flex;
-    align-items: center;
-  }
-
-  .reset-button {
-    padding: 6px 12px;
-    font-size: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    background-color: var(--color-bg);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-
-  .reset-button:hover {
-    border-color: var(--color-primary);
-    color: var(--color-text);
-  }
-
-  .slider-container {
-    position: relative;
-    height: 28px;
-    margin-bottom: 12px;
-    cursor: pointer;
-  }
-
-  .zone {
-    position: absolute;
-    top: 12px;
-    height: 4px;
-  }
-
-  .zone-data {
-    background-color: var(--color-primary);
-  }
-
-  .zone-no-data {
-    background-color: var(--color-border);
-  }
-
-  .slider-range {
-    position: absolute;
-    top: 12px;
-    height: 4px;
-    background-color: var(--color-primary);
-    border-radius: 2px;
-    opacity: 0.6;
-  }
-
-  .ticks-container {
-    position: absolute;
-    top: 16px;
-    left: 0;
-    right: 0;
-    height: 12px;
-    pointer-events: none;
-  }
-
-  .tick-mark {
-    position: absolute;
-    width: 1px;
-    height: 8px;
-    background-color: var(--color-text-muted);
-    opacity: 0.4;
-  }
-
-  .year-range-slider {
-    position: absolute;
-    top: 0;
-    width: 100%;
-    height: 28px;
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    pointer-events: none;
-  }
-
-  .start-slider {
-    z-index: 2;
-  }
-
-  .end-slider {
-    z-index: 1;
-  }
-
-  .year-range-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    pointer-events: all;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-alt);
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .year-range-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-  }
-
-  .year-range-slider:focus::-webkit-slider-thumb {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  }
-
-  .year-range-slider::-moz-range-thumb {
-    pointer-events: all;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-bg-alt);
-    box-shadow: 0 1px 3px var(--color-shadow);
-    cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-
-  .year-range-slider::-moz-range-thumb:hover {
-    transform: scale(1.1);
-  }
-
-  .year-range-slider:focus {
-    outline: none;
-  }
-
-  .year-range-slider:focus::-moz-range-thumb {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-  }
-
-  .edge-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: var(--color-text-muted);
-    margin-top: -4px;
-  }
-</style>

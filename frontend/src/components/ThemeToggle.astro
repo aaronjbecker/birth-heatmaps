@@ -2,9 +2,13 @@
 // Theme toggle component - vanilla JS with no props needed
 ---
 
-<button id="theme-toggle" aria-label="Toggle theme">
+<button
+  id="theme-toggle"
+  aria-label="Toggle theme"
+  class="relative flex items-center justify-center w-10 h-10 p-2 border border-border rounded-md bg-bg-alt text-text cursor-pointer transition-all duration-200 hover:bg-bg hover:border-primary active:scale-95 dark:border-border dark:bg-bg-alt dark:text-text"
+>
   <!-- Sun icon (visible in dark mode) -->
-  <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <svg class="sun-icon absolute opacity-0 -rotate-90 scale-75 transition-all duration-300" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="5"/>
     <line x1="12" y1="1" x2="12" y2="3"/>
     <line x1="12" y1="21" x2="12" y2="23"/>
@@ -17,7 +21,7 @@
   </svg>
 
   <!-- Moon icon (visible in light mode) -->
-  <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <svg class="moon-icon absolute opacity-100 rotate-0 scale-100 transition-all duration-300" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
   </svg>
 </button>
@@ -48,11 +52,17 @@
     const moonIcon = themeToggle?.querySelector('.moon-icon');
 
     if (theme === 'dark') {
-      sunIcon?.classList.add('visible');
-      moonIcon?.classList.remove('visible');
+      // Show sun icon in dark mode
+      sunIcon?.classList.remove('opacity-0', '-rotate-90', 'scale-75');
+      sunIcon?.classList.add('opacity-100', 'rotate-0', 'scale-100');
+      moonIcon?.classList.remove('opacity-100', 'rotate-0', 'scale-100');
+      moonIcon?.classList.add('opacity-0', '-rotate-90', 'scale-75');
     } else {
-      sunIcon?.classList.remove('visible');
-      moonIcon?.classList.add('visible');
+      // Show moon icon in light mode
+      sunIcon?.classList.remove('opacity-100', 'rotate-0', 'scale-100');
+      sunIcon?.classList.add('opacity-0', '-rotate-90', 'scale-75');
+      moonIcon?.classList.remove('opacity-0', '-rotate-90', 'scale-75');
+      moonIcon?.classList.add('opacity-100', 'rotate-0', 'scale-100');
     }
   }
 
@@ -78,48 +88,3 @@
     }
   });
 </script>
-
-<style is:inline>
-  #theme-toggle {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-bg-alt);
-    color: var(--color-text);
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-
-  #theme-toggle:hover {
-    background: var(--color-bg);
-    border-color: var(--color-primary);
-  }
-
-  #theme-toggle:active {
-    transform: scale(0.95);
-  }
-
-  #theme-toggle svg {
-    position: absolute;
-    opacity: 0;
-    transform: rotate(-90deg) scale(0.8);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-
-  #theme-toggle svg.visible {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
-
-  /* Initial state - show moon for light mode */
-  #theme-toggle .moon-icon {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
-</style>

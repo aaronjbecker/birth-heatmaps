@@ -35,13 +35,13 @@ const {
     showControls={showControls}
   />
 ) : dataUrl ? (
-  <div class="heatmap-loader" data-url={dataUrl} data-height={height}>
-    <p class="loading">Loading heatmap...</p>
+  <div class="min-h-[400px] flex items-center justify-center bg-bg border border-dashed border-border rounded" data-url={dataUrl} data-height={height}>
+    <p class="text-text-muted text-sm">Loading heatmap...</p>
   </div>
   <script define:vars={{ height, showLegend, showYearFilter, showControls }}>
     // Client-side data loading for dynamic routes
     document.addEventListener('DOMContentLoaded', async () => {
-      const loaders = document.querySelectorAll('.heatmap-loader');
+      const loaders = document.querySelectorAll('[data-url]');
 
       for (const loader of loaders) {
         const url = loader.dataset.url;
@@ -58,15 +58,15 @@ const {
           // Note: This requires the React component to be available globally
           // For full client-side loading, use the dataUrl approach with a script
           loader.innerHTML = `
-            <div class="heatmap-mounted" style="min-height: ${height}px;">
-              <p style="text-align: center; padding: 20px; color: #888;">
+            <div style="min-height: ${height}px;">
+              <p class="text-center p-lg text-text-muted">
                 Heatmap data loaded: ${data.data.length} cells
               </p>
             </div>
           `;
         } catch (error) {
           loader.innerHTML = `
-            <p class="error" style="text-align: center; padding: 20px; color: #d32f2f;">
+            <p class="text-center p-lg text-red-600">
               Error loading heatmap data
             </p>
           `;
@@ -75,30 +75,7 @@ const {
     });
   </script>
 ) : (
-  <div class="heatmap-placeholder">
-    <p class="no-data">No data provided. Pass either 'data' or 'dataUrl' prop.</p>
+  <div class="min-h-[400px] flex items-center justify-center bg-bg border border-dashed border-border rounded">
+    <p class="text-text-muted text-sm">No data provided. Pass either 'data' or 'dataUrl' prop.</p>
   </div>
 )}
-
-<style>
-  .heatmap-loader,
-  .heatmap-placeholder {
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #fafafa;
-    border: 1px dashed #ccc;
-    border-radius: 4px;
-  }
-
-  .loading,
-  .no-data {
-    color: #888;
-    font-size: 14px;
-  }
-
-  .error {
-    color: #d32f2f;
-  }
-</style>

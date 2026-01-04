@@ -26,10 +26,10 @@ const ogImageUrl = '/og/default.png';
   canonicalPath="/compare"
   ogImage={ogImageUrl}
 >
-  <div class="compare-page">
-    <header class="page-header">
-      <h1>Compare Countries</h1>
-      <p class="subtitle">
+  <div class="py-lg relative z-0">
+    <header class="mb-xl">
+      <h1 class="m-0 mb-sm text-2xl font-bold text-text">Compare Countries</h1>
+      <p class="m-0 text-base text-text-muted leading-normal max-w-[600px]">
         Select multiple countries to compare their birth patterns side by side.
         Toggle between unified and per-country color scales.
       </p>
@@ -42,30 +42,3 @@ const ogImageUrl = '/og/default.png';
     <ComparePageHeatmaps client:load />
   </div>
 </BaseLayout>
-
-<style>
-  .compare-page {
-    padding: var(--space-lg) 0;
-    position: relative;
-    z-index: 0;
-  }
-
-  .page-header {
-    margin-bottom: var(--space-xl);
-  }
-
-  .page-header h1 {
-    margin: 0 0 var(--space-sm) 0;
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--color-text);
-  }
-
-  .subtitle {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--color-text-muted);
-    line-height: 1.5;
-    max-width: 600px;
-  }
-</style>

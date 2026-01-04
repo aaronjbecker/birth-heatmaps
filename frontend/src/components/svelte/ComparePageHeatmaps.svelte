@@ -45,12 +45,12 @@
 </script>
 
 {#if loading}
-  <div class="loading-container">
-    <span class="loading-text">Loading heatmap data...</span>
+  <div class="flex items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border dark:bg-bg-alt dark:border-border">
+    <span class="text-sm text-text-muted dark:text-text-muted">Loading heatmap data...</span>
   </div>
 {:else if error}
-  <div class="error-container">
-    <span class="error-text">{error}</span>
+  <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border dark:bg-bg-alt dark:border-border">
+    <span class="text-sm text-red-500">{error}</span>
   </div>
 {:else}
   <CompareHeatmapStack
@@ -58,36 +58,3 @@
     {scaleMode}
   />
 {/if}
-
-<style>
-  .loading-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    background-color: var(--color-bg-alt);
-    border-radius: 4px;
-    border: 1px solid var(--color-border);
-  }
-
-  .loading-text {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .error-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 24px;
-    background-color: var(--color-bg-alt);
-    border-radius: 4px;
-    border: 1px solid var(--color-border);
-  }
-
-  .error-text {
-    font-size: 0.875rem;
-    color: var(--color-error, #ef4444);
-  }
-</style>

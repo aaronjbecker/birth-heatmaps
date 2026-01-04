@@ -203,17 +203,17 @@
   });
 </script>
 
-<div class="container">
+<div class="flex flex-col w-full">
   {#if !hasData}
-    <div class="error">
+    <div class="flex items-center justify-center min-h-[400px] text-red-600 flex-col gap-2">
       <span>No data available</span>
-      <span class="error-detail">
+      <span class="text-xs text-gray-500">
         Run the data pipeline to generate JSON files
       </span>
     </div>
   {:else}
     {#if showControls && showYearFilter}
-      <div class="controls-top">
+      <div class="w-full mb-4 px-4">
         <YearRangeFilter
           min={minYear}
           max={maxYear}
@@ -225,24 +225,25 @@
       </div>
     {/if}
 
-    <div class="heatmap-wrapper">
+    <div class="relative">
       <!-- Scrolling container - also serves as tooltip container -->
       <div
         bind:this={scrollWrapperRef}
-        class="heatmap-container"
-        class:no-border={noBorder}
+        class="relative w-full min-h-[400px] border border-border rounded overflow-hidden"
+        class:border-none={noBorder}
+        class:rounded-none={noBorder}
         style:height="{height}px"
         style:overflow-x={scrollEnabled ? 'auto' : 'hidden'}
         onpointerleave={handleContainerPointerLeave}
         onpointerdown={handleContainerPointerDown}
       >
         <!-- D3 will render SVG and tooltip into this container -->
-        <div bind:this={containerRef} class="d3-container"></div>
+        <div bind:this={containerRef} class="w-full h-full"></div>
       </div>
 
       <!-- Left scroll indicator -->
       <div
-        class="scroll-indicator-left"
+        class="absolute bottom-0 left-0 h-7 w-[90px] pointer-events-none flex items-center text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10 bg-gradient-to-r from-bg to-transparent pl-2.5 dark:from-bg"
         style:opacity={scrollEnabled && !scrollState.atStart ? 1 : 0}
       >
         ← more left
@@ -250,7 +251,7 @@
 
       <!-- Right scroll indicator -->
       <div
-        class="scroll-indicator-right"
+        class="absolute bottom-0 right-0 h-7 w-[110px] pointer-events-none flex items-center justify-end text-[11px] font-medium text-text-muted transition-opacity duration-200 z-10 bg-gradient-to-l from-bg to-transparent pr-2.5 dark:from-bg"
         style:opacity={scrollEnabled && !scrollState.atEnd ? 1 : 0}
       >
         more right →
@@ -258,7 +259,7 @@
     </div>
 
     {#if showControls && showLegend}
-      <div class="controls-bottom">
+      <div class="w-full mt-4 px-4">
         <ColorLegend
           colorScale={effectiveData.colorScale}
           width={containerWidth - 32}
@@ -269,91 +270,3 @@
     {/if}
   {/if}
 </div>
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-
-  .controls-top {
-    width: 100%;
-    margin-bottom: 16px;
-    padding: 0 16px;
-  }
-
-  .controls-bottom {
-    width: 100%;
-    margin-top: 16px;
-    padding: 0 16px;
-  }
-
-  .heatmap-wrapper {
-    position: relative;
-  }
-
-  .heatmap-container {
-    position: relative;
-    width: 100%;
-    min-height: 400px;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .heatmap-container.no-border {
-    border: none;
-    border-radius: 0;
-  }
-
-  .d3-container {
-    width: 100%;
-    height: 100%;
-  }
-
-  .error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    color: #d32f2f;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .error-detail {
-    font-size: 12px;
-    color: #888;
-  }
-
-  .scroll-indicator-left,
-  .scroll-indicator-right {
-    position: absolute;
-    bottom: 0;
-    height: 28px;
-    pointer-events: none;
-    display: flex;
-    align-items: center;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--color-text-muted);
-    transition: opacity 0.2s ease-in-out;
-    z-index: 10;
-  }
-
-  .scroll-indicator-left {
-    left: 0;
-    width: 90px;
-    background: linear-gradient(to right, var(--color-bg), transparent);
-    padding-left: 10px;
-  }
-
-  .scroll-indicator-right {
-    right: 0;
-    width: 110px;
-    background: linear-gradient(to left, var(--color-bg), transparent);
-    justify-content: flex-end;
-    padding-right: 10px;
-  }
-</style>

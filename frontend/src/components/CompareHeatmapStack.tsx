@@ -19,79 +19,6 @@ export interface CompareHeatmapStackProps {
   height?: number;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '16px',
-    width: '100%',
-    marginTop: '16px',
-  },
-  yearFilterContainer: {
-    padding: '16px',
-    backgroundColor: 'var(--color-bg-alt)',
-    border: '1px solid var(--color-border)',
-    borderRadius: '8px',
-  },
-  countrySection: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0',
-    border: '1px solid var(--color-border)',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    backgroundColor: 'var(--color-bg-alt)',
-  },
-  countryHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '10px 16px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderBottom: '1px solid var(--color-border)',
-  },
-  countryName: {
-    fontSize: '1.125rem',
-    fontWeight: 600,
-    color: 'var(--color-text)',
-    margin: 0,
-  },
-  countryMeta: {
-    fontSize: '0.8125rem',
-    color: 'var(--color-text-muted)',
-  },
-  heatmapWrapper: {
-    backgroundColor: 'var(--color-bg-alt)',
-  },
-  legendContainer: {
-    padding: '10px 16px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderTop: '1px solid var(--color-border)',
-  },
-  emptyState: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '48px 24px',
-    backgroundColor: 'var(--color-bg-alt)',
-    borderRadius: '4px',
-    border: '1px dashed var(--color-border)',
-    textAlign: 'center',
-  },
-  emptyTitle: {
-    fontSize: '1.125rem',
-    fontWeight: 600,
-    color: 'var(--color-text)',
-    margin: '0 0 8px 0',
-  },
-  emptyText: {
-    fontSize: '0.875rem',
-    color: 'var(--color-text-muted)',
-    margin: 0,
-  },
-};
-
 export function CompareHeatmapStack({
   countries,
   scaleMode,
@@ -145,9 +72,9 @@ export function CompareHeatmapStack({
   // Empty state
   if (countries.length === 0) {
     return (
-      <div style={styles.emptyState}>
-        <h3 style={styles.emptyTitle}>No countries selected</h3>
-        <p style={styles.emptyText}>
+      <div className="flex flex-col items-center justify-center py-12 px-6 bg-bg-alt rounded border border-dashed border-border text-center">
+        <h3 className="text-lg font-semibold text-text m-0 mb-2">No countries selected</h3>
+        <p className="text-sm text-text-muted m-0">
           Select two or more countries above to compare their birth patterns.
         </p>
       </div>
@@ -164,9 +91,9 @@ export function CompareHeatmapStack({
   }, [commonYearRange]);
 
   return (
-    <div style={styles.container}>
+    <div className="flex flex-col gap-4 w-full mt-4">
       {/* Year range filter at top */}
-      <div style={styles.yearFilterContainer}>
+      <div className="p-4 bg-bg-alt border border-border rounded-lg">
         <YearRangeFilter
           min={commonYearRange[0]}
           max={commonYearRange[1]}
@@ -199,17 +126,17 @@ export function CompareHeatmapStack({
         const legendColorScale = getColorScaleForCountry(country) || country.colorScale;
 
         return (
-          <div key={country.country.code} style={styles.countrySection}>
+          <div key={country.country.code} className="flex flex-col gap-0 border border-border rounded-lg overflow-hidden bg-bg-alt">
             {/* Country header */}
-            <div style={styles.countryHeader}>
-              <h3 style={styles.countryName}>{country.country.name}</h3>
-              <span style={styles.countryMeta}>
+            <div className="flex items-center justify-between py-2.5 px-4 bg-bg-alt border-b border-border">
+              <h3 className="text-lg font-semibold text-text m-0">{country.country.name}</h3>
+              <span className="text-[0.8125rem] text-text-muted">
                 {Math.min(...country.years)}–{Math.max(...country.years)}
               </span>
             </div>
 
             {/* Heatmap */}
-            <div style={styles.heatmapWrapper}>
+            <div className="bg-bg-alt">
               <HeatmapD3
                 data={alignedData}
                 height={height}
@@ -222,7 +149,7 @@ export function CompareHeatmapStack({
             </div>
 
             {/* Color legend below heatmap */}
-            <div style={styles.legendContainer}>
+            <div className="py-2.5 px-4 bg-bg-alt border-t border-border">
               <ColorLegend
                 colorScale={legendColorScale}
                 metric={country.metric}

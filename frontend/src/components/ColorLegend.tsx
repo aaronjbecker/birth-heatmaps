@@ -15,24 +15,6 @@ export interface ColorLegendProps {
   hoveredValue?: number | null;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '4px 8px',
-    width: '100%',
-    maxWidth: '100%',
-    overflow: 'hidden',
-    boxSizing: 'border-box',
-  },
-  title: {
-    fontSize: '12px',
-    color: 'var(--color-text)',
-    marginBottom: '6px',
-  },
-};
-
 export function ColorLegend({
   colorScale: colorScaleConfig,
   width = 800,
@@ -251,8 +233,8 @@ export function ColorLegend({
   const totalHeight = height + 75; // Increased to account for top and bottom spacing
 
   return (
-    <div ref={containerRef} style={styles.container}>
-      {title && <div style={styles.title}>{title}</div>}
+    <div ref={containerRef} className="flex flex-col items-center py-1 px-2 w-full max-w-full overflow-hidden box-border">
+      {title && <div className="text-xs text-text mb-1.5">{title}</div>}
       <svg ref={svgRef} width={actualWidth} height={totalHeight} />
     </div>
   );
