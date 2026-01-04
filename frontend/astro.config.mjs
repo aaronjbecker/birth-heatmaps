@@ -1,6 +1,5 @@
 import { defineConfig } from 'astro/config';
 import svelte from '@astrojs/svelte';
-import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
 import tailwind from '@astrojs/tailwind';
@@ -26,7 +25,6 @@ export default defineConfig({
 
   integrations: [
     svelte(),
-    react(),
     sitemap(),
     icon(),
     tailwind({
