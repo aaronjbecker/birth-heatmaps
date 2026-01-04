@@ -9,25 +9,26 @@ This document describes the tooltip and cell interaction system for the heatmap 
 ### Component Hierarchy
 
 ```
-HeatmapD3.tsx (React wrapper)
-├── YearRangeFilter.tsx (year range controls)
-├── scrollWrapperRef (div) - scrollable container with onPointerLeave/onPointerDown
+Heatmap.svelte (Svelte wrapper)
+├── YearRangeFilter.svelte (year range controls)
+├── scrollWrapperRef (div) - scrollable container with onpointerleave/onpointerdown
 │   └── containerRef (div) - D3 renders into this
 │       └── SVG.heatmap-svg (created by d3-heatmap.ts)
 │           ├── g.cells-group
 │           │   └── rect.cell (one per data point)
 │           └── (tooltip created by tooltip.ts, appended to scrollWrapper)
-└── ColorLegend.tsx (color scale with hover indicator)
+└── ColorLegend.svelte (color scale with hover indicator)
 ```
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/components/HeatmapD3.tsx` | React wrapper managing state (year range, scroll, legend hover) |
+| `src/components/svelte/Heatmap.svelte` | Svelte wrapper managing state (year range, scroll, legend hover) |
 | `src/lib/d3-heatmap.ts` | Pure D3 rendering logic, cell event handlers, tooltip management |
-| `src/lib/tooltip.ts` | D3-native tooltip using @floating-ui/dom (bypasses React for performance) |
-| `src/components/ColorLegend.tsx` | Color scale legend with hover indicator |
+| `src/lib/tooltip.ts` | D3-native tooltip using @floating-ui/dom (bypasses component layer for performance) |
+| `src/components/svelte/ColorLegend.svelte` | Color scale legend with hover indicator |
+| `src/components/svelte/YearRangeFilter.svelte` | Year range filter with dual slider |
 | `src/lib/types.ts` | TypeScript interfaces (`HeatmapCell`, etc.) |
 
 ---
@@ -48,12 +49,12 @@ showTooltipAndHighlight(cell, element)
 3. tooltip.show(cell, element, metric) - uses @floating-ui/dom
 4. Call onValueHover(cell.value) callback
     ↓
-HeatmapD3.tsx: handleValueHover(value)
+Heatmap.svelte: handleValueHover(value)
     ↓
 Sets hoveredValue for ColorLegend indicator
-Calls onCellHoverCallback for parent (CompareHeatmapStack)
+Updates hoveredValueStore for synchronized legends
     ↓
-ColorLegend.tsx shows indicator at value position
+ColorLegend.svelte shows indicator at value position
 ```
 
 ### Tooltip Dismissal Flow
@@ -67,11 +68,11 @@ d3-heatmap.ts: hideTooltipAndClearHighlight()
 2. Clear stroke from highlighted cell
 3. Call onValueHover(null)
     ↓
-HeatmapD3.tsx: handleValueHover(null)
+Heatmap.svelte: handleValueHover(null)
     ↓
 Sets hoveredValue = null
     ↓
-ColorLegend.tsx hides indicator
+ColorLegend.svelte hides indicator
 ```
 
 ---
@@ -82,7 +83,7 @@ ColorLegend.tsx hides indicator
 
 ```typescript
 // Creates a tooltip instance that renders directly to the DOM
-// Bypasses React entirely for immediate positioning
+// Bypasses component layer entirely for immediate positioning
 export function createTooltip(container: HTMLElement): TooltipInstance {
   const tooltipEl = document.createElement('div');
   tooltipEl.className = 'heatmap-tooltip';
@@ -121,7 +122,7 @@ export function createTooltip(container: HTMLElement): TooltipInstance {
 ### d3-heatmap.ts Cell Event Handlers
 
 ```typescript
-// Create tooltip instance (D3-native, no React)
+// Create tooltip instance (D3-native, no component framework)
 const tooltip: TooltipInstance = createTooltip(tooltipContainer);
 
 // Track if current interaction is touch (for pointerleave handling)
@@ -181,60 +182,65 @@ svg.on('pointerleave', function() {
 });
 ```
 
-### HeatmapD3.tsx (Simplified)
+### Heatmap.svelte (Simplified)
 
-```typescript
-// Value hover state for ColorLegend sync
-const [hoveredValue, setHoveredValue] = useState<number | null>(null);
+```svelte
+<script lang="ts">
+  // Value hover state for ColorLegend sync
+  let hoveredValue = $state<number | null>(null);
 
-// Handle value hover from D3 (for ColorLegend sync)
-const handleValueHover = useCallback((value: number | null) => {
-  setHoveredValue(value);
-  onCellHoverCallback?.(value);
-}, [onCellHoverCallback]);
-
-// Handle pointer leaving the heatmap container
-const handleContainerPointerLeave = useCallback(() => {
-  heatmapRef.current?.hideTooltip();
-}, []);
-
-// Handle pointerdown on container - for touch dismissal when tapping outside cells
-const handleContainerPointerDown = useCallback((event: React.PointerEvent) => {
-  const target = event.target as Element;
-  if (!target.closest('rect.cell')) {
-    heatmapRef.current?.hideTooltip();
+  // Handle value hover from D3 (for ColorLegend sync)
+  function handleValueHover(value: number | null) {
+    hoveredValue = value;
+    hoveredValueStore.set(value);
+    onCellHoverCallback?.(value);
   }
-}, []);
 
-// Create heatmap instance
-heatmapRef.current = createHeatmap(
-  container,
-  effectiveData,
-  {},
-  tooltipContainer,  // Tooltip container for D3-native tooltip
-  handleValueHover   // Callback for ColorLegend sync
-);
+  // Handle pointer leaving the heatmap container
+  function handleContainerPointerLeave() {
+    heatmapInstance?.hideTooltip();
+  }
+
+  // Handle pointerdown on container - for touch dismissal when tapping outside cells
+  function handleContainerPointerDown(event: PointerEvent) {
+    const target = event.target as Element;
+    if (!target.closest('rect.cell')) {
+      heatmapInstance?.hideTooltip();
+    }
+  }
+
+  // Create heatmap instance via $effect
+  $effect(() => {
+    heatmapInstance = createHeatmap(
+      containerRef,
+      effectiveData,
+      {},
+      scrollWrapperRef,  // Tooltip container for D3-native tooltip
+      handleValueHover   // Callback for ColorLegend sync
+    );
+  });
+</script>
 ```
 
 ---
 
 ## Architecture Improvements (Current Implementation)
 
-### 1. D3-Native Tooltip (Bypasses React) ✅
+### 1. D3-Native Tooltip (Bypasses Component Layer)
 
-**Previous problem:** React-based FloatingTooltip caused unacceptable latency on Compare page due to React virtual DOM overhead.
+**Previous problem:** React-based FloatingTooltip caused unacceptable latency on Compare page due to virtual DOM overhead.
 
 **Solution:**
 - Tooltip is now created and managed entirely in D3 layer (`tooltip.ts`)
-- Uses `@floating-ui/dom` directly on DOM elements (no React)
+- Uses `@floating-ui/dom` directly on DOM elements (no component framework)
 - DOM manipulation is immediate, no virtual DOM reconciliation
 
 **Benefits:**
-- Immediate tooltip positioning (no React render cycle)
+- Immediate tooltip positioning (no render cycle)
 - ~60% faster tooltip response on Compare page
 - Simpler architecture - tooltip logic co-located with D3
 
-### 2. @floating-ui/dom for Positioning ✅
+### 2. @floating-ui/dom for Positioning
 
 **Previous problem:** Manual viewport boundary calculations that were complex and error-prone.
 
@@ -248,21 +254,21 @@ heatmapRef.current = createHeatmap(
 - Tooltip automatically flips to best position
 - ~40 lines of manual positioning code removed
 
-### 3. Simplified State Management ✅
+### 3. Simplified State Management
 
-**Previous problem:** Dual state in D3 and React causing synchronization bugs.
+**Previous problem:** Dual state in D3 and component causing synchronization bugs.
 
 **Solution:**
 - D3 owns tooltip and highlight state entirely
-- React only receives value callbacks for ColorLegend sync
+- Svelte only receives value callbacks for ColorLegend sync
 - No bidirectional state flow
 
 **Benefits:**
 - Eliminated state synchronization bugs
 - Simpler mental model
-- ~50% less code in HeatmapD3.tsx
+- Cleaner component code
 
-### 4. Simplified Event Handling ✅
+### 4. Simplified Event Handling
 
 **Previous problem:** Complex pointer capture logic with `setPointerCapture`/`releasePointerCapture`.
 
@@ -270,54 +276,30 @@ heatmapRef.current = createHeatmap(
 - Simple `isTouchInteraction` flag to distinguish mouse vs touch
 - Touch ignores `pointerleave` (dismissed by tap-outside instead)
 - Mouse dismisses on `pointerleave` immediately
-- Container-level `onPointerDown` for touch dismissal
+- Container-level `onpointerdown` for touch dismissal
 
 **Benefits:**
 - No pointer capture complexity
 - Reliable touch and mouse handling
-- ~60 lines of event handling code removed
+- Cleaner event handling code
 
 ---
 
-## Changes Made (Tooltip Reimplementation)
+## Svelte Component Migration
 
-### Complete Tooltip System Redesign (D3-Native)
+The heatmap system has been fully migrated from React to Svelte 5 runes:
 
-**Replaced the React-based tooltip with a D3-native implementation for performance.**
+| Old React Component | New Svelte Component |
+|---------------------|---------------------|
+| `HeatmapD3.tsx` | `svelte/Heatmap.svelte` |
+| `YearRangeFilter.tsx` | `svelte/YearRangeFilter.svelte` |
+| `ColorLegend.tsx` | `svelte/ColorLegend.svelte` |
 
-1. **package.json**:
-   - Added `@floating-ui/dom` dependency
-
-2. **tooltip.ts** (NEW):
-   - D3-native tooltip module that bypasses React entirely
-   - Uses `@floating-ui/dom` directly on DOM elements
-   - `createTooltip(container)` returns `{ show, hide, destroy, isVisible }`
-   - Immediate DOM manipulation for fast positioning
-
-3. **d3-heatmap.ts**:
-   - Creates and manages tooltip instance internally
-   - New signature: `createHeatmap(container, data, config, tooltipContainer, onValueHover)`
-   - `hideTooltipAndClearHighlight()` - hide tooltip and clear cell stroke
-   - `showTooltipAndHighlight(cell, element)` - show tooltip and highlight cell
-   - `hideTooltip()` method exposed for external dismissal triggers
-   - SVG-level `pointerleave` fallback for fast mouse exit
-
-4. **HeatmapD3.tsx**:
-   - Removed all React tooltip state (no TooltipState, no FloatingTooltip)
-   - Simplified to pass `tooltipContainer` and `handleValueHover` callback to D3
-   - Container `onPointerLeave` and `onPointerDown` call `hideTooltip()` directly
-   - Only manages `hoveredValue` state for ColorLegend sync
-
-5. **FloatingTooltip.tsx**:
-   - **DELETED** - replaced by D3-native tooltip.ts
-
-6. **types.ts**:
-   - Simplified `TooltipState` interface (kept for reference but unused)
-   - `onCellHover` callback now just takes `(value: number | null)`
-
-7. **E2E Tests**:
-   - Updated selectors to use `data-testid="tooltip"`
-   - All tooltip tests pass (41/43, 2 failures are pre-existing scroll issues)
+**Key benefits of Svelte migration:**
+- Svelte 5 runes (`$state`, `$derived`, `$effect`) provide cleaner reactivity
+- No virtual DOM overhead - direct DOM updates
+- Smaller bundle size
+- Better performance with D3 integration
 
 ---
 
@@ -325,9 +307,8 @@ heatmapRef.current = createHeatmap(
 
 ### Automated Tests
 
-- All 108 unit tests pass
-- 151/158 E2E tests pass (4 failures are pre-existing unrelated issues, 3 skipped)
-- 8 new tooltip/scroll/touch E2E tests added (6 pass, 2 skip when scroll not needed)
+- Unit tests for utility functions (e.g., `calculateTickMarks`, `analyzeDataZones`)
+- E2E tests for tooltip interactions, hover states, year range filtering
 
 ### Manual Testing Checklist
 
@@ -339,7 +320,7 @@ heatmapRef.current = createHeatmap(
 - [x] Desktop: Tooltip stays attached to cell during page scroll
 - [x] Desktop: Tooltip disappears when cell scrolls out of viewport
 - [x] Mobile: Tooltip appears on cell tap (tap-to-toggle)
-- [x] Mobile: Cell shows stroke indicator on tap (via setPointerCapture)
+- [x] Mobile: Cell shows stroke indicator on tap
 - [x] Mobile: Tooltip closes on tap outside chart
 - [x] Mobile: Stroke indicator remains visible while tooltip is open
 - [x] Compare page: All heatmaps show/hide tooltips independently
@@ -393,7 +374,7 @@ function createHeatmap(
 
 ## Environment
 
-- Framework: Astro with React components
+- Framework: Astro with Svelte 5 components
 - D3 version: See package.json
 - Testing: Vitest (unit), Playwright (E2E)
 - Build: Vite
