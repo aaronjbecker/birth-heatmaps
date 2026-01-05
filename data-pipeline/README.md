@@ -57,7 +57,7 @@ const files = import.meta.glob('../../assets/data/fertility/*.json');
 
 **Locations:**
 - `output/charts/{country-slug}/` - Pipeline output (for archival)
-- `../frontend/src/content/charts/{country-slug}/` - Frontend assets (for display)
+- `../frontend/src/assets/charts/{country-slug}/` - Frontend assets (for display)
 
 **Files per country:**
 - `fertility_heatmap.png` - Fertility rate heatmap
@@ -182,10 +182,129 @@ output/
 
 The JSON files are also copied to `../frontend/src/assets/data/` for Vite imports.
 
+## Raw Data Setup
+
+Raw data files are **not included** in the repository per license terms (except for Japan population data, see below). You must download them manually.
+
+### Summary of Required Files
+
+| File | Source | Location | Tracked by Git |
+|------|--------|----------|----------------|
+| `jpop.csv` | fmsb R package | `data-pipeline/jpop.csv` | **Yes** |
+| `{COUNTRY}birthbymonth.txt` | HMD | `data/hmd_countries_YYYYMMDD/{COUNTRY}/InputDB/` | No |
+| `{COUNTRY}pop.txt` | HMD | `data/hmd_countries_YYYYMMDD/{COUNTRY}/InputDB/` | No |
+| `un_births_by_month_data_raw.csv` | UN Data | `data/` | No |
+| `WPP2024_PopulationBySingleAgeSex_Medium_1950-2023.csv` | UN WPP | `data/` | No |
+
+### Human Mortality Database (HMD)
+
+**Source:** https://www.mortality.org/ (registration required)
+
+**Files Used Per Country:**
+- `{COUNTRY_CODE}birthbymonth.txt` - Monthly births data (columns: Year, Month, Births, LDB, etc.)
+- `{COUNTRY_CODE}pop.txt` - Population by age and sex (columns: Year, Month, Sex, Age, Population, LDB, etc.)
+
+**HMD Country Codes:** The pipeline expects data for these country codes:
+`AUS`, `AUT`, `BEL`, `BLR`, `BGR`, `CAN`, `CHE`, `CHL`, `CZE`, `DEUTE`, `DEUTNP`, `DEUTW`, `DNK`, `ESP`, `EST`, `FIN`, `FRATNP`, `GBR_NIR`, `GBRTENW`, `GBR_NP`, `GBR_SCO`, `GRC`, `HKG`, `HRV`, `HUN`, `IRL`, `ISL`, `ISR`, `ITA`, `JPN`, `KOR`, `LTU`, `LUX`, `LVA`, `NLD`, `NOR`, `NZL_NP`, `POL`, `PRT`, `RUS`, `SVK`, `SVN`, `SWE`, `UKR`, `USA`
+
+**Bulk Download (Recommended):**
+
+1. Register at https://www.mortality.org/
+2. Download the bulk data ZIP (e.g., `hmd_countries_20241115.zip`)
+3. Extract to `data/` at the repository root:
+   ```
+   birth-heatmaps/
+   ├── data/
+   │   └── hmd_countries_YYYYMMDD/    # Extracted bulk download
+   │       ├── USA/
+   │       │   ├── InputDB/
+   │       │   │   ├── USAbirthbymonth.txt    # ← Used by pipeline
+   │       │   │   ├── USApop.txt             # ← Used by pipeline
+   │       │   │   └── ...
+   │       │   └── STATS/
+   │       │       └── ...
+   │       ├── JPN/
+   │       └── ...
+   ├── data-pipeline/
+   └── frontend/
+   ```
+
+The pipeline automatically detects the latest `hmd_countries_YYYYMMDD` directory by date.
+
+**Legacy Flat File Structure:**
+
+If no bulk download is found, the pipeline falls back to `hmd_data/` at the repository root:
+```
+birth-heatmaps/
+├── hmd_data/
+│   ├── USAbirthbymonth.txt
+│   ├── USApop.txt
+│   ├── JPNbirthbymonth.txt
+│   ├── JPNpop.txt
+│   └── ...
+```
+
+### UN Data
+
+**1. UN Births by Month**
+
+**Source:** https://data.un.org/Data.aspx?d=POP&f=tableCode%3A55
+
+**File:** `data/un_births_by_month_data_raw.csv`
+
+**Setup:**
+1. Download from the UN Data website (select all countries/years)
+2. Extract and rename to `un_births_by_month_data_raw.csv`
+3. Place in `data/` at repository root
+
+**Expected Columns:** `Country or Area`, `Year`, `Month`, `Value`, `Reliability`, etc.
+
+**2. World Population Prospects (WPP)**
+
+**Source:** https://population.un.org/wpp/downloads
+
+**File:** `data/WPP2024_PopulationBySingleAgeSex_Medium_1950-2023.csv`
+
+**Setup:**
+1. Go to UN WPP Downloads page
+2. Download "Population by Single Age - Both Sexes" (CSV format, Medium variant, 1950-2023)
+3. Place the CSV file in `data/` at repository root
+
+**Expected Columns:** `Location`, `Time`, `AgeGrpStart`, `AgeGrpSpan`, `PopMale`, `PopFemale`, etc.
+
+### Japan Population Data (Tracked)
+
+**File:** `data-pipeline/jpop.csv` (**tracked by Git**)
+
+**Source:** Minato Nakazawa's [fmsb R package](https://cran.r-project.org/package=fmsb), which processed data from Statistics Bureau, Ministry of Internal Affairs and Communications: Population Census, 1888-2020.
+
+This file is already included in the repository and does not require manual download. It provides population by age and sex for Japan (census date: October 1st each year).
+
+### Directory Structure After Setup
+
+```
+birth-heatmaps/
+├── data/                                    # Untracked raw data
+│   ├── hmd_countries_YYYYMMDD/             # HMD bulk download
+│   │   ├── USA/InputDB/
+│   │   │   ├── USAbirthbymonth.txt
+│   │   │   └── USApop.txt
+│   │   ├── JPN/InputDB/
+│   │   │   ├── JPNbirthbymonth.txt
+│   │   │   └── JPNpop.txt
+│   │   └── .../
+│   ├── un_births_by_month_data_raw.csv     # UN births by month
+│   └── WPP2024_PopulationBySingleAgeSex_Medium_1950-2023.csv  # UN WPP
+├── data-pipeline/
+│   ├── jpop.csv                            # Japan population (tracked)
+│   └── ...
+└── frontend/
+```
+
 ## Environment Variables
 
-- `HMD_DATA_DIR` - Path to HMD data directory (default: `./hmd_data`)
-- `UN_DATA_DIR` - Path to UN data directory (default: `./data`)
+- `HMD_DATA_DIR` - Override HMD data directory (default: auto-detects bulk download in `../data/hmd_countries_*`, falls back to `../hmd_data`)
+- `UN_DATA_DIR` - Path to UN data directory (default: `../data`)
 - `OUTPUT_DIR` - Pipeline output directory (default: `./output`)
 - `FRONTEND_ASSETS_DATA_DIR` - Frontend assets directory (default: `../frontend/src/assets/data`)
 

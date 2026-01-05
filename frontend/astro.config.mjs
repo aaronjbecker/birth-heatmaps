@@ -1,7 +1,8 @@
 import { defineConfig } from 'astro/config';
-import react from '@astrojs/react';
+import svelte from '@astrojs/svelte';
 import sitemap from '@astrojs/sitemap';
 import icon from 'astro-icon';
+import tailwind from '@astrojs/tailwind';
 
 // Production-only compression
 // playformCompress is minification, cf. https://github.com/PlayForm/Compress
@@ -21,10 +22,14 @@ function prodOnly(integration) {
 export default defineConfig({
   site: 'https://birth-heatmaps.aaronjbecker.com',
   output: 'static',
+
   integrations: [
-    react(),
+    svelte(),
     sitemap(),
     icon(),
+    tailwind({
+      applyBaseStyles: false, // We have our own global styles
+    }),
     // playformCompress is minification (HTML + SVG only since CSS/JS are already minified)
     prodOnly(
       playformCompress({
@@ -43,8 +48,9 @@ export default defineConfig({
       })
     ),
   ].filter(Boolean),
+
   build: {
     assets: 'assets',
     concurrency: 8,
-  },
+  }
 });

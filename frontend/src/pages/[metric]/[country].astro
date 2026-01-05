@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { HeatmapD3 } from '../../components/HeatmapD3';
-import { CountryDropdown } from '../../components/CountryDropdown';
+import Heatmap from '../../components/svelte/Heatmap.svelte';
+import CountryDropdown from '../../components/svelte/CountryDropdown.svelte';
 import ChartGallery from '../../components/ChartGallery.astro';
 import ShareButtons from '../../components/ShareButtons.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
@@ -87,9 +87,9 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
   canonicalPath={canonicalPath}
   ogImage={ogImageUrl}
 >
-  <div class="page-header">
-    <nav class="breadcrumb">
-      <a href="/">Countries</a> / <CountryDropdown
+  <div class="flex justify-between items-center mb-lg flex-wrap gap-sm">
+    <nav class="text-sm text-text-muted">
+      <a href="/" class="text-text-muted hover:text-primary">Countries</a> / <CountryDropdown
         client:load
         countries={allCountries}
         currentCountry={country}
@@ -104,28 +104,36 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
     />
   </div>
 
-  <h1>{countryMeta.name}</h1>
-  <p class="subtitle">{metricConfig.subtitle}</p>
+  <h1 class="mb-xs">{countryMeta.name}</h1>
+  <p class="text-text-muted mb-md">{metricConfig.subtitle}</p>
 
-  <div class="meta">
-    <span class="year-range">{formatYearRange(metricData.yearRange)}</span>
-    <span class="sources">Sources: {countryMeta.sources.join(', ')}</span>
+  <div class="flex gap-lg mb-lg text-sm text-text-muted flex-wrap items-center">
+    <span>{formatYearRange(metricData.yearRange)}</span>
+    <span>Sources: {countryMeta.sources.join(', ')}</span>
+    <a href={`/compare?countries=${country}&metric=${metric}`} class="text-primary hover:underline">
+      Compare with other countries →
+    </a>
   </div>
 
-  <div class="tabs">
+  <div class="flex gap-xs mb-lg border-b border-border">
     {METRIC_SLUGS.map((m) => (
       <a
         href={`/${m}/${country}`}
-        class:list={['tab', { active: m === metric }]}
+        class:list={[
+          'py-sm px-lg border-b-2 text-text-muted transition-all duration-150',
+          m === metric
+            ? 'border-primary text-primary'
+            : 'border-transparent hover:text-text hover:no-underline'
+        ]}
       >
         {METRICS[m].label}
       </a>
     ))}
   </div>
 
-  <div class="heatmap-wrapper">
+  <div class="mb-xl">
     {heatmapData ? (
-      <HeatmapD3
+      <Heatmap
         client:load
         data={heatmapData}
         height={500}
@@ -134,100 +142,14 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
         showControls={true}
       />
     ) : (
-      <div id="heatmap-container" class="heatmap-container" data-country={country} data-metric={metric}>
-        <p class="loading">Loading heatmap data...</p>
+      <div id="heatmap-container" class="min-h-[500px] flex items-center justify-center bg-bg border border-border rounded" data-country={country} data-metric={metric}>
+        <p class="p-xl text-center text-text-muted">Loading heatmap data...</p>
       </div>
     )}
   </div>
 
   <ChartGallery countrySlug={country} />
 </BaseLayout>
-
-<style>
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-lg);
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-  }
-
-  .breadcrumb {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .breadcrumb a {
-    color: var(--color-text-muted);
-  }
-
-  .breadcrumb a:hover {
-    color: var(--color-primary);
-  }
-
-  h1 {
-    margin-bottom: var(--space-xs);
-  }
-
-  .subtitle {
-    color: var(--color-text-muted);
-    margin-bottom: var(--space-md);
-  }
-
-  .meta {
-    display: flex;
-    gap: var(--space-lg);
-    margin-bottom: var(--space-lg);
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-  }
-
-  .tabs {
-    display: flex;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-lg);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .tab {
-    padding: var(--space-sm) var(--space-lg);
-    border-bottom: 2px solid transparent;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    transition: color 0.15s, border-color 0.15s;
-  }
-
-  .tab:hover {
-    color: var(--color-text);
-    text-decoration: none;
-  }
-
-  .tab.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
-  }
-
-  .heatmap-wrapper {
-    margin-bottom: var(--space-xl);
-  }
-
-  .heatmap-container {
-    min-height: 500px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #fafafa;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-  }
-
-  .loading {
-    padding: var(--space-xl);
-    text-align: center;
-    color: var(--color-text-muted);
-  }
-</style>
 
 {!heatmapData && (
   <script>
@@ -244,9 +166,9 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
         })
         .then(data => {
           container.innerHTML = `
-            <p style="text-align: center; padding: var(--space-xl);">
+            <p class="text-center p-xl">
               Heatmap data loaded: ${data.data.length} cells, ${data.years.length} years<br>
-              <small style="color: var(--color-text-muted);">
+              <small class="text-text-muted">
                 Note: Full D3 visualization requires data at build time.<br>
                 Run the data pipeline and rebuild the site.
               </small>
@@ -255,7 +177,7 @@ const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/${count
         })
         .catch(() => {
           container.innerHTML = `
-            <p style="text-align: center; padding: var(--space-xl); color: var(--color-text-muted);">
+            <p class="text-center p-xl text-text-muted">
               No data available for this country yet.<br>
               <small>Run the data pipeline to generate JSON files.</small>
             </p>

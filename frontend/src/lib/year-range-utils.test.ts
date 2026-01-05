@@ -1,10 +1,10 @@
 /**
- * Tests for YearRangeFilter component
+ * Tests for year-range-utils utility functions
  */
 import { describe, it, expect } from 'vitest';
-import { analyzeDataZones, calculateTickMarks } from './YearRangeFilter';
+import { analyzeDataZones, calculateTickMarks } from './year-range-utils';
 
-describe('YearRangeFilter', () => {
+describe('year-range-utils', () => {
   describe('analyzeDataZones', () => {
     it('should return single zone with hasData=false when no data years provided', () => {
       const zones = analyzeDataZones(2000, 2010);

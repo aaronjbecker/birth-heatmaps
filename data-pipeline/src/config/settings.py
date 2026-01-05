@@ -98,14 +98,18 @@ FRONTEND_ASSETS_FERTILITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'fertility'
 FRONTEND_ASSETS_SEASONALITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'seasonality'
 FRONTEND_ASSETS_CONCEPTION_DIR = FRONTEND_ASSETS_DATA_DIR / 'conception'
 
-# Frontend content charts (for Astro Image component with Vite asset handling)
+# Frontend assets charts (for Astro Image component with Vite asset handling)
 # Charts are imported using import.meta.glob() for optimization
 # Can be overridden via FRONTEND_CONTENT_CHARTS_DIR environment variable for Docker
-FRONTEND_CONTENT_CHARTS_DIR = Path(os.environ.get('FRONTEND_CONTENT_CHARTS_DIR', PROJECT_ROOT / 'frontend' / 'src' / 'content' / 'charts'))
+FRONTEND_CONTENT_CHARTS_DIR = Path(os.environ.get('FRONTEND_CONTENT_CHARTS_DIR', PROJECT_ROOT / 'frontend' / 'src' / 'assets' / 'charts'))
 
-# Legacy: Frontend public data (for nginx serving in production)
-# Note: For local dev, use FRONTEND_ASSETS_DATA_DIR instead to enable proper imports
-FRONTEND_DATA_DIR = PROJECT_ROOT / 'frontend' / 'public' / 'data'
+# Frontend public data (for client-side fetch() in Compare page and similar dynamic features)
+# Data is served directly by the web server without Vite processing
+# Can be overridden via FRONTEND_PUBLIC_DATA_DIR environment variable for Docker
+FRONTEND_PUBLIC_DATA_DIR = Path(os.environ.get('FRONTEND_PUBLIC_DATA_DIR', PROJECT_ROOT / 'frontend' / 'public' / 'data'))
+FRONTEND_PUBLIC_FERTILITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'fertility'
+FRONTEND_PUBLIC_SEASONALITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'seasonality'
+FRONTEND_PUBLIC_CONCEPTION_DIR = FRONTEND_PUBLIC_DATA_DIR / 'conception'
 
 # Legacy CSV output (for compatibility during transition)
 CSV_OUTPUT_DIR = DATA_PIPELINE_ROOT / 'src'
@@ -163,3 +167,7 @@ def ensure_output_dirs() -> None:
     FRONTEND_ASSETS_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_CONTENT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)

@@ -24,145 +24,80 @@ const shareLinks = {
 };
 ---
 
-<div class="share-buttons">
+<div class="flex gap-xs items-center md:gap-sm">
   <a
     href={shareLinks.x}
     target="_blank"
     rel="noopener noreferrer"
-    class="share-btn"
+    class="share-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Share on X"
     title="Share on X"
   >
-    <Icon name="simple-icons:x" />
+    <Icon name="simple-icons:x" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </a>
 
   <a
     href={shareLinks.bluesky}
     target="_blank"
     rel="noopener noreferrer"
-    class="share-btn"
+    class="share-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Share on Bluesky"
     title="Share on Bluesky"
   >
-    <Icon name="simple-icons:bluesky" />
+    <Icon name="simple-icons:bluesky" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </a>
 
   <a
     href={shareLinks.facebook}
     target="_blank"
     rel="noopener noreferrer"
-    class="share-btn"
+    class="share-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Share on Facebook"
     title="Share on Facebook"
   >
-    <Icon name="simple-icons:facebook" />
+    <Icon name="simple-icons:facebook" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </a>
 
   <a
     href={shareLinks.reddit}
     target="_blank"
     rel="noopener noreferrer"
-    class="share-btn"
+    class="share-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Share on Reddit"
     title="Share on Reddit"
   >
-    <Icon name="simple-icons:reddit" />
+    <Icon name="simple-icons:reddit" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </a>
 
   <a
     href={shareLinks.email}
-    class="share-btn"
+    class="share-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Share via email"
     title="Share via email"
   >
-    <Icon name="mdi:email-outline" />
+    <Icon name="mdi:email-outline" class="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </a>
 
   <button
     type="button"
-    class="share-btn copy-link-btn"
+    class="share-btn copy-link-btn flex items-center justify-center w-8 h-8 md:w-10 md:h-10 p-0 border border-border rounded-md bg-bg-alt text-text-muted cursor-pointer no-underline transition-all duration-200 hover:text-text hover:border-primary hover:scale-105 hover:no-underline focus:outline-none focus:border-primary focus:shadow-[0_0_0_2px_rgba(37,99,235,0.2)] active:scale-95"
     aria-label="Copy link"
     title="Copy link"
     data-url={url}
   >
-    <Icon name="mdi:link-variant" class="icon-link" />
-    <Icon name="mdi:check" class="icon-check" />
+    <Icon name="mdi:link-variant" class="icon-link w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
+    <Icon name="mdi:check" class="icon-check hidden text-green-500 w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
   </button>
 </div>
 
 <style>
-  .share-buttons {
-    display: flex;
-    gap: var(--space-xs);
-    align-items: center;
-  }
-
-  .share-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: var(--color-bg-alt);
-    color: var(--color-text-muted);
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
-
-  .share-btn:hover {
-    color: var(--color-text);
-    border-color: var(--color-primary);
-    transform: scale(1.05);
-    text-decoration: none;
-  }
-
-  .share-btn:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-  }
-
-  .share-btn:active {
-    transform: scale(0.95);
-  }
-
-  .share-btn [data-icon] {
-    width: 18px;
-    height: 18px;
-  }
-
-  .copy-link-btn .icon-check {
-    display: none;
-    color: #22c55e;
-  }
-
+  /* Icon visibility toggle for copy button */
   .copy-link-btn.copied .icon-link {
     display: none;
   }
 
   .copy-link-btn.copied .icon-check {
     display: block;
-  }
-
-  /* Desktop styles */
-  @media (min-width: 768px) {
-    .share-buttons {
-      gap: var(--space-sm);
-    }
-
-    .share-btn {
-      width: 40px;
-      height: 40px;
-    }
-
-    .share-btn [data-icon] {
-      width: 22px;
-      height: 22px;
-    }
   }
 </style>
 

@@ -2,6 +2,8 @@
  * TypeScript interfaces for HMD births heatmap data
  */
 
+import type { MetricSlug } from './metrics';
+
 /** Country metadata in the countries index */
 export interface CountryMeta {
   code: string;
@@ -76,15 +78,19 @@ export interface HeatmapProps {
   data: CountryHeatmapData;
   width?: number;
   height?: number;
-  onCellHover?: (cell: HeatmapCell | null, event: MouseEvent) => void;
+  /** Callback when cell hover state changes. Receives cell data and the SVG element. */
+  onCellHover?: (
+    cell: HeatmapCell | null,
+    element: SVGRectElement | null
+  ) => void;
 }
 
-/** Tooltip state */
+/** Tooltip state - simplified for @floating-ui/dom positioning */
 export interface TooltipState {
-  visible: boolean;
-  x: number;
-  y: number;
+  /** The hovered cell data (null when no cell is hovered) */
   cell: HeatmapCell | null;
+  /** Reference to the hovered SVG rect element for positioning */
+  referenceElement: SVGRectElement | null;
 }
 
 /** Year range filter state */
@@ -99,4 +105,38 @@ export interface YearRangeState {
 export interface ScrollInfo {
   needsScroll: boolean;
   scrollWidth: number;
+}
+
+// =====================================
+// Compare Page Types
+// =====================================
+
+/** Scale mode for comparison view */
+export type ScaleMode = 'unified' | 'per-country';
+
+/** Query parameters for compare page */
+export interface CompareQueryParams {
+  countries: string[];
+  metric: MetricSlug;
+  scale: ScaleMode;
+  yearStart?: number;
+  yearEnd?: number;
+}
+
+/** Result of loading multiple countries with status tracking */
+export interface LoadedCountryData {
+  data: CountryHeatmapData;
+  code: string;
+  error?: string;
+}
+
+/** Comparison state for managing multiple country datasets */
+export interface CompareState {
+  selectedCountries: string[];
+  loadedData: Map<string, CountryHeatmapData>;
+  loading: boolean;
+  error: string | null;
+  scaleMode: ScaleMode;
+  yearRange: [number, number] | null;
+  commonYearRange: [number, number] | null;
 }

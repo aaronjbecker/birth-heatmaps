@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { CountryDropdown } from '../components/CountryDropdown';
-import { HeatmapD3 } from '../components/HeatmapD3';
+import CountryDropdown from '../components/svelte/CountryDropdown.svelte';
+import Heatmap from '../components/svelte/Heatmap.svelte';
 import type { CountryMeta, CountryHeatmapData } from '../lib/types';
 import { METRICS } from '../lib/metrics';
 
@@ -24,20 +24,20 @@ function formatYearRange(range: [number, number]): string {
   description={`Explore fertility rates and birth seasonality patterns across ${countries.length} countries. Data from the Human Mortality Database and UN Population Division.`}
   canonicalPath="/"
 >
-  <h1>Birth Seasonality Heatmaps</h1>
-  <p style="margin-bottom: var(--space-lg); color: var(--color-text-muted);">
+  <h1 class="mb-sm">Birth Seasonality Heatmaps</h1>
+  <p class="mb-lg text-text-muted">
     Explore fertility rates and birth seasonality patterns across {countries.length} countries.
     Data from the Human Mortality Database, UN Population Division, and country-specific sources.
   </p>
 
-  <div class="demo-heatmap">
-    <div class="demo-header">
-      <h2>United States of America</h2>
-      <a href="/fertility/united-states-of-america" class="view-full">View full page →</a>
+  <div class="mb-xl p-lg bg-card-bg border border-card-border rounded-lg">
+    <div class="flex justify-between items-center mb-md">
+      <h2 class="m-0 text-xl">United States of America</h2>
+      <a href="/fertility/united-states-of-america" class="text-sm text-primary hover:underline">View full page →</a>
     </div>
-    <p class="subtitle">{METRICS.fertility.subtitle}</p>
+    <p class="text-text-muted mb-md mt-0">{METRICS.fertility.subtitle}</p>
 
-    <HeatmapD3
+    <Heatmap
       client:load
       data={demoData}
       height={400}
@@ -47,7 +47,7 @@ function formatYearRange(range: [number, number]): string {
     />
   </div>
 
-  <div style="margin-bottom: var(--space-xl); display: flex; justify-content: center;">
+  <div class="mb-xl flex justify-center">
     <CountryDropdown
       client:load
       countries={countries}
@@ -56,69 +56,28 @@ function formatYearRange(range: [number, number]): string {
   </div>
 
   {countries.length > 0 ? (
-    <div class="country-grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
       {countries.map((country) => (
-        <a href={`/fertility/${country.code}`} class="country-card">
-          <h3>{country.name}</h3>
-          <p class="sources">
+        <a href={`/fertility/${country.code}`} class="block p-lg bg-card-bg border border-card-border rounded-lg hover:border-primary transition-colors">
+          <h3 class="text-lg font-semibold mb-sm">{country.name}</h3>
+          <p class="text-sm text-text-muted mb-xs">
             Sources: {country.sources.join(', ')}
           </p>
-          <p class="year-range">
+          <p class="text-sm text-text-muted">
             {formatYearRange(country.fertility.yearRange)} · {country.completeYears} complete years
           </p>
         </a>
       ))}
     </div>
   ) : (
-    <div class="card">
-      <h2>No Data Available</h2>
-      <p>
+    <div class="p-lg bg-card-bg border border-card-border rounded-lg">
+      <h2 class="mb-md">No Data Available</h2>
+      <p class="mb-md">
         Run the data pipeline to generate country data:
       </p>
-      <pre style="background: var(--color-bg); padding: var(--space-md); border-radius: 4px; overflow-x: auto;">
+      <pre class="bg-bg p-md rounded overflow-x-auto">
 python data-pipeline/scripts/run_pipeline.py --json
       </pre>
     </div>
   )}
 </BaseLayout>
-
-<style>
-  h1 {
-    margin-bottom: var(--space-sm);
-  }
-
-  .demo-heatmap {
-    margin-bottom: var(--space-xl);
-    padding: var(--space-lg);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-  }
-
-  .demo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--space-md);
-  }
-
-  .demo-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-  }
-
-  .demo-heatmap .subtitle {
-    color: var(--color-text-muted);
-    margin-bottom: var(--space-md);
-    margin-top: 0;
-  }
-
-  .view-full {
-    font-size: 0.875rem;
-    color: var(--color-primary);
-  }
-
-  .view-full:hover {
-    text-decoration: underline;
-  }
-</style>

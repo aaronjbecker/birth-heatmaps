@@ -261,8 +261,8 @@ test.describe('Chart Gallery Lightbox - Theme Integration', () => {
     await countryPage.closeLightbox();
     await waitForLightboxClose(page);
 
-    // Toggle theme
-    await page.click('#theme-toggle');
+    // Toggle theme (use first() as there are 2 toggles: desktop and mobile)
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(500);
 
     // Open lightbox again in new theme

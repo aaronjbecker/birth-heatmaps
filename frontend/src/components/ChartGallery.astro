@@ -8,7 +8,7 @@
  * - Distributions (monthly boxplot, monthly trends)
  */
 import ChartImage from './ChartImage.astro';
-import { type ChartType } from '../content/config';
+import { type ChartType } from '../lib/chart-config';
 
 export interface Props {
   countrySlug: string;
@@ -41,15 +41,18 @@ const sections: ChartSection[] = [
 ];
 ---
 
-<div class="chart-gallery">
-  {sections.map((section) => (
-    <section class="chart-section">
-      <header class="section-header">
-        <h2>{section.title}</h2>
-        <p>{section.description}</p>
+<div class="chart-gallery mt-xl">
+  {sections.map((section, index) => (
+    <section class="mb-2xl">
+      <header class="mb-lg pb-sm border-b border-border">
+        <h2 class="m-0 mb-xs text-2xl font-semibold text-text">{section.title}</h2>
+        <p class="m-0 text-text-muted text-[0.9375rem]">{section.description}</p>
       </header>
 
-      <div class="charts-grid">
+      <div class:list={[
+        'grid gap-lg',
+        index === 0 ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'
+      ]}>
         {section.charts.map((chartType) => (
           <ChartImage
             countrySlug={countrySlug}
@@ -60,52 +63,6 @@ const sections: ChartSection[] = [
     </section>
   ))}
 </div>
-
-<style>
-  .chart-gallery {
-    margin-top: var(--space-xl);
-  }
-
-  .chart-section {
-    margin-bottom: var(--space-2xl);
-  }
-
-  .section-header {
-    margin-bottom: var(--space-lg);
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--color-border);
-  }
-
-  .section-header h2 {
-    margin: 0 0 var(--space-xs) 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--color-text);
-  }
-
-  .section-header p {
-    margin: 0;
-    color: var(--color-text-muted);
-    font-size: 0.9375rem;
-  }
-
-  .charts-grid {
-    display: grid;
-    gap: var(--space-lg);
-  }
-
-  /* For heatmaps section, keep single column for wide images */
-  .chart-section:first-child .charts-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* For other sections, use 2 columns on larger screens */
-  @media (min-width: 1024px) {
-    .chart-section:not(:first-child) .charts-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-</style>
 
 <script>
   import PhotoSwipeLightbox from 'photoswipe/lightbox';

@@ -115,20 +115,22 @@ JSON Files + PNG Charts
 
 ### Pipeline Output Locations
 
-The pipeline writes to **two locations** simultaneously:
+The pipeline writes to **three locations** simultaneously:
 
-1. **`data-pipeline/output/`** - Primary output (for archival/nginx)
-2. **`frontend/src/assets/data/`** - Frontend assets (for Vite imports)
+1. **`data-pipeline/output/`** - Primary output (for archival)
+2. **`frontend/src/assets/data/`** - Frontend assets (for Vite build-time imports)
+3. **`frontend/public/data/`** - Public data (for client-side fetch, e.g., Compare page)
 
 **Structure:**
 ```
-output/                              frontend/src/assets/data/
-├── countries.json          ───────> ├── countries.json
-├── fertility/{country}.json ──────> ├── fertility/{country}.json
-└── seasonality/{country}.json ────> └── seasonality/{country}.json
+output/                              frontend/src/assets/data/     frontend/public/data/
+├── countries.json          ───────> ├── countries.json     ────> ├── countries.json
+├── fertility/{country}.json ──────> ├── fertility/*.json   ────> ├── fertility/*.json
+├── seasonality/{country}.json ────> ├── seasonality/*.json ────> ├── seasonality/*.json
+└── conception/{country}.json ─────> └── conception/*.json  ────> └── conception/*.json
 ```
 
-Charts follow a similar pattern but use `src/content/charts/` (see CHART_LOADING.md).
+Charts follow a similar pattern but use `src/assets/charts/` (see CHART_LOADING.md).
 
 ### Frontend Architecture
 
@@ -142,50 +144,106 @@ Charts follow a similar pattern but use `src/content/charts/` (see CHART_LOADING
 - `ThemeToggle.astro` - Dark/light mode toggle (Astro)
 - `ChartGallery.astro` - Displays static PNG charts (Astro)
 
+**Compare Page Components:**
+- `ComparePageClient.tsx` - Main Compare page logic and state management
+- `CountryMultiSelect.tsx` - Multi-select country dropdown with chips
+- `ScaleModeToggle.tsx` - Toggle between unified/per-country color scales
+- `CompareHeatmapStack.tsx` - Vertically stacked heatmaps for comparison
+- `CompareShareButtons.tsx` - Share buttons with dynamic URL
+
 **Key Libraries:**
 - `lib/d3-heatmap.ts` - Core D3 rendering logic
 - `lib/color-scales.ts` - Color scale generation with configurable schemes
 - `lib/data.ts` - Data loading utilities
+- `lib/compare-data.ts` - Compare page data loading and alignment utilities
+- `lib/url-params.ts` - URL query parameter handling for Compare page
 - `lib/types.ts` - TypeScript interfaces for data structures
 
 **State Management:** React hooks within components; no global state management needed.
 
-## Critical Data Loading Pattern
+### Theming System
 
-**⚠️ IMPORTANT:** JSON data files MUST be loaded using Vite ES module imports, NOT fetch() or Node.js fs operations.
+The project uses a **CSS custom properties approach** for instant theme switching without transitions:
 
-### Rules
+**How it works:**
+1. CSS variables defined in `frontend/src/styles/global.css` for both themes:
+   ```css
+   :root[data-theme="light"] { --color-bg: #fafafa; }
+   :root[data-theme="dark"]  { --color-bg: #0f0f0f; }
+   ```
 
-1. **ALWAYS place JSON data in `frontend/src/assets/data/`** - Enables Vite to:
-   - Cache-bust with content hashes
-   - Optimize and bundle properly
-   - Track dependencies correctly
+2. Tailwind config (`frontend/tailwind.config.mjs`) references these variables:
+   ```js
+   colors: { bg: { DEFAULT: 'var(--color-bg)' } }
+   ```
 
-2. **NEVER load data from `public/` using fetch()** - The `public/` directory is only for:
-   - Files needing exact URLs (`robots.txt`, `favicon.ico`)
-   - Files that should NOT be processed by build system
+3. JavaScript sets `data-theme` attribute on `<html>`:
+   - `ThemeToggle.astro` - User toggle button
+   - `BaseLayout.astro` - Inline script prevents FOUC (Flash of Unstyled Content)
 
-3. **Use proper ES module imports:**
+4. When `data-theme` changes, CSS variables update **instantly** (no transitions)
 
-```typescript
-// ✅ CORRECT - Import from src/assets
-import countriesData from '../assets/data/countries.json';
+**Usage in components:**
+```tsx
+// ✅ Correct - automatically theme-aware
+<div className="bg-bg text-text border-border">
 
-// ✅ CORRECT - Dynamic imports with import.meta.glob
-const files = import.meta.glob<DataType>('../../assets/data/fertility/*.json');
-
-// ❌ WRONG - Don't use fetch from public/
-fetch('/data/countries.json')  // DON'T DO THIS
-
-// ❌ WRONG - Don't use Node.js fs
-fs.readFile('./public/data/countries.json')  // DON'T DO THIS
+// ❌ Wrong - redundant dark: prefix
+<div className="bg-bg dark:bg-bg-alt">
 ```
 
-### Why This Matters
+**Key files:**
+- `frontend/src/styles/global.css` - CSS variable definitions
+- `frontend/tailwind.config.mjs` - Tailwind color mappings
+- `frontend/src/components/ThemeToggle.astro` - Theme toggle UI
+- `frontend/src/layouts/BaseLayout.astro` - Theme initialization
 
-- **Development:** Vite serves imports with proper module resolution
-- **Production:** Files get content-hashed filenames for cache busting
-- **Build validation:** Missing files cause build failures (good!)
+**Design decision:** No CSS transitions on theme changes ensures instant, consistent switching across all components.
+
+## Data Loading Patterns
+
+This project uses **two data loading patterns** depending on the use case:
+
+### 1. Build-time Imports (Recommended for Static Pages)
+
+For pages generated at build time (e.g., individual country pages), use Vite ES module imports from `src/assets/data/`:
+
+```typescript
+// ✅ Static import from src/assets
+import countriesData from '../assets/data/countries.json';
+
+// ✅ Dynamic imports with import.meta.glob
+const files = import.meta.glob<DataType>('../../assets/data/fertility/*.json');
+```
+
+**Benefits:**
+- Cache-busting with content hashes
+- Build-time validation (missing files = build failure)
+- Proper Vite optimization
+
+### 2. Client-side Fetch (For Dynamic/Interactive Pages)
+
+For pages that load data dynamically based on user interaction (e.g., Compare Countries page), use fetch from `public/data/`:
+
+```typescript
+// ✅ Client-side dynamic loading
+const response = await fetch('/data/fertility/united-states-of-america.json');
+const data = await response.json();
+```
+
+**Use this pattern when:**
+- Data selection depends on user input (multi-select, filters)
+- Loading data on-demand would reduce initial bundle size
+- The page is static but content is dynamic (like the Compare page)
+
+**Note:** The data pipeline exports to BOTH locations to support both patterns.
+
+### What NOT to Do
+
+```typescript
+// ❌ WRONG - Don't use Node.js fs in frontend
+fs.readFile('./public/data/countries.json')  // DON'T DO THIS
+```
 
 See README.md "Data Loading Pattern" section for complete details.
 
@@ -200,7 +258,8 @@ PYTHONPATH=/path/to/data-pipeline/src
 HMD_DATA_DIR=/path/to/hmd_data        # Human Mortality Database files
 UN_DATA_DIR=/path/to/data             # UN population data
 OUTPUT_DIR=./output                    # Pipeline output
-FRONTEND_ASSETS_DATA_DIR=../frontend/src/assets/data  # Frontend JSON target
+FRONTEND_ASSETS_DATA_DIR=../frontend/src/assets/data   # Build-time imports
+FRONTEND_PUBLIC_DATA_DIR=../frontend/public/data       # Client-side fetch
 ```
 
 **Note:** Raw data files are NOT included in repo per license terms. Download manually from:

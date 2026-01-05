@@ -5,6 +5,61 @@
 import { type Page, type Locator } from '@playwright/test';
 
 /**
+ * Navigation component - Responsive header navigation
+ */
+export class NavigationComponent {
+  constructor(public page: Page) {}
+
+  getLogoLink(): Locator {
+    return this.page.locator('[data-testid="nav-logo-link"]');
+  }
+
+  getHamburgerButton(): Locator {
+    return this.page.locator('[data-testid="mobile-menu-button"]');
+  }
+
+  getMobileMenu(): Locator {
+    return this.page.locator('[data-testid="mobile-menu"]');
+  }
+
+  getMobileNavLink(label: string): Locator {
+    return this.page.locator(`[data-testid="mobile-nav-${label.toLowerCase()}"]`);
+  }
+
+  async openMobileMenu() {
+    const menu = this.getMobileMenu();
+    const isVisible = await menu.isVisible();
+    if (!isVisible) {
+      await this.getHamburgerButton().click();
+      await menu.waitFor({ state: 'visible' });
+    }
+  }
+
+  async closeMobileMenu() {
+    const menu = this.getMobileMenu();
+    const isVisible = await menu.isVisible();
+    if (isVisible) {
+      await this.page.keyboard.press('Escape');
+      await menu.waitFor({ state: 'hidden' });
+    }
+  }
+
+  async isMobileMenuOpen(): Promise<boolean> {
+    return await this.getMobileMenu().isVisible();
+  }
+
+  async isHamburgerVisible(): Promise<boolean> {
+    return await this.getHamburgerButton().isVisible();
+  }
+
+  async navigateToMobile(label: 'countries' | 'compare' | 'about') {
+    await this.openMobileMenu();
+    await this.getMobileNavLink(label).click();
+    await this.page.waitForLoadState('networkidle');
+  }
+}
+
+/**
  * Home page - Country selection grid
  */
 export class HomePage {
@@ -94,9 +149,9 @@ export class CountryPage {
   // --- Scroll Methods ---
 
   getHeatmapContainer(): Locator {
-    // The heatmap container is the div that is the direct parent of the SVG
-    // It should have border styling
-    return this.page.locator('.heatmap-svg').locator('..');
+    // The heatmap container is the scrollable wrapper with overflow-x styling
+    // It contains .d3-container which in turn contains the SVG
+    return this.page.locator('.heatmap-container');
   }
 
   async isHeatmapScrollable(): Promise<boolean> {
@@ -140,8 +195,8 @@ export class CountryPage {
   // --- Tooltip Methods ---
 
   getTooltip(): Locator {
-    // Tooltip renders with fixed positioning
-    return this.page.locator('div[style*="position: fixed"]').first();
+    // Tooltip renders with data-testid for reliable selection
+    return this.page.locator('[data-testid="tooltip"]');
   }
 
   async isTooltipVisible(): Promise<boolean> {
@@ -152,7 +207,7 @@ export class CountryPage {
     const opacity = await tooltip.evaluate((el) => {
       return getComputedStyle(el).opacity;
     });
-    return opacity === '1';
+    return parseFloat(opacity) > 0.5;
   }
 
   async getTooltipContent(): Promise<{
@@ -232,10 +287,12 @@ export class CountryPage {
   }
 
   async getRangeText(): Promise<string> {
-    // Find the span next to "Year Range" label
-    const rangeContainer = this.page.locator('span:has-text("Year Range")').locator('..');
-    const rangeSpan = rangeContainer.locator('span').nth(1); // Second span is the range value
-    return await rangeSpan.textContent() || '';
+    // Year range is now displayed via input fields
+    const startInput = this.page.locator('[data-testid="year-input-start"]');
+    const endInput = this.page.locator('[data-testid="year-input-end"]');
+    const startValue = await startInput.inputValue();
+    const endValue = await endInput.inputValue();
+    return `${startValue}–${endValue}`;
   }
 
   async setYearRange(start: number, end: number) {
@@ -476,5 +533,219 @@ export class CountryPage {
 
   getLightboxCloseButton(): Locator {
     return this.page.locator('.pswp__button--close');
+  }
+}
+
+/**
+ * Compare page - Multi-country comparison view
+ */
+export class ComparePage {
+  constructor(public page: Page) {}
+
+  async goto(queryParams?: string) {
+    const url = queryParams ? `/compare?${queryParams}` : '/compare';
+    await this.page.goto(url);
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  // --- Country Selection Methods ---
+
+  getCountrySelectTrigger(): Locator {
+    return this.page.locator('[data-testid="country-multiselect-trigger"]');
+  }
+
+  getCountryDropdown(): Locator {
+    return this.page.locator('[data-testid="country-multiselect-menu"]');
+  }
+
+  async openCountryDropdown() {
+    const dropdown = this.getCountryDropdown();
+    const isVisible = await dropdown.isVisible();
+    if (!isVisible) {
+      await this.getCountrySelectTrigger().click();
+      await this.page.waitForTimeout(100);
+    }
+  }
+
+  async closeCountryDropdown() {
+    // Press Escape to close
+    await this.page.keyboard.press('Escape');
+    await this.page.waitForTimeout(100);
+  }
+
+  getCountryOption(code: string): Locator {
+    return this.page.locator(`[data-testid="country-option-${code}"]`);
+  }
+
+  async selectCountry(code: string) {
+    await this.openCountryDropdown();
+    await this.getCountryOption(code).click();
+    await this.page.waitForTimeout(500); // Wait for data fetch
+  }
+
+  async deselectCountry(code: string) {
+    await this.openCountryDropdown();
+    await this.getCountryOption(code).click();
+    await this.page.waitForTimeout(100);
+  }
+
+  // Chips don't have data attributes, find by text content
+  getSelectedChips(): Locator {
+    return this.page.locator('.country-multiselect-chip-remove').locator('..');
+  }
+
+  async getSelectedCountryNames(): Promise<string[]> {
+    const chips = await this.getSelectedChips().all();
+    const names: string[] = [];
+    for (const chip of chips) {
+      const text = await chip.textContent();
+      if (text) names.push(text.replace('✕', '').trim());
+    }
+    return names;
+  }
+
+  async removeCountryByName(name: string) {
+    const chip = this.page.locator(`button[aria-label="Remove ${name}"]`);
+    await chip.click();
+    await this.page.waitForTimeout(100);
+  }
+
+  getClearAllButton(): Locator {
+    return this.page.locator('.country-multiselect-action:has-text("Clear")');
+  }
+
+  getSearchInput(): Locator {
+    return this.page.locator('[data-testid="country-multiselect-search"]');
+  }
+
+  async searchCountries(query: string) {
+    await this.openCountryDropdown();
+    const input = this.getSearchInput();
+    await input.fill(query);
+    await this.page.waitForTimeout(100);
+  }
+
+  // --- Scale Mode Methods ---
+
+  getScaleModeToggle(): Locator {
+    return this.page.locator('[data-testid="scale-mode-toggle"]');
+  }
+
+  getUnifiedScaleButton(): Locator {
+    return this.page.locator('[data-testid="scale-mode-unified"]');
+  }
+
+  getPerCountryScaleButton(): Locator {
+    return this.page.locator('[data-testid="scale-mode-per-country"]');
+  }
+
+  async selectScaleMode(mode: 'unified' | 'per-country') {
+    if (mode === 'unified') {
+      await this.getUnifiedScaleButton().click();
+    } else {
+      await this.getPerCountryScaleButton().click();
+    }
+    await this.page.waitForTimeout(100);
+  }
+
+  async getActiveScaleMode(): Promise<'unified' | 'per-country'> {
+    const unifiedClasses = await this.getUnifiedScaleButton().getAttribute('class');
+    return unifiedClasses?.includes('active') ? 'unified' : 'per-country';
+  }
+
+  // --- Metric Tab Methods ---
+
+  getMetricTab(metric: 'fertility' | 'seasonality' | 'conception'): Locator {
+    const labels: Record<string, string> = {
+      fertility: 'Fertility',
+      seasonality: 'Seasonality',
+      conception: 'Conception',
+    };
+    return this.page.locator(`.metric-tab:has-text("${labels[metric]}")`);
+  }
+
+  async selectMetric(metric: 'fertility' | 'seasonality' | 'conception') {
+    await this.getMetricTab(metric).click();
+    await this.page.waitForTimeout(500); // Wait for data reload
+  }
+
+  async getSelectedMetric(): Promise<string> {
+    const activeTab = this.page.locator('.metric-tab.active');
+    const text = await activeTab.textContent();
+    return text?.toLowerCase() || 'fertility';
+  }
+
+  // --- Heatmap Stack Methods ---
+
+  getHeatmapSVGs(): Locator {
+    return this.page.locator('.heatmap-svg');
+  }
+
+  async getHeatmapCount(): Promise<number> {
+    return await this.getHeatmapSVGs().count();
+  }
+
+  getCountryHeaders(): Locator {
+    // Country name headers in the compare stack
+    return this.page.locator('h3').filter({ hasText: /^[A-Z]/ });
+  }
+
+  getColorLegends(): Locator {
+    return this.page.locator('svg').filter({
+      has: this.page.locator('linearGradient'),
+    });
+  }
+
+  // --- Share Methods ---
+
+  getShareButtons(): Locator {
+    return this.page.locator('[data-testid="compare-share-buttons"]');
+  }
+
+  getCopyLinkButton(): Locator {
+    return this.page.locator('[data-testid="copy-link-button"]');
+  }
+
+  async clickCopyLink() {
+    await this.getCopyLinkButton().click();
+    await this.page.waitForTimeout(100);
+  }
+
+  // --- Loading & Error States ---
+
+  getLoadingContainer(): Locator {
+    return this.page.locator('text=Loading heatmap data');
+  }
+
+  async isLoading(): Promise<boolean> {
+    return await this.getLoadingContainer().isVisible();
+  }
+
+  getErrorContainer(): Locator {
+    // Error text styling
+    return this.page.locator('span').filter({ hasText: /Failed|Error/ });
+  }
+
+  async hasError(): Promise<boolean> {
+    return await this.getErrorContainer().isVisible();
+  }
+
+  getEmptyState(): Locator {
+    return this.page.locator('text=No countries selected');
+  }
+
+  async isEmptyStateVisible(): Promise<boolean> {
+    return await this.getEmptyState().isVisible();
+  }
+
+  // --- URL Methods ---
+
+  getCurrentUrl(): string {
+    return this.page.url();
+  }
+
+  getQueryParam(name: string): string | null {
+    const url = new URL(this.page.url());
+    return url.searchParams.get(name);
   }
 }
