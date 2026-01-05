@@ -2,6 +2,7 @@
 name: build-runner
 description: >
   Runs builds and tests for the HMD births heatmaps project.
+  You MUST use this agent instead of running build or test commands directly.
   Use PROACTIVELY after code changes to Python pipeline or Astro frontend.
   Provide: the build/test command to run, and optionally the working directory.
 tools: Bash, Read

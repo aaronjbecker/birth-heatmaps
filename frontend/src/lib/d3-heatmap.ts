@@ -88,8 +88,11 @@ export function createHeatmap(
 
   // SVG-level pointerleave handler as fallback for fast mouse exit
   // This catches cases where the mouse exits so quickly it misses individual cell handlers
-  svg.on('pointerleave', function () {
-    hideTooltipAndClearHighlight();
+  // Only dismiss for mouse - touch uses tap-outside dismissal
+  svg.on('pointerleave', function (event: PointerEvent) {
+    if (event.pointerType !== 'touch') {
+      hideTooltipAndClearHighlight();
+    }
   });
 
   // State for current data and year range

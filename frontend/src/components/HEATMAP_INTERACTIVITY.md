@@ -11,12 +11,13 @@ This document describes the tooltip and cell interaction system for the heatmap 
 ```
 Heatmap.svelte (Svelte wrapper)
 ├── YearRangeFilter.svelte (year range controls)
-├── scrollWrapperRef (div) - scrollable container with onpointerleave/onpointerdown
+├── scrollWrapperRef (div) - scrollable container with onpointerleave
 │   └── containerRef (div) - D3 renders into this
 │       └── SVG.heatmap-svg (created by d3-heatmap.ts)
 │           ├── g.cells-group
 │           │   └── rect.cell (one per data point)
 │           └── (tooltip created by tooltip.ts, appended to scrollWrapper)
+├── Document-level pointerdown listener (via $effect, for outside dismissal)
 └── ColorLegend.svelte (color scale with hover indicator)
 ```
 
@@ -59,20 +60,34 @@ ColorLegend.svelte shows indicator at value position
 
 ### Tooltip Dismissal Flow
 
+**Mouse dismissal (pointerleave):**
 ```
-User action (pointerleave container, tap outside cells)
+User moves mouse out of heatmap
     ↓
-d3-heatmap.ts: hideTooltipAndClearHighlight()
+Container/SVG pointerleave (checks pointerType !== 'touch')
+    ↓
+heatmapInstance.hideTooltip() → hideTooltipAndClearHighlight()
     ↓
 1. tooltip.hide() - hides DOM element
 2. Clear stroke from highlighted cell
 3. Call onValueHover(null)
     ↓
-Heatmap.svelte: handleValueHover(null)
-    ↓
-Sets hoveredValue = null
+Heatmap.svelte: handleValueHover(null) → hoveredValue = null
     ↓
 ColorLegend.svelte hides indicator
+```
+
+**Touch dismissal (document-level outside tap):**
+```
+User taps anywhere outside heatmap container
+    ↓
+Document pointerdown listener (attached when hoveredValue !== null)
+    ↓
+Checks !scrollWrapperRef.contains(event.target)
+    ↓
+heatmapInstance.hideTooltip() → hideTooltipAndClearHighlight()
+    ↓
+Same flow as mouse...
 ```
 
 ---
@@ -177,8 +192,11 @@ function showTooltipAndHighlight(cell: HeatmapCell, element: SVGRectElement): vo
 });
 
 // SVG-level pointerleave fallback for fast mouse exit
-svg.on('pointerleave', function() {
-  hideTooltipAndClearHighlight();
+// Only dismiss for mouse - touch uses tap-outside dismissal
+svg.on('pointerleave', function(event: PointerEvent) {
+  if (event.pointerType !== 'touch') {
+    hideTooltipAndClearHighlight();
+  }
 });
 ```
 
@@ -186,7 +204,7 @@ svg.on('pointerleave', function() {
 
 ```svelte
 <script lang="ts">
-  // Value hover state for ColorLegend sync
+  // Value hover state for ColorLegend sync (also tracks tooltip visibility)
   let hoveredValue = $state<number | null>(null);
 
   // Handle value hover from D3 (for ColorLegend sync)
@@ -197,17 +215,33 @@ svg.on('pointerleave', function() {
   }
 
   // Handle pointer leaving the heatmap container
-  function handleContainerPointerLeave() {
-    heatmapInstance?.hideTooltip();
-  }
-
-  // Handle pointerdown on container - for touch dismissal when tapping outside cells
-  function handleContainerPointerDown(event: PointerEvent) {
-    const target = event.target as Element;
-    if (!target.closest('rect.cell')) {
+  // Only dismiss for mouse - touch uses document-level listener
+  function handleContainerPointerLeave(event: PointerEvent) {
+    if (event.pointerType !== 'touch') {
       heatmapInstance?.hideTooltip();
     }
   }
+
+  // Document-level click handler for dismissing tooltip on outside interaction
+  // Uses the same pattern as CountryDropdown.svelte
+  $effect(() => {
+    // Only attach listener when tooltip is visible
+    if (hoveredValue === null) return;
+
+    function handleOutsideInteraction(e: Event) {
+      // Check if click/tap was outside the heatmap container
+      if (scrollWrapperRef && !scrollWrapperRef.contains(e.target as Node)) {
+        heatmapInstance?.hideTooltip();
+      }
+    }
+
+    // Use pointerdown for unified mouse/touch handling
+    document.addEventListener('pointerdown', handleOutsideInteraction);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideInteraction);
+    };
+  });
 
   // Create heatmap instance via $effect
   $effect(() => {
@@ -273,15 +307,23 @@ svg.on('pointerleave', function() {
 **Previous problem:** Complex pointer capture logic with `setPointerCapture`/`releasePointerCapture`.
 
 **Solution:**
-- Simple `isTouchInteraction` flag to distinguish mouse vs touch
-- Touch ignores `pointerleave` (dismissed by tap-outside instead)
+- Check `event.pointerType !== 'touch'` in all `pointerleave` handlers
+- Touch ignores `pointerleave` (dismissed by document-level tap-outside instead)
 - Mouse dismisses on `pointerleave` immediately
-- Container-level `onpointerdown` for touch dismissal
+- Document-level `pointerdown` listener for touch dismissal (tap anywhere outside heatmap)
+
+**Key insight:** On touch devices, lifting a finger fires `pointerleave` events. Without the `pointerType` check, tooltips would dismiss immediately after appearing. The check ensures touch interactions remain stable until user taps outside.
+
+**Document-level listener pattern:** The document listener is only attached when `hoveredValue !== null` (tooltip visible), following the same pattern as `CountryDropdown.svelte`. This ensures:
+- No performance impact when tooltip is hidden
+- Automatic cleanup via Svelte 5 `$effect()` return function
+- Taps anywhere on the page (header, sidebar, etc.) dismiss the tooltip
 
 **Benefits:**
 - No pointer capture complexity
 - Reliable touch and mouse handling
 - Cleaner event handling code
+- Full page coverage for touch dismissal
 
 ---
 
@@ -321,7 +363,8 @@ The heatmap system has been fully migrated from React to Svelte 5 runes:
 - [x] Desktop: Tooltip disappears when cell scrolls out of viewport
 - [x] Mobile: Tooltip appears on cell tap (tap-to-toggle)
 - [x] Mobile: Cell shows stroke indicator on tap
-- [x] Mobile: Tooltip closes on tap outside chart
+- [x] Mobile: Tooltip closes on tap outside chart (within container)
+- [x] Mobile: Tooltip closes on tap anywhere on page (header, sidebar, etc.)
 - [x] Mobile: Stroke indicator remains visible while tooltip is open
 - [x] Compare page: All heatmaps show/hide tooltips independently
 - [x] Compare page: Unified mode shows indicator on all legends

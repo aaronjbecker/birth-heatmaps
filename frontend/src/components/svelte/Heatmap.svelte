@@ -87,14 +87,9 @@
   }
 
   // Handle pointer leaving the heatmap container
-  function handleContainerPointerLeave() {
-    heatmapInstance?.hideTooltip();
-  }
-
-  // Handle pointerdown on container - for touch dismissal when tapping outside cells
-  function handleContainerPointerDown(event: PointerEvent) {
-    const target = event.target as Element;
-    if (!target.closest('rect.cell')) {
+  // Only dismiss for mouse - touch uses document-level listener for outside dismissal
+  function handleContainerPointerLeave(event: PointerEvent) {
+    if (event.pointerType !== 'touch') {
       heatmapInstance?.hideTooltip();
     }
   }
@@ -201,6 +196,27 @@
       scrollState = { atStart: true, atEnd: false };
     }
   });
+
+  // Document-level click handler for dismissing tooltip on outside interaction
+  // Uses the same pattern as CountryDropdown.svelte
+  $effect(() => {
+    // Only attach listener when tooltip is visible
+    if (hoveredValue === null) return;
+
+    function handleOutsideInteraction(e: Event) {
+      // Check if click/tap was outside the heatmap container
+      if (scrollWrapperRef && !scrollWrapperRef.contains(e.target as Node)) {
+        heatmapInstance?.hideTooltip();
+      }
+    }
+
+    // Use pointerdown for unified mouse/touch handling
+    document.addEventListener('pointerdown', handleOutsideInteraction);
+
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideInteraction);
+    };
+  });
 </script>
 
 <div class="flex flex-col w-full">
@@ -235,7 +251,6 @@
         style:height="{height}px"
         style:overflow-x={scrollEnabled ? 'auto' : 'hidden'}
         onpointerleave={handleContainerPointerLeave}
-        onpointerdown={handleContainerPointerDown}
       >
         <!-- D3 will render SVG and tooltip into this container -->
         <div bind:this={containerRef} class="w-full h-full"></div>

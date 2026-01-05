@@ -926,6 +926,44 @@ test.describe('Touch interactions', () => {
       // If tooltip is removed from DOM, that's also valid
     }
   });
+
+  test('tap on page header dismisses tooltip on touch', async ({ page }) => {
+    // This test explicitly verifies document-level outside-click handling
+    // by tapping on the header element (completely outside heatmap)
+    const countryPage = new CountryPage(page);
+    await countryPage.goto(TEST_COUNTRY.code, 'fertility');
+    await waitForHeatmapRender(page);
+
+    const cell = countryPage.getHeatmapCells().nth(10);
+    const box = await cell.boundingBox();
+
+    if (box) {
+      // Tap cell to show tooltip
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(300);
+
+      // Tap on the page header (completely outside heatmap container)
+      const header = page.locator('header').first();
+      const headerBox = await header.boundingBox();
+
+      if (headerBox) {
+        await page.touchscreen.tap(
+          headerBox.x + headerBox.width / 2,
+          headerBox.y + headerBox.height / 2
+        );
+        await page.waitForTimeout(300);
+
+        // Tooltip should be dismissed
+        const tooltip = countryPage.getTooltip();
+        const tooltipCount = await tooltip.count();
+        if (tooltipCount > 0) {
+          const opacity = await tooltip.evaluate(el => getComputedStyle(el).opacity);
+          expect(parseFloat(opacity)).toBeLessThanOrEqual(0.5);
+        }
+        // If tooltip is removed from DOM, that's also valid
+      }
+    }
+  });
 });
 
 test.describe('Fast mouse exit', () => {
