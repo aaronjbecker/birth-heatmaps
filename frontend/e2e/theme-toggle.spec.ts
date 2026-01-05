@@ -10,8 +10,8 @@ test.describe('Theme Toggle', () => {
   test('theme toggle button exists in header', async ({ page }) => {
     await page.goto('/');
 
-    // Check that theme toggle button exists
-    const toggleButton = page.locator('#theme-toggle');
+    // Check that theme toggle button exists (there are 2: desktop and mobile)
+    const toggleButton = page.locator('#theme-toggle').first();
     await expect(toggleButton).toBeVisible();
     await expect(toggleButton).toHaveAttribute('aria-label', 'Toggle theme');
   });
@@ -41,7 +41,7 @@ test.describe('Theme Toggle', () => {
     expect(theme).toBe('light');
 
     // Click the toggle
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
 
     // Wait for theme to change
     await page.waitForTimeout(100);
@@ -65,7 +65,7 @@ test.describe('Theme Toggle', () => {
     expect(theme).toBe('dark');
 
     // Click the toggle
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
 
     // Wait for theme to change
     await page.waitForTimeout(100);
@@ -85,7 +85,7 @@ test.describe('Theme Toggle', () => {
     });
 
     // Toggle to dark
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(100);
 
     // Check localStorage
@@ -127,15 +127,15 @@ test.describe('Theme Toggle', () => {
     });
     await page.reload();
 
-    // In light mode, moon icon should be visible
-    const moonIcon = page.locator('.moon-icon');
-    const sunIcon = page.locator('.sun-icon');
+    // In light mode, moon icon should be visible (use first() as there are 2 toggles)
+    const moonIcon = page.locator('.moon-icon').first();
+    const sunIcon = page.locator('.sun-icon').first();
 
     // Check initial state (light theme shows moon)
     await expect(moonIcon).toHaveCSS('opacity', '1');
 
-    // Toggle to dark
-    await page.click('#theme-toggle');
+    // Toggle to dark (use first toggle)
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(300); // Wait for transition
 
     // In dark mode, sun icon should be visible
@@ -160,7 +160,7 @@ test.describe('Theme Toggle', () => {
     });
 
     // Toggle to dark
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(100);
 
     // Get dark theme background color
@@ -192,7 +192,7 @@ test.describe('Theme Toggle', () => {
     });
 
     // Toggle to dark
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(400); // Wait for transition
 
     // Get computed background color in dark mode
@@ -241,25 +241,26 @@ test.describe('Theme Toggle', () => {
     });
     await page.reload();
 
-    // Use more specific selectors to avoid Astro dev toolbar
-    await expect(page.locator('header h1').first()).toBeVisible();
+    // Check header components (logo link instead of h1, and first toggle)
+    await expect(page.locator('[data-testid="nav-logo-link"]')).toBeVisible();
     await expect(page.locator('header nav').first()).toBeVisible();
-    await expect(page.locator('#theme-toggle')).toBeVisible();
+    await expect(page.locator('#theme-toggle').first()).toBeVisible();
 
     // Toggle to dark theme
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(100);
 
     // Check components still visible in dark theme
-    await expect(page.locator('header h1').first()).toBeVisible();
+    await expect(page.locator('[data-testid="nav-logo-link"]')).toBeVisible();
     await expect(page.locator('header nav').first()).toBeVisible();
-    await expect(page.locator('#theme-toggle')).toBeVisible();
+    await expect(page.locator('#theme-toggle').first()).toBeVisible();
   });
 
   test('toggle button has hover state', async ({ page }) => {
     await page.goto('/');
 
-    const toggleButton = page.locator('#theme-toggle');
+    // Use first() since there are 2 toggle buttons
+    const toggleButton = page.locator('#theme-toggle').first();
 
     // Get initial border color
     const initialBorder = await toggleButton.evaluate((el) => {
@@ -321,7 +322,7 @@ test.describe('Theme Toggle on Country Pages', () => {
     await page.waitForLoadState('networkidle');
 
     // Test theme toggle
-    await page.click('#theme-toggle');
+    await page.locator('#theme-toggle').first().click();
     await page.waitForTimeout(100);
 
     const theme = await page.locator('html').getAttribute('data-theme');

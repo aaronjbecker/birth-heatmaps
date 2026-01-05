@@ -5,6 +5,61 @@
 import { type Page, type Locator } from '@playwright/test';
 
 /**
+ * Navigation component - Responsive header navigation
+ */
+export class NavigationComponent {
+  constructor(public page: Page) {}
+
+  getLogoLink(): Locator {
+    return this.page.locator('[data-testid="nav-logo-link"]');
+  }
+
+  getHamburgerButton(): Locator {
+    return this.page.locator('[data-testid="mobile-menu-button"]');
+  }
+
+  getMobileMenu(): Locator {
+    return this.page.locator('[data-testid="mobile-menu"]');
+  }
+
+  getMobileNavLink(label: string): Locator {
+    return this.page.locator(`[data-testid="mobile-nav-${label.toLowerCase()}"]`);
+  }
+
+  async openMobileMenu() {
+    const menu = this.getMobileMenu();
+    const isVisible = await menu.isVisible();
+    if (!isVisible) {
+      await this.getHamburgerButton().click();
+      await menu.waitFor({ state: 'visible' });
+    }
+  }
+
+  async closeMobileMenu() {
+    const menu = this.getMobileMenu();
+    const isVisible = await menu.isVisible();
+    if (isVisible) {
+      await this.page.keyboard.press('Escape');
+      await menu.waitFor({ state: 'hidden' });
+    }
+  }
+
+  async isMobileMenuOpen(): Promise<boolean> {
+    return await this.getMobileMenu().isVisible();
+  }
+
+  async isHamburgerVisible(): Promise<boolean> {
+    return await this.getHamburgerButton().isVisible();
+  }
+
+  async navigateToMobile(label: 'countries' | 'compare' | 'about') {
+    await this.openMobileMenu();
+    await this.getMobileNavLink(label).click();
+    await this.page.waitForLoadState('networkidle');
+  }
+}
+
+/**
  * Home page - Country selection grid
  */
 export class HomePage {
