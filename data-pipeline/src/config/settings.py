@@ -76,6 +76,7 @@ def _get_hmd_data_dir() -> Path:
 # HMD data: prefers bulk download structure, falls back to legacy flat files
 HMD_DATA_DIR = _get_hmd_data_dir()
 UN_DATA_DIR = Path(os.environ.get('UN_DATA_DIR', PROJECT_ROOT / 'data'))
+STATES_DATA_DIR = Path(os.environ.get('STATES_DATA_DIR', PROJECT_ROOT / 'state-level-data'))
 
 # Output directory (git-ignored, contains all generated files)
 # Can be overridden via OUTPUT_DIR environment variable

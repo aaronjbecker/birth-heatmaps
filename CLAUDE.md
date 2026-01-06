@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Git Commit Guidelines
+
+- **Never mention Claude or AI in commit messages.** No "Generated with Claude", no "Co-Authored-By: Claude", no AI attribution of any kind.
+- Write commit messages as if a human developer wrote them.
+
 ## Project Overview
 
 Interactive visualization of birth seasonality patterns using Human Mortality Database and UN Population Division data. This is a dual-component system:
