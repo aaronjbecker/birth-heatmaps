@@ -357,6 +357,11 @@ def compute_state_fertility_rates(
         .alias('daily_fertility_rate')
     )
 
+    # Add Date column for seasonality processor compatibility
+    combined = combined.with_columns(
+        pl.date(pl.col('Year'), pl.col('Month'), 1).alias('Date')
+    )
+
     return combined
 
 
@@ -373,11 +378,13 @@ def load_births_with_fertility(data_dir: Optional[Path] = None) -> pl.DataFrame:
     Returns:
         DataFrame with columns:
         - Country (state name)
-        - Year, Month
+        - Year, Month, Date
         - Births
         - childbearing_population
+        - days_in_month
         - births_per_day
         - daily_fertility_rate
+        - Source
     """
     # Load births
     births = load_births(data_dir)
@@ -387,5 +394,10 @@ def load_births_with_fertility(data_dir: Optional[Path] = None) -> pl.DataFrame:
 
     # Compute fertility rates
     result = compute_state_fertility_rates(births, population)
+
+    # Add Source column for processor/exporter compatibility
+    result = result.with_columns(
+        pl.lit('CDC/Historical').alias('Source')
+    )
 
     return result

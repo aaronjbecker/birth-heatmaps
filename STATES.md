@@ -48,6 +48,18 @@ Columns: `year, state_fips, state_name, female_15_44, source, note`
 
 ## Data Pipeline Integration
 
+State data is fully integrated into the main pipeline. Run with `--states` flag:
+
+```bash
+# Run pipeline with state data
+python data-pipeline/scripts/run_pipeline.py --json --states
+
+# Or include states with charts
+python data-pipeline/scripts/run_pipeline.py --json --charts --states
+```
+
+### Loader Module
+
 The state data loader is in `data-pipeline/src/loaders/states.py`:
 
 ```python
@@ -60,6 +72,17 @@ births = states.load_births()
 df = states.load_births_with_fertility()
 ```
 
+### Exporter Module
+
+The state exporter is in `data-pipeline/src/exporters/states_exporter.py`:
+
+```python
+from exporters import export_all_states
+
+# Export state JSON files
+export_all_states(state_births, output_dir, min_years=25, min_monthly_births=200)
+```
+
 ### Output DataFrame Columns
 
 | Column | Type | Description |
@@ -67,10 +90,15 @@ df = states.load_births_with_fertility()
 | Country | str | State name (uses "Country" for format consistency) |
 | Year | int | Year |
 | Month | int | Month (1-12) |
+| Date | date | First day of month |
 | Births | float | Total births in month |
 | childbearing_population | float | Female population 15-44 |
+| days_in_month | int | Days in the month |
 | births_per_day | float | Births / days in month |
 | daily_fertility_rate | float | Births per day per 100k women |
+| Source | str | Data source label |
+| seasonality_percentage_normalized | float | Normalized % of annual births |
+| daily_conception_rate | float | Conceptions per day per 100k women |
 
 ### Interpolation
 
@@ -123,27 +151,62 @@ export IPUMS_API_KEY="your_key"
 python nhgis_download_historical.py
 ```
 
-## Frontend Integration (TODO)
+## Frontend Integration
 
-### Planned Features
+### Exported Data Structure
 
-1. **State Heatmaps**: Birth seasonality by state (similar to country heatmaps)
+State data is exported to three locations (same as countries):
+
+```
+data-pipeline/output/              # Primary output
+├── states.json                    # State metadata index
+├── fertility/states/              # Fertility heatmap data
+│   ├── california.json
+│   └── ...
+├── seasonality/states/            # Seasonality heatmap data
+│   └── ...
+└── conception/states/             # Conception rate data
+    └── ...
+
+frontend/src/assets/data/          # Build-time imports
+└── (same structure)
+
+frontend/public/data/              # Client-side fetch
+└── (same structure)
+```
+
+### URL Pattern (Planned)
+
+Frontend pages will use nested routes:
+- `/fertility/states/california`
+- `/seasonality/states/texas`
+- `/conception/states/new-york`
+
+### Filtering Results
+
+Default filters applied (same as countries):
+- Minimum 25 complete years of data
+- Minimum 200 births in every month
+
+States excluded by these filters:
+- Alaska (22 complete years)
+- District of Columbia (22 complete years)
+- Hawaii (22 complete years)
+- Nevada (low birth counts in early years)
+- Rhode Island (low birth counts in early years)
+
+### Planned Frontend Features (TODO)
+
+1. **State Heatmap Pages**: `/fertility/states/[state].astro`
 2. **State Comparison**: Compare seasonality patterns across states
 3. **Regional Analysis**: Group states by region (Northeast, South, etc.)
-4. **Fertility Trends**: Long-term fertility rate visualization
+4. **Mixed Comparison**: Compare states with small countries
 
-### Data Export
+### Technical Notes
 
-State data export should follow the same pattern as country data:
-- JSON files in `frontend/src/assets/data/states/`
-- Slug-based filenames (e.g., `california.json`, `new-york.json`)
-
-### Considerations
-
-- State names need slugification for URLs/filenames
-- Consider FIPS codes as stable identifiers
+- State slugs use same slugification as countries: "New York" → `new-york`
+- DC is included as "District of Columbia" → `district-of-columbia`
 - Historical state boundaries unchanged since 1959 (AK/HI statehood)
-- DC is included but is not technically a state
 
 ## References
 

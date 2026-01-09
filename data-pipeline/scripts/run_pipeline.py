@@ -24,7 +24,7 @@ from config import (
     CHARTS_OUTPUT_DIR, FRONTEND_ASSETS_DATA_DIR, FRONTEND_ASSETS_FERTILITY_DIR,
     FRONTEND_ASSETS_SEASONALITY_DIR, FRONTEND_ASSETS_CONCEPTION_DIR, FRONTEND_CONTENT_CHARTS_DIR
 )
-from loaders import hmd, un, japan
+from loaders import hmd, un, japan, states
 from processors import (
     interpolate_population,
     create_births_monthly_index,
@@ -34,7 +34,7 @@ from processors import (
     compute_births_extent_stats,
     compute_population_extent_stats,
 )
-from exporters import export_all_countries, export_all_charts
+from exporters import export_all_countries, export_all_charts, export_all_states
 from schemas import BirthsSchema, PopulationSchema, StatsSchema
 
 
@@ -324,11 +324,74 @@ def export_charts(
     print("  Chart export complete")
 
 
+def load_and_process_state_data() -> pl.DataFrame:
+    """
+    Load and process US state-level data.
+
+    This loads state birth and population data, then computes fertility rates,
+    seasonality metrics, and conception rates.
+
+    Returns:
+        Processed births DataFrame with all metrics computed.
+    """
+    print("\n" + "=" * 50)
+    print("Loading US State-Level Data")
+    print("=" * 50)
+
+    print("Loading state births and population data...")
+    state_births = states.load_births_with_fertility()
+    print(f"  Loaded {len(state_births)} state records")
+
+    # The loader already adds Date and Source columns
+    # Now compute seasonality and conception rates using the same processors
+
+    print("Computing state seasonality metrics...")
+    state_births = compute_seasonality(state_births)
+
+    print("Computing state conception rates...")
+    state_births = compute_conception_rates(state_births)
+
+    return state_births
+
+
+def export_state_json(
+    births: pl.DataFrame,
+    output_dir: Path = None,
+    min_years: Optional[int] = None,
+    min_monthly_births: Optional[int] = None
+) -> List[str]:
+    """Export state data to JSON files for frontend.
+
+    Args:
+        births: DataFrame with state data
+        output_dir: Output directory (defaults to OUTPUT_DIR)
+        min_years: Minimum complete years required (defaults to MIN_YEARS_DATA)
+        min_monthly_births: Minimum births in every month (defaults to MIN_MONTHLY_BIRTHS)
+
+    Returns:
+        List of state names that were exported (passed all filters)
+    """
+    if output_dir is None:
+        output_dir = OUTPUT_DIR
+    if min_years is None:
+        min_years = MIN_YEARS_DATA
+    if min_monthly_births is None:
+        min_monthly_births = MIN_MONTHLY_BIRTHS
+
+    print(f"\nExporting state JSON files to {output_dir}...")
+    print(f"  Minimum complete years required: {min_years}")
+    print(f"  Minimum monthly births required: {min_monthly_births}")
+    exported_states = export_all_states(births, output_dir, min_years=min_years, min_monthly_births=min_monthly_births)
+    print("  State JSON export complete")
+    return exported_states
+
+
 def main():
     parser = argparse.ArgumentParser(description='HMD Births Heatmap Data Pipeline')
     parser.add_argument('--csv', action='store_true', help='Export CSV files (legacy format)')
     parser.add_argument('--json', action='store_true', help='Export JSON files for frontend')
     parser.add_argument('--charts', action='store_true', help='Export PNG charts for frontend')
+    parser.add_argument('--states', action='store_true', help='Include US state-level data')
     parser.add_argument('--all', action='store_true', help='Export CSV, JSON, and charts')
     parser.add_argument('--hmd-dir', type=Path, help='HMD data directory')
     parser.add_argument('--un-dir', type=Path, help='UN data directory')
@@ -385,6 +448,12 @@ def main():
     if args.charts or args.all:
         # Use filtered countries from JSON export if available
         export_charts(births, population, args.output_dir, countries=filtered_countries)
+
+    # Process US state-level data if requested
+    if args.states:
+        state_births = load_and_process_state_data()
+        if args.json or args.all:
+            export_state_json(state_births, args.output_dir, min_years, min_monthly_births)
 
     print("\n" + "=" * 50)
     print("Pipeline complete!")

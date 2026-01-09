@@ -88,6 +88,11 @@ FERTILITY_OUTPUT_DIR = OUTPUT_DIR / 'fertility'
 SEASONALITY_OUTPUT_DIR = OUTPUT_DIR / 'seasonality'
 CONCEPTION_OUTPUT_DIR = OUTPUT_DIR / 'conception'
 
+# State-specific output directories (nested under existing dirs)
+STATES_FERTILITY_OUTPUT_DIR = FERTILITY_OUTPUT_DIR / 'states'
+STATES_SEASONALITY_OUTPUT_DIR = SEASONALITY_OUTPUT_DIR / 'states'
+STATES_CONCEPTION_OUTPUT_DIR = CONCEPTION_OUTPUT_DIR / 'states'
+
 # Chart output directory
 CHARTS_OUTPUT_DIR = OUTPUT_DIR / 'charts'
 
@@ -98,6 +103,11 @@ FRONTEND_ASSETS_DATA_DIR = Path(os.environ.get('FRONTEND_ASSETS_DATA_DIR', PROJE
 FRONTEND_ASSETS_FERTILITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'fertility'
 FRONTEND_ASSETS_SEASONALITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'seasonality'
 FRONTEND_ASSETS_CONCEPTION_DIR = FRONTEND_ASSETS_DATA_DIR / 'conception'
+
+# Frontend assets for states (nested under existing dirs)
+FRONTEND_ASSETS_STATES_FERTILITY_DIR = FRONTEND_ASSETS_FERTILITY_DIR / 'states'
+FRONTEND_ASSETS_STATES_SEASONALITY_DIR = FRONTEND_ASSETS_SEASONALITY_DIR / 'states'
+FRONTEND_ASSETS_STATES_CONCEPTION_DIR = FRONTEND_ASSETS_CONCEPTION_DIR / 'states'
 
 # Frontend assets charts (for Astro Image component with Vite asset handling)
 # Charts are imported using import.meta.glob() for optimization
@@ -111,6 +121,11 @@ FRONTEND_PUBLIC_DATA_DIR = Path(os.environ.get('FRONTEND_PUBLIC_DATA_DIR', PROJE
 FRONTEND_PUBLIC_FERTILITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'fertility'
 FRONTEND_PUBLIC_SEASONALITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'seasonality'
 FRONTEND_PUBLIC_CONCEPTION_DIR = FRONTEND_PUBLIC_DATA_DIR / 'conception'
+
+# Frontend public for states (nested under existing dirs)
+FRONTEND_PUBLIC_STATES_FERTILITY_DIR = FRONTEND_PUBLIC_FERTILITY_DIR / 'states'
+FRONTEND_PUBLIC_STATES_SEASONALITY_DIR = FRONTEND_PUBLIC_SEASONALITY_DIR / 'states'
+FRONTEND_PUBLIC_STATES_CONCEPTION_DIR = FRONTEND_PUBLIC_CONCEPTION_DIR / 'states'
 
 # Legacy CSV output (for compatibility during transition)
 CSV_OUTPUT_DIR = DATA_PIPELINE_ROOT / 'src'
@@ -155,6 +170,14 @@ DATA_SOURCE_URLS = {
     'JPOP': None,
 }
 
+# State data source URLs (for US state-level data)
+STATES_DATA_SOURCE_URLS = {
+    'CDC': 'https://wonder.cdc.gov/',
+    'Historical': 'https://datadryad.org/dataset/doi:10.5061/dryad.3p008p4',
+    'Census': 'https://www.census.gov/programs-surveys/popest.html',
+    'NHGIS': 'https://www.nhgis.org/',
+}
+
 
 def ensure_output_dirs() -> None:
     """Create output directories if they don't exist."""
@@ -172,3 +195,13 @@ def ensure_output_dirs() -> None:
     FRONTEND_PUBLIC_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
+    # State output directories
+    STATES_FERTILITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    STATES_SEASONALITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    STATES_CONCEPTION_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_ASSETS_STATES_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_ASSETS_STATES_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_ASSETS_STATES_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_STATES_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_STATES_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_STATES_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
