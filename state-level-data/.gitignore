@@ -1,0 +1,11 @@
+# Data directories (large files, not tracked in git)
+census-scripts/data/
+census-scripts/nhgis_data/
+census-scripts/sample_data/
+
+# Environment files with API keys
+census-scripts/.env
+
+# Python cache
+__pycache__/
+*.pyc
