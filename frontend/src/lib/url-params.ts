@@ -22,6 +22,12 @@ export function parseCompareParams(searchParams: URLSearchParams): CompareQueryP
     ? countriesParam.split(',').map(c => c.trim()).filter(Boolean)
     : [];
 
+  // Parse states (comma-separated list)
+  const statesParam = searchParams.get('states') || '';
+  const states = statesParam
+    ? statesParam.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
   // Parse metric with validation
   const metricParam = searchParams.get('metric') || 'fertility';
   const metric: MetricSlug = METRIC_SLUGS.includes(metricParam as MetricSlug)
@@ -41,6 +47,7 @@ export function parseCompareParams(searchParams: URLSearchParams): CompareQueryP
 
   return {
     countries,
+    states,
     metric,
     scale,
     yearStart: yearStart && !isNaN(yearStart) ? yearStart : undefined,
@@ -58,6 +65,11 @@ export function serializeCompareParams(params: CompareQueryParams): string {
   // Always include countries if any are selected
   if (params.countries.length > 0) {
     searchParams.set('countries', params.countries.join(','));
+  }
+
+  // Always include states if any are selected
+  if (params.states.length > 0) {
+    searchParams.set('states', params.states.join(','));
   }
 
   // Only include metric if not the default

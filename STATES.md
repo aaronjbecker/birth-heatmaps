@@ -79,8 +79,8 @@ The state exporter is in `data-pipeline/src/exporters/states_exporter.py`:
 ```python
 from exporters import export_all_states
 
-# Export state JSON files
-export_all_states(state_births, output_dir, min_years=25, min_monthly_births=200)
+# Export state JSON files (no filtering - all 51 states included)
+export_all_states(state_births, output_dir, min_years=0, min_monthly_births=0)
 ```
 
 ### Output DataFrame Columns
@@ -119,11 +119,11 @@ Population data is interpolated to fill gaps:
 
 ## State Coverage
 
-All 50 states plus District of Columbia are included.
+All 50 states plus District of Columbia (51 total) are included without data quality filtering.
 
 Historical notes:
 - Alaska/Hawaii: Limited pre-statehood data (became states in 1959)
-- DC: Not in historical births file, available in CDC WONDER
+- DC: Not in historical births file, available in CDC WONDER (2003-2024)
 
 ## Scripts
 
@@ -175,32 +175,46 @@ frontend/public/data/              # Client-side fetch
 └── (same structure)
 ```
 
-### URL Pattern (Planned)
+### URL Pattern
 
-Frontend pages will use nested routes:
+Frontend pages use nested routes:
 - `/fertility/states/california`
 - `/seasonality/states/texas`
 - `/conception/states/new-york`
 
-### Filtering Results
+Compare page supports state selection:
+- `/compare?states=california,texas`
+- `/compare?countries=japan&states=california` (mixed)
 
-Default filters applied (same as countries):
-- Minimum 25 complete years of data
-- Minimum 200 births in every month
+### State Coverage
 
-States excluded by these filters:
-- Alaska (22 complete years)
-- District of Columbia (22 complete years)
-- Hawaii (22 complete years)
-- Nevada (low birth counts in early years)
-- Rhode Island (low birth counts in early years)
+All 51 states (50 states + District of Columbia) are included in the export.
 
-### Planned Frontend Features (TODO)
+Unlike countries, states bypass the data quality filters to ensure complete geographic coverage.
 
-1. **State Heatmap Pages**: `/fertility/states/[state].astro`
-2. **State Comparison**: Compare seasonality patterns across states
-3. **Regional Analysis**: Group states by region (Northeast, South, etc.)
-4. **Mixed Comparison**: Compare states with small countries
+**Data completeness varies by state:**
+- Most states: Data from 1915-2024 (100+ years)
+- Alaska/Hawaii: Limited pre-statehood data (became states in 1959)
+- DC: CDC WONDER data only (2003-2024)
+- Some states have gaps in population data that affect fertility rate calculations
+
+### Frontend Features
+
+**Implemented:**
+
+1. **State Heatmap Pages**: `/fertility/states/[state]` - Individual state heatmaps with metric tabs
+2. **State Index Section**: Homepage includes state grid with navigation to all 51 states
+3. **State Dropdown**: Navigation dropdown on state pages for quick state switching
+4. **State Comparison**: Compare page supports selecting multiple US states
+5. **Mixed Comparison**: Compare states alongside countries on the same page
+6. **State OG Images**: OpenGraph images generated for all state/metric combinations
+7. **URL Parameters**: States can be selected via URL (`/compare?states=california,texas`)
+8. **E2E Tests**: Full Playwright test coverage for state pages and comparison features
+
+**Pending:**
+
+1. **Static Charts**: Generate PNG charts for states (like country chart galleries)
+2. **Regional Analysis**: Group states by region (Northeast, South, etc.)
 
 ### Technical Notes
 

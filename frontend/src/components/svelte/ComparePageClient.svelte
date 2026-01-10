@@ -1,49 +1,60 @@
 <script lang="ts">
   /**
-   * Client-side component for the Compare Countries page.
+   * Client-side component for the Compare Countries & States page.
    * Handles state management, URL sync, data loading, and rendering.
    *
    * Svelte 5 port that consolidates ComparePageClient.tsx and ComparePageHeatmaps.svelte
    * into a single component, eliminating the need for nanostores.
    */
-  import type { CountryMeta, CountryHeatmapData, ScaleMode } from '../../lib/types';
+  import type { CountryMeta, StateMeta, CountryHeatmapData, ScaleMode } from '../../lib/types';
   import type { MetricSlug } from '../../lib/metrics';
   import { METRICS, METRIC_SLUGS } from '../../lib/metrics';
-  import { loadMultipleCountries } from '../../lib/compare-data';
+  import { loadMultipleCountries, loadMultipleStates } from '../../lib/compare-data';
   import { parseCompareParams, updateBrowserUrl, buildCompareUrl } from '../../lib/url-params';
   import CountryMultiSelect from './CountryMultiSelect.svelte';
+  import StateMultiSelect from './StateMultiSelect.svelte';
   import ScaleModeToggle from './ScaleModeToggle.svelte';
   import CompareShareButtons from './CompareShareButtons.svelte';
   import CompareHeatmapStack from './CompareHeatmapStack.svelte';
 
   interface Props {
     countries: CountryMeta[];
+    states?: StateMeta[];
   }
 
-  const { countries }: Props = $props();
+  const { countries, states = [] }: Props = $props();
 
   // Local state (replaces nanostores)
   let selectedCountries = $state<string[]>([]);
+  let selectedStates = $state<string[]>([]);
   let scaleMode = $state<ScaleMode>('unified');
   let metric = $state<MetricSlug>('fertility');
   let loading = $state(false);
   let error = $state<string | null>(null);
-  let loadedData = $state<Record<string, CountryHeatmapData>>({});
+  let loadedCountryData = $state<Record<string, CountryHeatmapData>>({});
+  let loadedStateData = $state<Record<string, CountryHeatmapData>>({});
 
   // Track whether we've initialized from URL
   let initialized = $state(false);
 
-  // Get ordered list of loaded country data (preserving selection order)
-  const orderedCountryData = $derived.by(() => {
-    return selectedCountries
-      .map((code) => loadedData[code])
+  // Combined data from countries and states (countries first, then states)
+  const orderedData = $derived.by(() => {
+    const countryData = selectedCountries
+      .map((code) => loadedCountryData[code])
       .filter((d): d is CountryHeatmapData => d !== undefined);
+    const stateData = selectedStates
+      .map((code) => loadedStateData[code])
+      .filter((d): d is CountryHeatmapData => d !== undefined);
+    return [...countryData, ...stateData];
   });
+
+  // Total selections
+  const totalSelected = $derived(selectedCountries.length + selectedStates.length);
 
   // Current share URL
   const shareUrl = $derived.by(() => {
     const base = typeof window !== 'undefined' ? window.location.origin : '';
-    return base + buildCompareUrl({ countries: selectedCountries, metric, scale: scaleMode });
+    return base + buildCompareUrl({ countries: selectedCountries, states: selectedStates, metric, scale: scaleMode });
   });
 
   // Parse URL on mount
@@ -53,6 +64,9 @@
     const params = parseCompareParams(new URLSearchParams(window.location.search));
     if (params.countries.length > 0) {
       selectedCountries = params.countries;
+    }
+    if (params.states.length > 0) {
+      selectedStates = params.states;
     }
     metric = params.metric;
     scaleMode = params.scale;
@@ -65,24 +79,25 @@
 
     // Access reactive state to track changes
     const currentCountries = selectedCountries;
+    const currentStates = selectedStates;
     const currentMetric = metric;
     const currentScale = scaleMode;
 
     updateBrowserUrl({
       countries: currentCountries,
+      states: currentStates,
       metric: currentMetric,
       scale: currentScale,
     });
   });
 
-  // Load data when selected countries or metric changes
+  // Load country data when selected countries or metric changes
   $effect(() => {
-    // Track dependencies
     const countriesToLoad = selectedCountries;
     const metricToLoad = metric;
 
     if (countriesToLoad.length === 0) {
-      loadedData = {};
+      loadedCountryData = {};
       return;
     }
 
@@ -96,12 +111,11 @@
         const data = await loadMultipleCountries(countriesToLoad, metricToLoad);
 
         if (!cancelled) {
-          // Convert Map to Record for local state
           const dataRecord: Record<string, CountryHeatmapData> = {};
           data.forEach((value, key) => {
             dataRecord[key] = value;
           });
-          loadedData = dataRecord;
+          loadedCountryData = dataRecord;
 
           if (data.size < countriesToLoad.length) {
             const failed = countriesToLoad.filter((c) => !data.has(c));
@@ -126,9 +140,62 @@
     };
   });
 
+  // Load state data when selected states or metric changes
+  $effect(() => {
+    const statesToLoad = selectedStates;
+    const metricToLoad = metric;
+
+    if (statesToLoad.length === 0) {
+      loadedStateData = {};
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadData() {
+      loading = true;
+      error = null;
+
+      try {
+        const data = await loadMultipleStates(statesToLoad, metricToLoad);
+
+        if (!cancelled) {
+          const dataRecord: Record<string, CountryHeatmapData> = {};
+          data.forEach((value, key) => {
+            dataRecord[key] = value;
+          });
+          loadedStateData = dataRecord;
+
+          if (data.size < statesToLoad.length) {
+            const failed = statesToLoad.filter((s) => !data.has(s));
+            console.warn('Failed to load some states:', failed);
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          error = err instanceof Error ? err.message : 'Failed to load state data';
+        }
+      } finally {
+        if (!cancelled) {
+          loading = false;
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  });
+
   // Handlers
   function handleCountriesChange(codes: string[]) {
     selectedCountries = codes;
+  }
+
+  function handleStatesChange(codes: string[]) {
+    selectedStates = codes;
   }
 
   function handleMetricChange(newMetric: MetricSlug) {
@@ -153,6 +220,18 @@
           onChange={handleCountriesChange}
         />
       </div>
+
+      <!-- State selector -->
+      {#if states.length > 0}
+        <div class="flex flex-col gap-2.5">
+          <label class="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">US States</label>
+          <StateMultiSelect
+            {states}
+            selected={selectedStates}
+            onChange={handleStatesChange}
+          />
+        </div>
+      {/if}
 
       <!-- Metric tabs -->
       <div class="flex flex-col gap-2.5">
@@ -185,13 +264,13 @@
         <ScaleModeToggle
           mode={scaleMode}
           onChange={handleScaleModeChange}
-          disabled={selectedCountries.length < 2}
+          disabled={totalSelected < 2}
         />
       </div>
     </div>
 
     <!-- Share buttons -->
-    {#if selectedCountries.length > 0}
+    {#if totalSelected > 0}
       <div class="flex justify-end pt-2 border-t border-border">
         <CompareShareButtons url={shareUrl} />
       </div>
@@ -209,7 +288,7 @@
     </div>
   {:else}
     <CompareHeatmapStack
-      countries={orderedCountryData}
+      countries={orderedData}
       {scaleMode}
     />
   {/if}

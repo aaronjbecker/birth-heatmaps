@@ -2,16 +2,20 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CountryDropdown from '../components/svelte/CountryDropdown.svelte';
 import Heatmap from '../components/svelte/Heatmap.svelte';
-import type { CountryMeta, CountryHeatmapData } from '../lib/types';
+import type { CountryMeta, CountryHeatmapData, StateMeta } from '../lib/types';
 import { METRICS } from '../lib/metrics';
 
 // Import countries data from src/assets - Vite will handle cache-busting
 import countriesData from '../assets/data/countries.json';
 
+// Import states data from src/assets
+import statesData from '../assets/data/states.json';
+
 // Import US fertility data for demo heatmap
 import usaFertilityData from '../assets/data/fertility/united-states-of-america.json';
 
 const countries = (countriesData.countries || []) as CountryMeta[];
+const states = (statesData.states || []) as StateMeta[];
 const demoData = usaFertilityData as CountryHeatmapData;
 
 function formatYearRange(range: [number, number]): string {
@@ -20,15 +24,21 @@ function formatYearRange(range: [number, number]): string {
 ---
 
 <BaseLayout
-  title="Countries"
-  description={`Explore fertility rates and birth seasonality patterns across ${countries.length} countries. Data from the Human Mortality Database and UN Population Division.`}
+  title="Birth Seasonality Heatmaps"
+  description={`Explore fertility rates and birth seasonality patterns across ${countries.length} countries and ${states.length} US states. Data from the Human Mortality Database, UN Population Division, and CDC.`}
   canonicalPath="/"
 >
   <h1 class="mb-sm">Birth Seasonality Heatmaps</h1>
-  <p class="mb-lg text-text-muted">
-    Explore fertility rates and birth seasonality patterns across {countries.length} countries.
-    Data from the Human Mortality Database, UN Population Division, and country-specific sources.
+  <p class="mb-md text-text-muted">
+    Explore fertility rates and birth seasonality patterns across {countries.length} countries and {states.length} US states.
+    Data from the Human Mortality Database, UN Population Division, CDC, and other sources.
   </p>
+
+  <nav class="mb-lg flex gap-md text-sm">
+    <a href="#countries" class="text-primary hover:underline">Countries ({countries.length})</a>
+    <span class="text-text-muted">|</span>
+    <a href="#states" class="text-primary hover:underline">US States ({states.length})</a>
+  </nav>
 
   <div class="mb-xl p-lg bg-card-bg border border-card-border rounded-lg">
     <div class="flex justify-between items-center mb-md">
@@ -55,29 +65,65 @@ function formatYearRange(range: [number, number]): string {
     />
   </div>
 
-  {countries.length > 0 ? (
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-      {countries.map((country) => (
-        <a href={`/fertility/${country.code}`} class="block p-lg bg-card-bg border border-card-border rounded-lg hover:border-primary transition-colors">
-          <h3 class="text-lg font-semibold mb-sm">{country.name}</h3>
-          <p class="text-sm text-text-muted mb-xs">
-            Sources: {country.sources.join(', ')}
-          </p>
-          <p class="text-sm text-text-muted">
-            {formatYearRange(country.fertility.yearRange)} · {country.completeYears} complete years
-          </p>
-        </a>
-      ))}
-    </div>
-  ) : (
-    <div class="p-lg bg-card-bg border border-card-border rounded-lg">
-      <h2 class="mb-md">No Data Available</h2>
-      <p class="mb-md">
-        Run the data pipeline to generate country data:
-      </p>
-      <pre class="bg-bg p-md rounded overflow-x-auto">
+  <section id="countries" class="mb-2xl scroll-mt-lg">
+    <h2 class="text-xl font-semibold mb-md">Countries</h2>
+    {countries.length > 0 ? (
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+        {countries.map((country) => (
+          <a href={`/fertility/${country.code}`} class="block p-lg bg-card-bg border border-card-border rounded-lg hover:border-primary transition-colors">
+            <h3 class="text-lg font-semibold mb-sm">{country.name}</h3>
+            <p class="text-sm text-text-muted mb-xs">
+              Sources: {country.sources.join(', ')}
+            </p>
+            <p class="text-sm text-text-muted">
+              {formatYearRange(country.fertility.yearRange)} · {country.completeYears} complete years
+            </p>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="p-lg bg-card-bg border border-card-border rounded-lg">
+        <h3 class="mb-md">No Data Available</h3>
+        <p class="mb-md">
+          Run the data pipeline to generate country data:
+        </p>
+        <pre class="bg-bg p-md rounded overflow-x-auto">
 python data-pipeline/scripts/run_pipeline.py --json
-      </pre>
+        </pre>
+      </div>
+    )}
+  </section>
+
+  <section id="states" class="mb-xl scroll-mt-lg">
+    <div class="flex justify-between items-center mb-md">
+      <h2 class="text-xl font-semibold m-0">US States</h2>
+      <a href="#countries" class="text-sm text-primary hover:underline">Back to Countries</a>
     </div>
-  )}
+    <p class="text-text-muted mb-md">
+      Explore fertility rates and birth seasonality patterns across {states.length} US states.
+      Data from CDC WONDER, historical records, and Census Bureau population estimates.
+    </p>
+    {states.length > 0 ? (
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-md">
+        {states.map((state) => (
+          <a href={`/fertility/states/${state.code}`} class="block p-md bg-card-bg border border-card-border rounded-lg hover:border-primary transition-colors">
+            <h3 class="text-md font-semibold mb-xs">{state.name}</h3>
+            <p class="text-xs text-text-muted">
+              {formatYearRange(state.fertility.yearRange)}
+            </p>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="p-lg bg-card-bg border border-card-border rounded-lg">
+        <h3 class="mb-md">No State Data Available</h3>
+        <p class="mb-md">
+          Run the data pipeline with the --states flag:
+        </p>
+        <pre class="bg-bg p-md rounded overflow-x-auto">
+python data-pipeline/scripts/run_pipeline.py --json --states
+        </pre>
+      </div>
+    )}
+  </section>
 </BaseLayout>

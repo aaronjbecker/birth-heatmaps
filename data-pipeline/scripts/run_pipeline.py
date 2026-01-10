@@ -453,7 +453,8 @@ def main():
     if args.states:
         state_births = load_and_process_state_data()
         if args.json or args.all:
-            export_state_json(state_births, args.output_dir, min_years, min_monthly_births)
+            # States bypass filtering - include all 50 states + DC for completeness
+            export_state_json(state_births, args.output_dir, min_years=0, min_monthly_births=0)
 
     print("\n" + "=" * 50)
     print("Pipeline complete!")
