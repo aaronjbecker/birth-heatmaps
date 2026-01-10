@@ -83,7 +83,8 @@ const pageDescription = `${metricConfig.label} data for ${stateMeta.name} from $
 const canonicalPath = `/${metric}/states/${state}`;
 
 // Build full OG image URL (must be absolute for social media crawlers)
-const ogImageUrl = `https://birth-heatmaps.aaronjbecker.com/og/${metric}/states/${state}.png`;
+const site = Astro.site?.origin ?? 'https://birth-heatmaps.aaronjbecker.com';
+const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
 ---
 
 <BaseLayout

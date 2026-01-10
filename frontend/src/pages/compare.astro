@@ -16,8 +16,9 @@ import type { CountryMeta, StateMeta } from '../lib/types';
 const countries = countriesData.countries as CountryMeta[];
 const states = statesData.states as StateMeta[];
 
-// Use default OG image
-const ogImageUrl = '/og/default.png';
+// Use default OG image (absolute URL required for social media crawlers)
+const site = Astro.site?.origin ?? 'https://birth-heatmaps.aaronjbecker.com';
+const ogImageUrl = `${site}/og/default.png`;
 ---
 
 <BaseLayout
