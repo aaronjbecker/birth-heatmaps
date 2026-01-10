@@ -29,8 +29,8 @@
   let svgRef: SVGSVGElement | null = $state(null);
   let actualWidth = $state(800);
 
-  const margin = { top: 30, left: 40, right: 40 };
-  const totalHeight = $derived(height + 75);
+  const margin = { top: 2, left: 30, right: 30 };
+  const totalHeight = $derived(height + 22);
   const barWidth = $derived(actualWidth - margin.left - margin.right);
 
   const domain = $derived(colorScaleConfig.domain);
@@ -124,37 +124,11 @@
         .attr('x', x)
         .attr('y', 14)
         .attr('text-anchor', 'middle')
-        .attr('font-size', '10px')
+        .attr('font-size', '12px')
         .style('fill', 'var(--color-text)')
         .text(formatValue(tick, metric));
     });
 
-    // Add edge labels (min/max values)
-    const edgeLabelsGroup = g.append('g').attr('class', 'edge-labels');
-
-    // Min label (left edge)
-    edgeLabelsGroup
-      .append('text')
-      .attr('x', 0)
-      .attr('y', -8)
-      .attr('text-anchor', 'start')
-      .attr('font-size', '12px')
-      .attr('font-weight', 600)
-      .style('fill', 'var(--color-text)')
-      .attr('data-testid', 'legend-min-label')
-      .text(formatValue(min, metric));
-
-    // Max label (right edge)
-    edgeLabelsGroup
-      .append('text')
-      .attr('x', actualWidth)
-      .attr('y', -8)
-      .attr('text-anchor', 'end')
-      .attr('font-size', '12px')
-      .attr('font-weight', 600)
-      .style('fill', 'var(--color-text)')
-      .attr('data-testid', 'legend-max-label')
-      .text(formatValue(max, metric));
   });
 
   // Render hover indicator when hoveredValue changes
@@ -243,7 +217,7 @@
   });
 </script>
 
-<div bind:this={containerRef} class="flex flex-col items-center px-2 py-1 w-full max-w-full overflow-hidden box-border">
+<div bind:this={containerRef} class="flex flex-col items-center w-full max-w-full overflow-hidden box-border">
   {#if title}
     <div class="text-xs text-text mb-1.5">{title}</div>
   {/if}

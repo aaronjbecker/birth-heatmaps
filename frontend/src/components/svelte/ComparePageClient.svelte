@@ -209,7 +209,7 @@
 
 <div class="flex flex-col gap-0 w-full">
   <!-- Controls -->
-  <div class="flex flex-col gap-4 p-4 bg-bg-alt rounded-lg border border-border">
+  <div class="flex flex-col gap-4 p-3 bg-bg-alt rounded-lg border border-border">
     <div class="flex items-start gap-8 flex-wrap">
       <!-- Country selector -->
       <div class="flex flex-col gap-2.5">

@@ -20,7 +20,7 @@
     height?: number;
   }
 
-  const { countries, scaleMode, height = 400 }: Props = $props();
+  const { countries, scaleMode, height = 340 }: Props = $props();
 
   // State - initialize with defaults
   let yearRangeStart = $state(1900);
@@ -96,9 +96,9 @@
     </p>
   </div>
 {:else}
-  <div class="flex flex-col gap-4 w-full mt-4">
+  <div class="flex flex-col gap-2 w-full mt-4">
     <!-- Year range filter at top -->
-    <div class="px-3 py-2 bg-bg-alt border border-border rounded-lg">
+    <div class="px-3 py-1.5 bg-bg-alt border border-border rounded-lg">
       <YearRangeFilter
         min={commonYearRange[0]}
         max={commonYearRange[1]}
@@ -117,7 +117,7 @@
 
       <div class="flex flex-col gap-0 border border-border rounded-lg overflow-hidden bg-bg-alt">
         <!-- Country header -->
-        <div class="flex items-center justify-between px-4 py-2.5 bg-bg-alt border-b border-border">
+        <div class="flex items-center justify-between px-4 py-1.5 bg-bg-alt border-b border-border">
           <h3 class="text-lg font-semibold text-text m-0">{country.country.name}</h3>
           <span class="text-[0.8125rem] text-text-muted">
             {Math.min(...country.years)}–{Math.max(...country.years)}
@@ -139,7 +139,7 @@
         </div>
 
         <!-- Color legend below heatmap -->
-        <div class="px-4 py-2.5 bg-bg-alt border-t border-border">
+        <div class="px-4 py-1.5 bg-bg-alt border-t border-border">
           <ColorLegend
             colorScale={legendColorScale}
             metric={country.metric}
