@@ -241,47 +241,51 @@
       </div>
     {/if}
 
-    <div class="relative">
-      <!-- Scrolling container - also serves as tooltip container -->
-      <div
-        bind:this={scrollWrapperRef}
-        class="relative w-full min-h-[400px] border border-border rounded overflow-hidden"
-        class:border-none={noBorder}
-        class:rounded-none={noBorder}
-        style:height="{height}px"
-        style:overflow-x={scrollEnabled ? 'auto' : 'hidden'}
-        onpointerleave={handleContainerPointerLeave}
-      >
-        <!-- D3 will render SVG and tooltip into this container -->
-        <div bind:this={containerRef} class="w-full h-full"></div>
+    <div
+      class="border border-border rounded overflow-hidden"
+      class:border-none={noBorder}
+      class:rounded-none={noBorder}
+    >
+      <div class="relative">
+        <!-- Scrolling container - also serves as tooltip container -->
+        <div
+          bind:this={scrollWrapperRef}
+          class="relative w-full min-h-[400px] overflow-y-hidden"
+          style:height="{height}px"
+          style:overflow-x={scrollEnabled ? 'auto' : 'hidden'}
+          onpointerleave={handleContainerPointerLeave}
+        >
+          <!-- D3 will render SVG and tooltip into this container -->
+          <div bind:this={containerRef} class="w-full h-full"></div>
+        </div>
+
+        <!-- Left scroll indicator -->
+        <div
+          class="absolute bottom-0 left-0 h-7 w-[90px] pointer-events-none flex items-center text-[11px] font-medium text-text-muted z-10 bg-gradient-to-r from-bg to-transparent pl-2.5"
+          style:opacity={scrollEnabled && !scrollState.atStart ? 1 : 0}
+        >
+          ← more left
+        </div>
+
+        <!-- Right scroll indicator -->
+        <div
+          class="absolute bottom-0 right-0 h-7 w-[110px] pointer-events-none flex items-center justify-end text-[11px] font-medium text-text-muted z-10 bg-gradient-to-l from-bg to-transparent pr-2.5"
+          style:opacity={scrollEnabled && !scrollState.atEnd ? 1 : 0}
+        >
+          more right →
+        </div>
       </div>
 
-      <!-- Left scroll indicator -->
-      <div
-        class="absolute bottom-0 left-0 h-7 w-[90px] pointer-events-none flex items-center text-[11px] font-medium text-text-muted z-10 bg-gradient-to-r from-bg to-transparent pl-2.5"
-        style:opacity={scrollEnabled && !scrollState.atStart ? 1 : 0}
-      >
-        ← more left
-      </div>
-
-      <!-- Right scroll indicator -->
-      <div
-        class="absolute bottom-0 right-0 h-7 w-[110px] pointer-events-none flex items-center justify-end text-[11px] font-medium text-text-muted z-10 bg-gradient-to-l from-bg to-transparent pr-2.5"
-        style:opacity={scrollEnabled && !scrollState.atEnd ? 1 : 0}
-      >
-        more right →
-      </div>
+      {#if showControls && showLegend}
+        <div class="w-full px-4 pb-3">
+          <ColorLegend
+            colorScale={effectiveData.colorScale}
+            width={containerWidth - 32}
+            metric={effectiveData.metric}
+            {hoveredValue}
+          />
+        </div>
+      {/if}
     </div>
-
-    {#if showControls && showLegend}
-      <div class="w-full mt-4 px-4">
-        <ColorLegend
-          colorScale={effectiveData.colorScale}
-          width={containerWidth - 32}
-          metric={effectiveData.metric}
-          {hoveredValue}
-        />
-      </div>
-    {/if}
   {/if}
 </div>

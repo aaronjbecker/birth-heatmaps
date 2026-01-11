@@ -195,9 +195,11 @@
                 ? 'bg-bg'
                 : ''} {isCurrent ? 'font-semibold text-primary' : ''}"
               onclick={() => handleSelect(state.code)}
+              onkeydown={(e) => e.key === 'Enter' && handleSelect(state.code)}
               onmouseenter={() => (highlightedIndex = index)}
               role="option"
               aria-selected={isCurrent}
+              tabindex="-1"
               data-testid="state-option-{state.code}"
             >
               {state.name}
