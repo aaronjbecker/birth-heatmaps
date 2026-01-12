@@ -6,9 +6,13 @@ interface Props {
   code: string;
   /** Additional CSS classes */
   class?: string;
+  /** Width in pixels (default: 24) */
+  width?: number;
+  /** Height in pixels (default: 18) */
+  height?: number;
 }
 
-const { code, class: className } = Astro.props;
+const { code, class: className, width = 24, height = 18 } = Astro.props;
 
 // Import all flag SVGs at build time
 const flagModules = import.meta.glob<{ default: ImageMetadata }>(
@@ -31,8 +35,8 @@ const flag = flagCode ? flags[flagCode] : null;
 {flag && (
   <img
     src={flag.src}
-    width={24}
-    height={18}
+    width={width}
+    height={height}
     alt=""
     loading="lazy"
     decoding="async"

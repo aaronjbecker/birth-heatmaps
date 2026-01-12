@@ -5,6 +5,8 @@
    */
   import type { CountryMeta } from '../../lib/types';
   import type { MetricSlug } from '../../lib/metrics';
+  import { getFlagUrl } from '../../lib/flags';
+  import CountryFlag from './CountryFlag.svelte';
 
   interface Props {
     countries: CountryMeta[];
@@ -202,6 +204,7 @@
               tabindex="-1"
               data-testid="country-option-{country.code}"
             >
+              <CountryFlag url={getFlagUrl(country.code)} class="mr-1.5" />
               {country.name}
               {#if isCurrent}
                 {' (current)'}

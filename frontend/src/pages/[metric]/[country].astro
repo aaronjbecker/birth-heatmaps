@@ -4,6 +4,7 @@ import Heatmap from '../../components/svelte/Heatmap.svelte';
 import CountryDropdown from '../../components/svelte/CountryDropdown.svelte';
 import ChartGallery from '../../components/ChartGallery.astro';
 import ShareButtons from '../../components/ShareButtons.astro';
+import CountryFlag from '../../components/CountryFlag.astro';
 import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../lib/metrics';
 
@@ -105,7 +106,10 @@ const ogImageUrl = `${site}/og/${metric}/${country}.png`;
     />
   </div>
 
-  <h1 class="mb-xs">{countryMeta.name}</h1>
+  <h1 class="mb-xs">
+    <CountryFlag code={countryMeta.code} width={40} height={30} class="mr-sm" />
+    {countryMeta.name}
+  </h1>
   <p class="text-text-muted mb-md">{metricConfig.subtitle}</p>
 
   <div class="flex gap-lg mb-lg text-sm text-text-muted flex-wrap items-center">
