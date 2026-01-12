@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CountryDropdown from '../components/svelte/CountryDropdown.svelte';
 import Heatmap from '../components/svelte/Heatmap.svelte';
+import CountryFlag from '../components/CountryFlag.astro';
 import type { CountryMeta, CountryHeatmapData, StateMeta } from '../lib/types';
 import { METRICS } from '../lib/metrics';
 
@@ -71,7 +72,10 @@ function formatYearRange(range: [number, number]): string {
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
         {countries.map((country) => (
           <a href={`/fertility/${country.code}`} class="block p-lg bg-card-bg border border-card-border rounded-lg hover:border-primary transition-colors">
-            <h3 class="text-lg font-semibold mb-sm">{country.name}</h3>
+            <h3 class="text-lg font-semibold mb-sm">
+              <CountryFlag code={country.code} class="mr-sm" />
+              {country.name}
+            </h3>
             <p class="text-sm text-text-muted mb-xs">
               Sources: {country.sources.join(', ')}
             </p>
