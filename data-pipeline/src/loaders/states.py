@@ -71,18 +71,16 @@ def _load_historical_file(file_path: Path) -> pl.DataFrame:
     Load the historical US births file (1915-2008).
 
     This file has:
-    - CR-only line endings (not standard LF/CRLF)
+    - CRLF line endings
     - "na" string for missing birth values
     - No District of Columbia data
     - Columns: year, month, num, mo, state, kid, stateid, births, ...
 
     Filters out rows with "na" births.
     """
-    # Read with CR line endings
     df = pl.read_csv(
         file_path,
         infer_schema_length=100000,
-        eol_char='\r',
     )
 
     # Filter out rows with "na" births
@@ -146,7 +144,56 @@ def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:
     # Sort for consistency
     combined = combined.sort(['Country', 'Year', 'Month'])
 
+    # Ensure continuous monthly coverage
+    combined = _ensure_continuous_births_index(combined)
+
     return combined
+
+
+def _ensure_continuous_births_index(births: pl.DataFrame) -> pl.DataFrame:
+    """
+    Ensure continuous monthly time series for each state.
+
+    Creates a complete monthly index from first to last month for each state,
+    filling gaps with null Births values.
+
+    Args:
+        births: DataFrame with Country, Year, Month, Births
+
+    Returns:
+        DataFrame with continuous monthly coverage per state.
+        Missing months have null Births values.
+    """
+    # Create Date column for range calculation
+    births_with_date = births.with_columns(
+        pl.date(pl.col('Year'), pl.col('Month'), 1).alias('Date')
+    )
+
+    # Create complete monthly index per state (min date to max date)
+    monthly_index = (
+        births_with_date
+        .group_by('Country')
+        .agg(pl.date_range(
+            pl.col('Date').min(),
+            pl.col('Date').max(),
+            interval='1mo'
+        ).alias('Date'))
+        .explode('Date')
+        .select(
+            'Country',
+            pl.col('Date').dt.year().cast(pl.Int64).alias('Year'),
+            pl.col('Date').dt.month().cast(pl.Int64).alias('Month'),
+        )
+    )
+
+    # Left join to preserve all months, gaps get null Births
+    result = monthly_index.join(
+        births,
+        on=['Country', 'Year', 'Month'],
+        how='left'
+    ).sort(['Country', 'Year', 'Month'])
+
+    return result
 
 
 def load_population(data_dir: Optional[Path] = None) -> pl.DataFrame:
