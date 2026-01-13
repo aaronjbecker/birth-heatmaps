@@ -220,9 +220,15 @@ export interface MonthRanking {
   lowestAvg: number;  // Month number (1-12) with lowest average
 }
 
-/** Monthly fertility timeseries data structure */
+/** Monthly fertility timeseries data structure (for countries or US states) */
 export interface MonthlyFertilityTimeSeriesData {
-  country: {
+  /** Country metadata (present for country-level data) */
+  country?: {
+    code: string;
+    name: string;
+  };
+  /** State metadata (present for US state-level data) */
+  state?: {
     code: string;
     name: string;
   };

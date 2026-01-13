@@ -39,7 +39,8 @@ Time series with 12 monthly lines showing daily fertility rate per 100k women ag
 ### JSON Data Schema
 ```typescript
 interface MonthlyFertilityTimeSeriesData {
-  country: { code: string; name: string };
+  country?: { code: string; name: string };  // Present for country-level data
+  state?: { code: string; name: string };    // Present for US state-level data
   metric: 'daily_fertility_rate';
   title: string;
   yearRange: [number, number];
@@ -58,6 +59,8 @@ interface MonthlyFertilityTimeSeriesData {
   generatedAt: string;
 }
 ```
+
+**Note:** Country data has `country` key, US state data has `state` key. The chart component handles both via `data.country?.name || data.state?.name`.
 
 ### Files Created/Modified
 
@@ -79,8 +82,10 @@ interface MonthlyFertilityTimeSeriesData {
 | `data-pipeline/src/config/settings.py` | Added `MONTHLY_FERTILITY_OUTPUT_DIR` and frontend paths |
 | `data-pipeline/src/config/__init__.py` | Exported new path constants |
 | `data-pipeline/src/exporters/json_exporter.py` | Added `export_monthly_fertility_timeseries()` function |
-| `frontend/src/lib/types.ts` | Added `MonthlyFertilityTimeSeriesData` interface |
+| `data-pipeline/src/exporters/states_exporter.py` | Added monthly fertility export for US states |
+| `frontend/src/lib/types.ts` | Added `MonthlyFertilityTimeSeriesData` interface with optional country/state keys |
 | `frontend/src/pages/[metric]/[country].astro` | Load monthly fertility data at build time |
+| `frontend/src/pages/[metric]/states/[state].astro` | Load monthly fertility data for US state pages |
 | `frontend/src/components/EntityHeatmapPage.astro` | Render chart below heatmap (fertility metric only) |
 
 ### Reference Implementation

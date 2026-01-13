@@ -199,7 +199,7 @@
     class="w-full h-full overflow-visible"
     preserveAspectRatio="none"
     role="img"
-    aria-label="Monthly fertility rate time series chart for {data.country.name}"
+    aria-label="Monthly fertility rate time series chart for {data.country?.name || data.state?.name}"
     onpointermove={handlePointerMove}
     onpointerleave={handlePointerLeave}
     ontouchstart={handleTouchStart}

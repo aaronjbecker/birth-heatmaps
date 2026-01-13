@@ -15,20 +15,24 @@ import polars as pl
 
 from config import (
     MONTH_NAMES,
+    MONTH_NAMES_FULL,
     STATES_DATA_SOURCE_URLS,
     get_country_slug,
     JSON_OUTPUT_DIR,
     STATES_FERTILITY_OUTPUT_DIR,
     STATES_SEASONALITY_OUTPUT_DIR,
     STATES_CONCEPTION_OUTPUT_DIR,
+    STATES_MONTHLY_FERTILITY_OUTPUT_DIR,
     FRONTEND_ASSETS_DATA_DIR,
     FRONTEND_ASSETS_STATES_FERTILITY_DIR,
     FRONTEND_ASSETS_STATES_SEASONALITY_DIR,
     FRONTEND_ASSETS_STATES_CONCEPTION_DIR,
+    FRONTEND_ASSETS_STATES_MONTHLY_FERTILITY_DIR,
     FRONTEND_PUBLIC_DATA_DIR,
     FRONTEND_PUBLIC_STATES_FERTILITY_DIR,
     FRONTEND_PUBLIC_STATES_SEASONALITY_DIR,
     FRONTEND_PUBLIC_STATES_CONCEPTION_DIR,
+    FRONTEND_PUBLIC_STATES_MONTHLY_FERTILITY_DIR,
     MIN_YEARS_DATA,
     MIN_MONTHLY_BIRTHS,
     ensure_output_dirs,
@@ -258,8 +262,11 @@ def export_states_index(
 def _export_state_json(args: tuple) -> str:
     """Helper function to export JSON data for a single state (for parallel execution)."""
     (births_dict, state_name, fertility_dir, seasonality_dir, conception_dir,
+     monthly_fertility_dir,
      frontend_fertility_dir, frontend_seasonality_dir, frontend_conception_dir,
-     public_fertility_dir, public_seasonality_dir, public_conception_dir) = args
+     frontend_monthly_fertility_dir,
+     public_fertility_dir, public_seasonality_dir, public_conception_dir,
+     public_monthly_fertility_dir) = args
 
     # Reconstruct DataFrame from dict for this state
     births = pl.DataFrame(births_dict)
@@ -432,6 +439,93 @@ def _export_state_json(args: tuple) -> str:
         with open(public_conception_dir / conception_filename, 'w') as f:
             json.dump(conception_output, f)
 
+    # --- Export monthly fertility timeseries data ---
+    if len(valid_fertility) > 0:
+        monthly_fertility_dir.mkdir(parents=True, exist_ok=True)
+
+        # Compute month rankings based on average seasonality ratio
+        month_avg = (
+            state_data
+            .filter(pl.col('seasonality_ratio_annual').is_not_null())
+            .group_by('Month')
+            .agg(pl.col('seasonality_ratio_annual').mean().alias('avg_ratio'))
+            .sort('Month')
+        )
+
+        if len(month_avg) > 0:
+            highest_row = month_avg.sort('avg_ratio', descending=True).head(1)
+            lowest_row = month_avg.sort('avg_ratio').head(1)
+            highest_month = int(highest_row['Month'][0])
+            lowest_month = int(lowest_row['Month'][0])
+        else:
+            highest_month = 9
+            lowest_month = 4
+
+        # Build monthly series
+        monthly_series = []
+        for month in range(1, 13):
+            month_data = valid_fertility.filter(pl.col('Month') == month).sort('Year')
+            series_data = []
+            for row in month_data.iter_rows(named=True):
+                series_data.append({
+                    'year': int(row['Year']),
+                    'value': round(row['daily_fertility_rate'], 2)
+                })
+            monthly_series.append({
+                'month': month,
+                'monthName': MONTH_NAMES_FULL[month - 1],
+                'data': series_data
+            })
+
+        # Build annual average series
+        annual_avg = (
+            valid_fertility
+            .group_by('Year')
+            .agg(pl.col('daily_fertility_rate').mean().alias('avg'))
+            .sort('Year')
+        )
+        annual_average_series = []
+        for row in annual_avg.iter_rows(named=True):
+            annual_average_series.append({
+                'year': int(row['Year']),
+                'value': round(row['avg'], 2)
+            })
+
+        # Compute Y domain
+        mf_min_val = float(valid_fertility['daily_fertility_rate'].min())
+        mf_max_val = float(valid_fertility['daily_fertility_rate'].max())
+        padding = (mf_max_val - mf_min_val) * 0.05
+        y_domain = [round(max(0, mf_min_val - padding), 1), round(mf_max_val + padding, 1)]
+
+        mf_years = sorted(valid_fertility['Year'].unique().to_list())
+        monthly_fertility_output = {
+            'state': {'code': state_slug, 'name': state_name},
+            'metric': 'daily_fertility_rate',
+            'title': 'Daily Births per 100k Women Age 15-44',
+            'yearRange': [int(min(mf_years)), int(max(mf_years))],
+            'monthRanking': {
+                'highestAvg': highest_month,
+                'lowestAvg': lowest_month
+            },
+            'monthlySeries': monthly_series,
+            'annualAverageSeries': annual_average_series,
+            'yDomain': y_domain,
+            'sources': sources,
+            'generatedAt': datetime.utcnow().isoformat() + 'Z'
+        }
+
+        monthly_fertility_filename = f'{state_slug}.json'
+        with open(monthly_fertility_dir / monthly_fertility_filename, 'w') as f:
+            json.dump(monthly_fertility_output, f)
+
+        frontend_monthly_fertility_dir.mkdir(parents=True, exist_ok=True)
+        with open(frontend_monthly_fertility_dir / monthly_fertility_filename, 'w') as f:
+            json.dump(monthly_fertility_output, f)
+
+        public_monthly_fertility_dir.mkdir(parents=True, exist_ok=True)
+        with open(public_monthly_fertility_dir / monthly_fertility_filename, 'w') as f:
+            json.dump(monthly_fertility_output, f)
+
     return state_name
 
 
@@ -471,6 +565,7 @@ def export_all_states(
     fertility_dir = STATES_FERTILITY_OUTPUT_DIR
     seasonality_dir = STATES_SEASONALITY_OUTPUT_DIR
     conception_dir = STATES_CONCEPTION_OUTPUT_DIR
+    monthly_fertility_dir = STATES_MONTHLY_FERTILITY_OUTPUT_DIR
 
     # Convert DataFrame to dict for pickling (needed for multiprocessing)
     births_dict = births.to_dict()
@@ -478,8 +573,11 @@ def export_all_states(
     # Create args for each state
     export_args = [
         (births_dict, state_name, fertility_dir, seasonality_dir, conception_dir,
+         monthly_fertility_dir,
          FRONTEND_ASSETS_STATES_FERTILITY_DIR, FRONTEND_ASSETS_STATES_SEASONALITY_DIR, FRONTEND_ASSETS_STATES_CONCEPTION_DIR,
-         FRONTEND_PUBLIC_STATES_FERTILITY_DIR, FRONTEND_PUBLIC_STATES_SEASONALITY_DIR, FRONTEND_PUBLIC_STATES_CONCEPTION_DIR)
+         FRONTEND_ASSETS_STATES_MONTHLY_FERTILITY_DIR,
+         FRONTEND_PUBLIC_STATES_FERTILITY_DIR, FRONTEND_PUBLIC_STATES_SEASONALITY_DIR, FRONTEND_PUBLIC_STATES_CONCEPTION_DIR,
+         FRONTEND_PUBLIC_STATES_MONTHLY_FERTILITY_DIR)
         for state_name in states
     ]
 

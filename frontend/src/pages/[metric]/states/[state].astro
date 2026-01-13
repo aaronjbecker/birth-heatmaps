@@ -3,7 +3,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import EntityHeatmapPage from '../../../components/EntityHeatmapPage.astro';
 import StateDropdown from '../../../components/svelte/StateDropdown.svelte';
 import ShareButtons from '../../../components/ShareButtons.astro';
-import type { StateMeta, StateHeatmapData, CountryHeatmapData } from '../../../lib/types';
+import type { StateMeta, StateHeatmapData, CountryHeatmapData, MonthlyFertilityTimeSeriesData } from '../../../lib/types';
 import { stateToCountryFormat } from '../../../lib/normalize-data';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../../lib/metrics';
 
@@ -20,6 +20,7 @@ export async function getStaticPaths() {
   const fertilityFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/fertility/states/*.json');
   const seasonalityFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/seasonality/states/*.json');
   const conceptionFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/conception/states/*.json');
+  const monthlyFertilityFiles = import.meta.glob<MonthlyFertilityTimeSeriesData>('../../../assets/data/monthly-fertility/states/*.json');
 
   const dataFilesByMetric: Record<MetricSlug, Record<string, () => Promise<StateHeatmapData>>> = {
     fertility: fertilityFiles,
@@ -48,9 +49,22 @@ export async function getStaticPaths() {
           ? stateToCountryFormat(stateHeatmapData)
           : null;
 
+        // Load monthly fertility timeseries data (only for fertility metric)
+        let monthlyFertilityData: MonthlyFertilityTimeSeriesData | null = null;
+        if (metric === 'fertility') {
+          const monthlyFilePath = `../../../assets/data/monthly-fertility/states/${state.code}.json`;
+          if (monthlyFertilityFiles[monthlyFilePath]) {
+            try {
+              monthlyFertilityData = await monthlyFertilityFiles[monthlyFilePath]() as MonthlyFertilityTimeSeriesData;
+            } catch (e) {
+              console.warn(`Failed to load monthly fertility data for state ${state.name}:`, e);
+            }
+          }
+        }
+
         return {
           params: { metric, state: state.code },
-          props: { stateMeta: state, heatmapData, metric },
+          props: { stateMeta: state, heatmapData, monthlyFertilityData, metric },
         };
       })
     )
@@ -62,11 +76,12 @@ export async function getStaticPaths() {
 interface Props {
   stateMeta: StateMeta;
   heatmapData: CountryHeatmapData | null;
+  monthlyFertilityData: MonthlyFertilityTimeSeriesData | null;
   metric: MetricSlug;
 }
 
 const { state } = Astro.params;
-const { stateMeta, heatmapData, metric } = Astro.props;
+const { stateMeta, heatmapData, monthlyFertilityData, metric } = Astro.props;
 
 const metricConfig = METRICS[metric];
 const metricData = stateMeta[metric];
@@ -95,6 +110,7 @@ const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
     yearRange={metricData.yearRange}
     metric={metric}
     heatmapData={heatmapData}
+    monthlyFertilityData={monthlyFertilityData}
     compareUrl={`/compare?states=${state}&metric=${metric}`}
     metricBaseUrl={`/${metric}/states`}
     fallbackDataUrl={`/data/${metric}/states/${state}.json`}
