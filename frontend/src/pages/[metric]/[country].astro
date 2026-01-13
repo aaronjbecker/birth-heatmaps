@@ -4,7 +4,7 @@ import EntityHeatmapPage from '../../components/EntityHeatmapPage.astro';
 import CountryDropdown from '../../components/svelte/CountryDropdown.svelte';
 import ShareButtons from '../../components/ShareButtons.astro';
 import CountryFlag from '../../components/CountryFlag.astro';
-import type { CountryMeta, CountryHeatmapData } from '../../lib/types';
+import type { CountryMeta, CountryHeatmapData, MonthlyFertilityTimeSeriesData } from '../../lib/types';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../lib/metrics';
 
 // Import countries data at module level for use in page
@@ -20,6 +20,7 @@ export async function getStaticPaths() {
   const fertilityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/fertility/*.json');
   const seasonalityFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/seasonality/*.json');
   const conceptionFiles = import.meta.glob<CountryHeatmapData>('../../assets/data/conception/*.json');
+  const monthlyFertilityFiles = import.meta.glob<MonthlyFertilityTimeSeriesData>('../../assets/data/monthly-fertility/*.json');
 
   const dataFilesByMetric: Record<MetricSlug, Record<string, () => Promise<CountryHeatmapData>>> = {
     fertility: fertilityFiles,
@@ -43,9 +44,22 @@ export async function getStaticPaths() {
           }
         }
 
+        // Load monthly fertility timeseries data (only for fertility metric)
+        let monthlyFertilityData: MonthlyFertilityTimeSeriesData | null = null;
+        if (metric === 'fertility') {
+          const monthlyFilePath = `../../assets/data/monthly-fertility/${country.code}.json`;
+          if (monthlyFertilityFiles[monthlyFilePath]) {
+            try {
+              monthlyFertilityData = await monthlyFertilityFiles[monthlyFilePath]() as MonthlyFertilityTimeSeriesData;
+            } catch (e) {
+              console.warn(`Failed to load monthly fertility data for ${country.name}:`, e);
+            }
+          }
+        }
+
         return {
           params: { metric, country: country.code },
-          props: { countryMeta: country, heatmapData, metric },
+          props: { countryMeta: country, heatmapData, monthlyFertilityData, metric },
         };
       })
     )
@@ -57,11 +71,12 @@ export async function getStaticPaths() {
 interface Props {
   countryMeta: CountryMeta;
   heatmapData: CountryHeatmapData | null;
+  monthlyFertilityData: MonthlyFertilityTimeSeriesData | null;
   metric: MetricSlug;
 }
 
 const { country } = Astro.params;
-const { countryMeta, heatmapData, metric } = Astro.props;
+const { countryMeta, heatmapData, monthlyFertilityData, metric } = Astro.props;
 
 const metricConfig = METRICS[metric];
 const metricData = countryMeta[metric];
@@ -90,6 +105,7 @@ const ogImageUrl = `${site}/og/${metric}/${country}.png`;
     yearRange={metricData.yearRange}
     metric={metric}
     heatmapData={heatmapData}
+    monthlyFertilityData={monthlyFertilityData}
     compareUrl={`/compare?countries=${country}&metric=${metric}`}
     metricBaseUrl={`/${metric}`}
     fallbackDataUrl={`/data/${metric}/${country}.json`}

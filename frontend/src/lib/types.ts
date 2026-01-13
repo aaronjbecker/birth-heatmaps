@@ -190,3 +190,61 @@ export interface CompareState {
   yearRange: [number, number] | null;
   commonYearRange: [number, number] | null;
 }
+
+// =====================================
+// Monthly Fertility Time Series Types
+// =====================================
+
+/** Single data point in a monthly time series */
+export interface MonthlySeriesDataPoint {
+  year: number;
+  value: number | null;
+}
+
+/** Monthly series data for one month */
+export interface MonthlySeries {
+  month: number;
+  monthName: string;
+  data: MonthlySeriesDataPoint[];
+}
+
+/** Annual average data point */
+export interface AnnualAverageDataPoint {
+  year: number;
+  value: number;
+}
+
+/** Month ranking metadata */
+export interface MonthRanking {
+  highestAvg: number; // Month number (1-12) with highest average
+  lowestAvg: number;  // Month number (1-12) with lowest average
+}
+
+/** Monthly fertility timeseries data structure */
+export interface MonthlyFertilityTimeSeriesData {
+  country: {
+    code: string;
+    name: string;
+  };
+  metric: 'daily_fertility_rate';
+  title: string;
+  yearRange: [number, number];
+  monthRanking: MonthRanking;
+  monthlySeries: MonthlySeries[];
+  annualAverageSeries: AnnualAverageDataPoint[];
+  yDomain: [number, number];
+  sources: string[];
+  generatedAt: string;
+}
+
+/** Tooltip data for hovered year */
+export interface MonthlyFertilityTooltipData {
+  year: number;
+  monthValues: Array<{
+    month: number;
+    monthName: string;
+    value: number | null;
+    color: string;
+  }>;
+  annualValue: number | null;
+}

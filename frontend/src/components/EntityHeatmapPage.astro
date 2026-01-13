@@ -14,9 +14,10 @@
  * Entity-specific elements (navigation, header) are passed via named slots.
  */
 import Heatmap from './svelte/Heatmap.svelte';
+import MonthlyFertilityChart from './svelte/charts/MonthlyFertilityChart.svelte';
 import ChartGallery from './ChartGallery.astro';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../lib/metrics';
-import type { CountryHeatmapData } from '../lib/types';
+import type { CountryHeatmapData, MonthlyFertilityTimeSeriesData } from '../lib/types';
 
 export interface Props {
   entityType: 'country' | 'state';
@@ -26,6 +27,7 @@ export interface Props {
   yearRange: [number, number];
   metric: MetricSlug;
   heatmapData: CountryHeatmapData | null;
+  monthlyFertilityData?: MonthlyFertilityTimeSeriesData | null;  // Optional for states
   compareUrl: string;           // e.g., '/compare?states=california&metric=fertility'
   metricBaseUrl: string;        // e.g., '/fertility/states' or '/fertility'
   fallbackDataUrl: string;      // e.g., '/data/fertility/states/california.json'
@@ -39,6 +41,7 @@ const {
   yearRange,
   metric,
   heatmapData,
+  monthlyFertilityData,
   compareUrl,
   metricBaseUrl,
   fallbackDataUrl,
@@ -105,6 +108,21 @@ function formatYearRange(range: [number, number]): string {
     </div>
   )}
 </div>
+
+<!-- Monthly Fertility Time Series Chart (fertility metric only) -->
+{metric === 'fertility' && monthlyFertilityData && (
+  <div class="mb-xl">
+    <h2 class="text-lg font-semibold mb-sm text-text">Monthly Trends Over Time</h2>
+    <p class="text-sm text-text-muted mb-md">
+      Daily fertility rate for each month across all years. Hover to see values for a specific year.
+    </p>
+    <MonthlyFertilityChart
+      client:load
+      data={monthlyFertilityData}
+      height={400}
+    />
+  </div>
+)}
 
 <!-- Chart Gallery -->
 <ChartGallery

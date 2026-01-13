@@ -87,6 +87,7 @@ JSON_OUTPUT_DIR = OUTPUT_DIR
 FERTILITY_OUTPUT_DIR = OUTPUT_DIR / 'fertility'
 SEASONALITY_OUTPUT_DIR = OUTPUT_DIR / 'seasonality'
 CONCEPTION_OUTPUT_DIR = OUTPUT_DIR / 'conception'
+MONTHLY_FERTILITY_OUTPUT_DIR = OUTPUT_DIR / 'monthly-fertility'
 
 # State-specific output directories (nested under existing dirs)
 STATES_FERTILITY_OUTPUT_DIR = FERTILITY_OUTPUT_DIR / 'states'
@@ -106,6 +107,7 @@ FRONTEND_ASSETS_DATA_DIR = Path(os.environ.get('FRONTEND_ASSETS_DATA_DIR', PROJE
 FRONTEND_ASSETS_FERTILITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'fertility'
 FRONTEND_ASSETS_SEASONALITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'seasonality'
 FRONTEND_ASSETS_CONCEPTION_DIR = FRONTEND_ASSETS_DATA_DIR / 'conception'
+FRONTEND_ASSETS_MONTHLY_FERTILITY_DIR = FRONTEND_ASSETS_DATA_DIR / 'monthly-fertility'
 
 # Frontend assets for states (nested under existing dirs)
 FRONTEND_ASSETS_STATES_FERTILITY_DIR = FRONTEND_ASSETS_FERTILITY_DIR / 'states'
@@ -127,6 +129,7 @@ FRONTEND_PUBLIC_DATA_DIR = Path(os.environ.get('FRONTEND_PUBLIC_DATA_DIR', PROJE
 FRONTEND_PUBLIC_FERTILITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'fertility'
 FRONTEND_PUBLIC_SEASONALITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'seasonality'
 FRONTEND_PUBLIC_CONCEPTION_DIR = FRONTEND_PUBLIC_DATA_DIR / 'conception'
+FRONTEND_PUBLIC_MONTHLY_FERTILITY_DIR = FRONTEND_PUBLIC_DATA_DIR / 'monthly-fertility'
 
 # Frontend public for states (nested under existing dirs)
 FRONTEND_PUBLIC_STATES_FERTILITY_DIR = FRONTEND_PUBLIC_FERTILITY_DIR / 'states'
@@ -198,16 +201,19 @@ def ensure_output_dirs() -> None:
     FERTILITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     SEASONALITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     CONCEPTION_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    MONTHLY_FERTILITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     CHARTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_DATA_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_ASSETS_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_ASSETS_MONTHLY_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_CONTENT_CHARTS_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_DATA_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_PUBLIC_MONTHLY_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     # State output directories
     STATES_FERTILITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     STATES_SEASONALITY_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
