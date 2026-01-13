@@ -112,10 +112,11 @@ python scripts/run_pipeline.py --json --charts \
 
 ```
 scripts/run_pipeline.py          # Main entry point
-├── loaders/                     # Data loading from HMD, UN, Japan
+├── loaders/                     # Data loading from HMD, UN, Japan, US States
 │   ├── hmd.py                  # Human Mortality Database
 │   ├── un.py                   # UN World Population Prospects
-│   └── japan.py                # Japan population data
+│   ├── japan.py                # Japan population data
+│   └── states.py               # US state-level birth data
 ├── processors/                  # Data transformation
 │   ├── interpolation.py        # Population interpolation
 │   ├── fertility.py            # Fertility rate computation
@@ -195,6 +196,8 @@ Raw data files are **not included** in the repository per license terms (except 
 | `{COUNTRY}pop.txt` | HMD | `data/hmd_countries_YYYYMMDD/{COUNTRY}/InputDB/` | No |
 | `un_births_by_month_data_raw.csv` | UN Data | `data/` | No |
 | `WPP2024_PopulationBySingleAgeSex_Medium_1950-2023.csv` | UN WPP | `data/` | No |
+| `monthly-births-by-state-*.csv` | CDC WONDER | `state-level-data/` | **Yes** |
+| `US_BIRTH_1915_2008.csv` | Dryad (Martinez-Bakker et al.) | `state-level-data/` | **Yes** |
 
 ### Human Mortality Database (HMD)
 
@@ -280,6 +283,51 @@ birth-heatmaps/
 
 This file is already included in the repository and does not require manual download. It provides population by age and sex for Japan (census date: October 1st each year).
 
+### US State-Level Birth Data (Tracked)
+
+**Location:** `state-level-data/` at repository root (**tracked by Git**)
+
+These files are included in the repository and do not require manual download. The loader (`loaders/states.py`) consolidates them into a single dataset covering 1915-2024.
+
+**Files:**
+
+| File | Years | Source |
+|------|-------|--------|
+| `monthly-births-by-state-2003-2006.csv` | 2003-2006 | CDC WONDER |
+| `monthly-births-by-state-2007-2024.csv` | 2007-2024 | CDC WONDER |
+| `US_BIRTH_1915_2008.csv` | 1915-2008 | Dryad |
+
+**Data Priority:** For overlapping years (2003-2008), CDC WONDER data is preferred.
+
+**Coverage:**
+- 51 jurisdictions (50 states + District of Columbia)
+- DC data available from 2003 onward only (not in historical file)
+- Early years (1915-1926) have incomplete coverage as states joined the Birth Registration Area gradually
+
+**Citations:**
+
+1. **CDC WONDER (2003-2024):**
+
+   Centers for Disease Control and Prevention, National Center for Health Statistics. National Vital Statistics System, Natality on CDC WONDER Online Database. http://wonder.cdc.gov/natality-current.html
+
+   Data queried November 2025.
+
+2. **Historical Data (1915-2008):**
+
+   Martinez-Bakker M, Bakker KM, King AA, Rohani P (2018) Data from: Human birth seasonality: latitudinal gradient and interplay with childhood disease dynamics. Dryad Digital Repository. https://doi.org/10.5061/dryad.3p008p4
+
+   Dataset URL: https://datadryad.org/dataset/doi:10.5061/dryad.3p008p4
+
+   Associated publication: Martinez-Bakker M, Bakker KM, King AA, Rohani P (2014) Human birth seasonality: latitudinal gradient and interplay with childhood disease dynamics. *Proceedings of the Royal Society B* 281(1783): 20132438. https://doi.org/10.1098/rspb.2013.2438
+
+**Usage:**
+
+```python
+from loaders import states
+df = states.load_births()
+# Returns DataFrame with columns: Country (state name), Year, Month, Births
+```
+
 ### Directory Structure After Setup
 
 ```
@@ -295,6 +343,10 @@ birth-heatmaps/
 │   │   └── .../
 │   ├── un_births_by_month_data_raw.csv     # UN births by month
 │   └── WPP2024_PopulationBySingleAgeSex_Medium_1950-2023.csv  # UN WPP
+├── state-level-data/                        # US state births (tracked)
+│   ├── monthly-births-by-state-2003-2006.csv
+│   ├── monthly-births-by-state-2007-2024.csv
+│   └── US_BIRTH_1915_2008.csv
 ├── data-pipeline/
 │   ├── jpop.csv                            # Japan population (tracked)
 │   └── ...
@@ -305,6 +357,7 @@ birth-heatmaps/
 
 - `HMD_DATA_DIR` - Override HMD data directory (default: auto-detects bulk download in `../data/hmd_countries_*`, falls back to `../hmd_data`)
 - `UN_DATA_DIR` - Path to UN data directory (default: `../data`)
+- `STATES_DATA_DIR` - Path to US state-level data directory (default: `../state-level-data`)
 - `OUTPUT_DIR` - Pipeline output directory (default: `./output`)
 - `FRONTEND_ASSETS_DATA_DIR` - Frontend assets directory (default: `../frontend/src/assets/data`)
 

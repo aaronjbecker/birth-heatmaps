@@ -33,7 +33,7 @@ export interface HeatmapInstance {
 }
 
 const defaultConfig: HeatmapConfig = {
-  margin: { top: 20, right: 30, bottom: 50, left: 60 },
+  margin: { top: 12, right: 30, bottom: 30, left: 60 },
   cellPadding: 0.05,
   minCellWidth: 8,
   minCellHeight: 20,
@@ -164,17 +164,16 @@ export function createHeatmap(
 
     const axis = d3.axisBottom(xScale)
       .tickValues(tickYears)
-      .tickSize(0);
+      .tickSize(6);
 
     xAxisGroup
       .call(axis)
       .select('.domain').remove();
 
     xAxisGroup.selectAll('text')
-      .style('font-size', '11px')
+      .style('font-size', '14px')
       .style('fill', getCSSVariable('--color-svg-text'))
-      .attr('transform', 'rotate(-45)')
-      .style('text-anchor', 'end');
+      .style('text-anchor', 'middle');
 
     xAxisGroup.selectAll('line')
       .style('stroke', getCSSVariable('--color-svg-axis'));
@@ -236,7 +235,7 @@ export function createHeatmap(
       .select('.domain').remove();
 
     yAxisGroup.selectAll('text')
-      .style('font-size', '12px')
+      .style('font-size', '14px')
       .style('fill', getCSSVariable('--color-svg-text'));
 
     yAxisGroup.selectAll('line')

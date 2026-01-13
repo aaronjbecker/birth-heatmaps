@@ -14,6 +14,16 @@ export const TEST_COUNTRY = {
 };
 
 /**
+ * Test state with known comprehensive data
+ * California has extensive CDC data coverage
+ */
+export const TEST_STATE = {
+  code: 'california',
+  name: 'California',
+  // Year range and cell count will be determined dynamically from actual data
+};
+
+/**
  * Wait for heatmap to fully render
  * Accounts for D3 rendering and transitions
  *

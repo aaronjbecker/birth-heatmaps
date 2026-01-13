@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import EntityHeatmapPage from '../../../components/EntityHeatmapPage.astro';
+import StateDropdown from '../../../components/svelte/StateDropdown.svelte';
+import ShareButtons from '../../../components/ShareButtons.astro';
+import type { StateMeta, StateHeatmapData, CountryHeatmapData } from '../../../lib/types';
+import { stateToCountryFormat } from '../../../lib/normalize-data';
+import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../../lib/metrics';
+
+// Import states data at module level for use in page
+const statesData = await import('../../../assets/data/states.json');
+const allStates = statesData.states as StateMeta[];
+
+export async function getStaticPaths() {
+  // Import states data from src/assets - Vite will handle cache-busting
+  const statesData = await import('../../../assets/data/states.json');
+  const states = statesData.states as StateMeta[];
+
+  // Load all state data files for each metric using import.meta.glob
+  const fertilityFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/fertility/states/*.json');
+  const seasonalityFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/seasonality/states/*.json');
+  const conceptionFiles = import.meta.glob<StateHeatmapData>('../../../assets/data/conception/states/*.json');
+
+  const dataFilesByMetric: Record<MetricSlug, Record<string, () => Promise<StateHeatmapData>>> = {
+    fertility: fertilityFiles,
+    seasonality: seasonalityFiles,
+    conception: conceptionFiles,
+  };
+
+  // Generate paths for all metric × state combinations
+  const paths = await Promise.all(
+    METRIC_SLUGS.flatMap((metric) =>
+      states.map(async (state) => {
+        let stateHeatmapData: StateHeatmapData | null = null;
+        const filePath = `../../../assets/data/${metric}/states/${state.code}.json`;
+        const metricFiles = dataFilesByMetric[metric];
+
+        if (metricFiles[filePath]) {
+          try {
+            stateHeatmapData = await metricFiles[filePath]() as StateHeatmapData;
+          } catch (e) {
+            console.warn(`Failed to load ${metric} data for state ${state.name}:`, e);
+          }
+        }
+
+        // Transform to CountryHeatmapData format for component compatibility
+        const heatmapData: CountryHeatmapData | null = stateHeatmapData
+          ? stateToCountryFormat(stateHeatmapData)
+          : null;
+
+        return {
+          params: { metric, state: state.code },
+          props: { stateMeta: state, heatmapData, metric },
+        };
+      })
+    )
+  );
+
+  return paths;
+}
+
+interface Props {
+  stateMeta: StateMeta;
+  heatmapData: CountryHeatmapData | null;
+  metric: MetricSlug;
+}
+
+const { state } = Astro.params;
+const { stateMeta, heatmapData, metric } = Astro.props;
+
+const metricConfig = METRICS[metric];
+const metricData = stateMeta[metric];
+
+// SEO metadata
+const pageTitle = `${stateMeta.name} - ${metricConfig.label}`;
+const pageDescription = `${metricConfig.label} data for ${stateMeta.name} from ${metricData.yearRange[0]} to ${metricData.yearRange[1]}. ${metricConfig.subtitle} Data sources: ${stateMeta.sources.join(', ')}.`;
+const canonicalPath = `/${metric}/states/${state}`;
+
+// Build full OG image URL (must be absolute for social media crawlers)
+const site = Astro.site?.origin ?? 'https://birth-heatmaps.aaronjbecker.com';
+const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonicalPath={canonicalPath}
+  ogImage={ogImageUrl}
+>
+  <EntityHeatmapPage
+    entityType="state"
+    entityCode={state!}
+    entityName={stateMeta.name}
+    sources={stateMeta.sources}
+    yearRange={metricData.yearRange}
+    metric={metric}
+    heatmapData={heatmapData}
+    compareUrl={`/compare?states=${state}&metric=${metric}`}
+    metricBaseUrl={`/${metric}/states`}
+    fallbackDataUrl={`/data/${metric}/states/${state}.json`}
+  >
+    <div slot="navigation" class="page-header flex justify-between items-center mb-lg flex-wrap gap-sm">
+      <nav class="breadcrumb text-sm text-text-muted">
+        <a href="/" class="text-text-muted hover:text-primary">Countries</a>
+        <span class="mx-1">/</span>
+        <a href="/#states" class="text-text-muted hover:text-primary">US States</a>
+        <span class="mx-1">/</span>
+        <StateDropdown
+          client:load
+          states={allStates}
+          currentState={state}
+          metric={metric}
+          variant="inline"
+        />
+      </nav>
+      <ShareButtons
+        url={`https://birth-heatmaps.aaronjbecker.com${canonicalPath}`}
+        title={pageTitle}
+        description={pageDescription}
+      />
+    </div>
+
+    <h1 slot="header" class="mb-xs">{stateMeta.name}</h1>
+  </EntityHeatmapPage>
+</BaseLayout>

@@ -5,6 +5,8 @@
    */
   import type { CountryMeta } from '../../lib/types';
   import type { MetricSlug } from '../../lib/metrics';
+  import { getFlagUrl } from '../../lib/flags';
+  import CountryFlag from './CountryFlag.svelte';
 
   interface Props {
     countries: CountryMeta[];
@@ -195,11 +197,14 @@
                 ? 'bg-bg'
                 : ''} {isCurrent ? 'font-semibold text-primary' : ''}"
               onclick={() => handleSelect(country.code)}
+              onkeydown={(e) => e.key === 'Enter' && handleSelect(country.code)}
               onmouseenter={() => (highlightedIndex = index)}
               role="option"
               aria-selected={isCurrent}
+              tabindex="-1"
               data-testid="country-option-{country.code}"
             >
+              <CountryFlag url={getFlagUrl(country.code)} class="mr-1.5" />
               {country.name}
               {#if isCurrent}
                 {' (current)'}

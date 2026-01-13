@@ -37,9 +37,23 @@ from config import (
     DATA_SOURCE_LABELS,
     CHARTS_OUTPUT_DIR,
     FRONTEND_CONTENT_CHARTS_DIR,
+    STATES_CHARTS_OUTPUT_DIR,
+    FRONTEND_CONTENT_STATES_CHARTS_DIR,
     get_country_slug,
     ensure_output_dirs,
 )
+
+# Try to import heatmap functions at module level for subprocess compatibility
+try:
+    from fertility_heatmap_plotting import (
+        build_fertility_heatmap_figure,
+        build_seasonality_heatmap_figure
+    )
+    HEATMAP_FUNCTIONS_AVAILABLE = True
+except ImportError:
+    HEATMAP_FUNCTIONS_AVAILABLE = False
+    build_fertility_heatmap_figure = None
+    build_seasonality_heatmap_figure = None
 
 
 # Chart filenames for consistent naming
@@ -556,34 +570,24 @@ def export_country_charts(
         generated_paths.append(path)
 
     # Optionally generate heatmaps (these are supplementary to D3 interactive heatmaps)
-    if include_heatmaps:
-        try:
-            # Import heatmap functions (may not be available in all environments)
-            import sys
-            sys.path.insert(0, str(Path(__file__).parent.parent))
-            from fertility_heatmap_plotting import (
-                build_fertility_heatmap_figure,
-                build_seasonality_heatmap_figure
-            )
+    if include_heatmaps and HEATMAP_FUNCTIONS_AVAILABLE:
+        # Fertility heatmap
+        build_fertility_heatmap_figure(
+            country_births, country_name, country_output_dir,
+            num_rows=1,
+            filename_fn=lambda c: country_output_dir / CHART_FILENAMES['fertility_heatmap']
+        )
+        generated_paths.append(country_output_dir / CHART_FILENAMES['fertility_heatmap'])
 
-            # Fertility heatmap
-            build_fertility_heatmap_figure(
-                country_births, country_name, country_output_dir,
-                num_rows=1,
-                filename_fn=lambda c: country_output_dir / CHART_FILENAMES['fertility_heatmap']
-            )
-            generated_paths.append(country_output_dir / CHART_FILENAMES['fertility_heatmap'])
-
-            # Seasonality heatmap
-            build_seasonality_heatmap_figure(
-                country_births, country_name, country_output_dir,
-                num_rows=1,
-                filename_fn=lambda c: country_output_dir / CHART_FILENAMES['seasonality_heatmap']
-            )
-            generated_paths.append(country_output_dir / CHART_FILENAMES['seasonality_heatmap'])
-
-        except ImportError as e:
-            print(f"  Warning: Could not import heatmap functions: {e}")
+        # Seasonality heatmap
+        build_seasonality_heatmap_figure(
+            country_births, country_name, country_output_dir,
+            num_rows=1,
+            filename_fn=lambda c: country_output_dir / CHART_FILENAMES['seasonality_heatmap']
+        )
+        generated_paths.append(country_output_dir / CHART_FILENAMES['seasonality_heatmap'])
+    elif include_heatmaps and not HEATMAP_FUNCTIONS_AVAILABLE:
+        print(f"  Warning: Heatmap functions not available, skipping heatmaps for {country_name}")
 
     return generated_paths
 
@@ -720,3 +724,177 @@ def _copy_charts_to_frontend(source_dir: Path, dest_dir: Path) -> None:
                 copied_files += 1
 
     print(f"  Copied {copied_files} charts to {dest_dir} for frontend imports")
+
+
+def get_state_output_dir(state_name: str, base_dir: Optional[Path] = None) -> Path:
+    """Get the output directory for a state's charts."""
+    if base_dir is None:
+        base_dir = STATES_CHARTS_OUTPUT_DIR
+    # Reuse country slug function - works for state names too
+    state_slug = get_country_slug(state_name)
+    return base_dir / state_slug
+
+
+def export_state_charts(
+    births: pl.DataFrame,
+    state_name: str,
+    output_dir: Optional[Path] = None,
+    include_heatmaps: bool = True
+) -> List[Path]:
+    """
+    Export all charts for a single US state.
+
+    Uses the same chart-building functions as countries since state data
+    follows the same DataFrame structure (Country column contains state name).
+
+    Args:
+        births: DataFrame with births data (Country column = state name)
+        state_name: Name of the state
+        output_dir: Base output directory (defaults to STATES_CHARTS_OUTPUT_DIR)
+        include_heatmaps: Whether to include matplotlib heatmaps
+
+    Returns:
+        List of paths to generated charts
+    """
+    if output_dir is None:
+        output_dir = STATES_CHARTS_OUTPUT_DIR
+
+    state_output_dir = get_state_output_dir(state_name, output_dir)
+    state_output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Filter data for this state (uses 'Country' column which holds state name)
+    state_births = births.filter(pl.col('Country') == state_name)
+
+    # Extract population data from births (state data has childbearing_population in births df)
+    state_population = state_births.select(
+        'Country', 'Year', 'Month', 'Date', 'childbearing_population', 'Source'
+    ).unique()
+
+    generated_paths = []
+
+    print(f"  Generating charts for {state_name}...")
+
+    # Generate all chart types (same functions work for states)
+    path = build_monthly_fertility_rate_chart(state_births, state_name, state_output_dir)
+    if path:
+        generated_paths.append(path)
+
+    path = build_monthly_fertility_boxplot(state_births, state_name, state_output_dir)
+    if path:
+        generated_paths.append(path)
+
+    if len(state_population) > 0:
+        path = build_population_chart(state_population, state_name, state_output_dir)
+        if path:
+            generated_paths.append(path)
+
+    path = build_births_chart(state_births, state_name, state_output_dir)
+    if path:
+        generated_paths.append(path)
+
+    path = build_daily_fertility_rate_chart(state_births, state_name, state_output_dir)
+    if path:
+        generated_paths.append(path)
+
+    # Optionally generate heatmaps
+    if include_heatmaps and HEATMAP_FUNCTIONS_AVAILABLE:
+        build_fertility_heatmap_figure(
+            state_births, state_name, state_output_dir,
+            num_rows=1,
+            filename_fn=lambda c: state_output_dir / CHART_FILENAMES['fertility_heatmap']
+        )
+        generated_paths.append(state_output_dir / CHART_FILENAMES['fertility_heatmap'])
+
+        build_seasonality_heatmap_figure(
+            state_births, state_name, state_output_dir,
+            num_rows=1,
+            filename_fn=lambda c: state_output_dir / CHART_FILENAMES['seasonality_heatmap']
+        )
+        generated_paths.append(state_output_dir / CHART_FILENAMES['seasonality_heatmap'])
+    elif include_heatmaps and not HEATMAP_FUNCTIONS_AVAILABLE:
+        print(f"  Warning: Heatmap functions not available, skipping heatmaps for {state_name}")
+
+    return generated_paths
+
+
+def _export_state_charts_worker(args: Tuple[Dict, str, Path, bool]) -> Tuple[str, int]:
+    """Worker function for parallel state chart generation."""
+    births_dict, state_name, output_dir, include_heatmaps = args
+
+    births = pl.DataFrame(births_dict)
+
+    try:
+        paths = export_state_charts(
+            births, state_name,
+            output_dir, include_heatmaps
+        )
+        plt.close('all')
+        return (state_name, len(paths))
+    except Exception as e:
+        plt.close('all')
+        print(f"  Error generating charts for {state_name}: {e}")
+        return (state_name, 0)
+
+
+def export_all_state_charts(
+    births: pl.DataFrame,
+    output_dir: Optional[Path] = None,
+    states: Optional[List[str]] = None,
+    include_heatmaps: bool = True,
+    max_workers: Optional[int] = None
+) -> None:
+    """
+    Export charts for all US states in parallel.
+
+    Args:
+        births: DataFrame with all state births data
+        output_dir: Base output directory (defaults to STATES_CHARTS_OUTPUT_DIR)
+        states: Optional list of states to export (defaults to all unique states in data)
+        include_heatmaps: Whether to include matplotlib heatmaps
+        max_workers: Maximum number of parallel workers
+    """
+    if output_dir is None:
+        output_dir = STATES_CHARTS_OUTPUT_DIR
+
+    ensure_output_dirs()
+
+    if states is None:
+        states = sorted(births['Country'].unique().to_list())
+
+    if max_workers is None:
+        max_workers = max(1, (os.cpu_count() or 4) - 1)
+        max_workers = min(max_workers, 4)
+
+    print(f"Exporting charts for {len(states)} states using {max_workers} workers...")
+
+    births_dict = births.to_dict()
+
+    export_args = [
+        (births_dict, state_name, output_dir, include_heatmaps)
+        for state_name in states
+    ]
+
+    total_charts = 0
+    completed = 0
+
+    ctx = multiprocessing.get_context('spawn')
+
+    with ProcessPoolExecutor(max_workers=max_workers, mp_context=ctx) as executor:
+        futures = {executor.submit(_export_state_charts_worker, args): args[1] for args in export_args}
+
+        for future in as_completed(futures):
+            state_name = futures[future]
+            try:
+                _, num_charts = future.result()
+                total_charts += num_charts
+                completed += 1
+                if completed % 10 == 0:
+                    print(f"  Completed {completed}/{len(states)} states...")
+            except Exception as e:
+                print(f"  Error processing {state_name}: {e}")
+                completed += 1
+
+    print(f"\nExported {total_charts} state charts to {output_dir}")
+
+    # Copy charts to frontend content directory
+    _copy_charts_to_frontend(output_dir, FRONTEND_CONTENT_STATES_CHARTS_DIR)

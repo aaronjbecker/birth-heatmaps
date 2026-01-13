@@ -1,0 +1,148 @@
+---
+/**
+ * EntityHeatmapPage - Shared layout for country and state heatmap pages.
+ *
+ * Handles common elements:
+ * - Metric subtitle
+ * - Year range and sources display
+ * - Compare link
+ * - Metric tabs
+ * - Heatmap component
+ * - Chart gallery
+ * - Fallback script for client-side data loading
+ *
+ * Entity-specific elements (navigation, header) are passed via named slots.
+ */
+import Heatmap from './svelte/Heatmap.svelte';
+import ChartGallery from './ChartGallery.astro';
+import { METRICS, METRIC_SLUGS, type MetricSlug } from '../lib/metrics';
+import type { CountryHeatmapData } from '../lib/types';
+
+export interface Props {
+  entityType: 'country' | 'state';
+  entityCode: string;           // Slug (e.g., 'california', 'united-states-of-america')
+  entityName: string;           // Display name
+  sources: string[];
+  yearRange: [number, number];
+  metric: MetricSlug;
+  heatmapData: CountryHeatmapData | null;
+  compareUrl: string;           // e.g., '/compare?states=california&metric=fertility'
+  metricBaseUrl: string;        // e.g., '/fertility/states' or '/fertility'
+  fallbackDataUrl: string;      // e.g., '/data/fertility/states/california.json'
+}
+
+const {
+  entityType,
+  entityCode,
+  entityName,
+  sources,
+  yearRange,
+  metric,
+  heatmapData,
+  compareUrl,
+  metricBaseUrl,
+  fallbackDataUrl,
+} = Astro.props;
+
+const metricConfig = METRICS[metric];
+
+function formatYearRange(range: [number, number]): string {
+  return `${range[0]}–${range[1]}`;
+}
+---
+
+<!-- Navigation slot (CountryDropdown or StateDropdown breadcrumb) -->
+<slot name="navigation" />
+
+<!-- Entity header slot (name with optional flag) -->
+<slot name="header" />
+
+<p class="text-text-muted mb-md">{metricConfig.subtitle}</p>
+
+<div class="flex gap-lg mb-lg text-sm text-text-muted flex-wrap items-center">
+  <span>{formatYearRange(yearRange)}</span>
+  <span>Sources: {sources.join(', ')}</span>
+  <a href={compareUrl} class="compare-link text-primary hover:underline">
+    Compare with other {entityType === 'state' ? 'states' : 'countries'} →
+  </a>
+</div>
+
+<!-- Metric tabs -->
+<div class="flex gap-xs mb-lg border-b border-border">
+  {METRIC_SLUGS.map((m) => (
+    <a
+      href={`${metricBaseUrl.replace(metric, m)}/${entityCode}`}
+      class:list={[
+        'tab py-sm px-lg border-b-2 text-text-muted transition-all duration-150',
+        m === metric
+          ? 'active border-primary text-primary'
+          : 'border-transparent hover:text-text hover:no-underline'
+      ]}
+    >
+      {METRICS[m].label}
+    </a>
+  ))}
+</div>
+
+<!-- Heatmap -->
+<div class="mb-xl">
+  {heatmapData ? (
+    <Heatmap
+      client:load
+      data={heatmapData}
+      height={500}
+      showLegend={true}
+      showYearFilter={true}
+      showControls={true}
+    />
+  ) : (
+    <div
+      id="heatmap-container"
+      class="min-h-[500px] flex items-center justify-center bg-bg border border-border rounded"
+      data-fallback-url={fallbackDataUrl}
+    >
+      <p class="p-xl text-center text-text-muted">Loading heatmap data...</p>
+    </div>
+  )}
+</div>
+
+<!-- Chart Gallery -->
+<ChartGallery
+  countrySlug={entityType === 'country' ? entityCode : undefined}
+  stateSlug={entityType === 'state' ? entityCode : undefined}
+/>
+
+<!-- Client-side fallback script -->
+{!heatmapData && (
+  <script>
+    const container = document.getElementById('heatmap-container');
+    const fallbackUrl = container?.dataset.fallbackUrl;
+
+    if (fallbackUrl && container) {
+      fetch(fallbackUrl)
+        .then(res => {
+          if (!res.ok) throw new Error('Data not found');
+          return res.json();
+        })
+        .then(data => {
+          container.innerHTML = `
+            <p class="text-center p-xl">
+              Heatmap data loaded: ${data.data.length} cells, ${data.years.length} years<br>
+              <small class="text-text-muted">
+                Note: Full D3 visualization requires data at build time.<br>
+                Run the data pipeline and rebuild the site.
+              </small>
+            </p>
+          `;
+        })
+        .catch(() => {
+          container.innerHTML = `
+            <p class="text-center p-xl text-text-muted">
+              No data available yet.<br>
+              <small>Run the data pipeline to generate JSON files.</small>
+            </p>
+          `;
+        });
+    }
+  </script>
+)}

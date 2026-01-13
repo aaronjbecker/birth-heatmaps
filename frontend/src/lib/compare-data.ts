@@ -8,8 +8,9 @@
  * - Computing unified color scales from multiple datasets
  */
 
-import type { CountryHeatmapData, HeatmapCell, ColorScaleConfig } from './types';
+import type { CountryHeatmapData, StateHeatmapData, HeatmapCell, ColorScaleConfig } from './types';
 import type { MetricSlug } from './metrics';
+import { stateToCountryFormat } from './normalize-data';
 
 const DATA_BASE_PATH = '/data';
 
@@ -50,6 +51,50 @@ export async function loadMultipleCountries(
       dataMap.set(countryCodes[index], result.value);
     } else {
       console.warn(`Failed to load data for ${countryCodes[index]}:`, result.reason);
+    }
+  });
+
+  return dataMap;
+}
+
+/**
+ * Load heatmap data for a specific state and metric.
+ * Uses fetch to load from the public folder, then transforms to CountryHeatmapData format.
+ */
+export async function loadStateMetricData(
+  stateCode: string,
+  metric: MetricSlug
+): Promise<CountryHeatmapData> {
+  const url = `${DATA_BASE_PATH}/${metric}/states/${stateCode}.json`;
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load ${metric} data for state ${stateCode}: ${response.statusText}`);
+  }
+
+  const stateData: StateHeatmapData = await response.json();
+  return stateToCountryFormat(stateData);
+}
+
+/**
+ * Load data for multiple states in parallel.
+ * Returns a Map of state code to data, silently skipping failed loads.
+ */
+export async function loadMultipleStates(
+  stateCodes: string[],
+  metric: MetricSlug
+): Promise<Map<string, CountryHeatmapData>> {
+  const results = await Promise.allSettled(
+    stateCodes.map(code => loadStateMetricData(code, metric))
+  );
+
+  const dataMap = new Map<string, CountryHeatmapData>();
+
+  results.forEach((result, index) => {
+    if (result.status === 'fulfilled') {
+      dataMap.set(stateCodes[index], result.value);
+    } else {
+      console.warn(`Failed to load data for state ${stateCodes[index]}:`, result.reason);
     }
   });
 

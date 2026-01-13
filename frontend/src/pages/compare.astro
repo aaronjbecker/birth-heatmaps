@@ -1,7 +1,7 @@
 ---
 /**
- * Compare Countries page
- * Allows users to compare birth patterns across multiple countries.
+ * Compare Countries and States page
+ * Allows users to compare birth patterns across multiple countries and US states.
  *
  * Uses pure Svelte architecture:
  * - ComparePageClient.svelte handles all controls, URL sync, data loading, and heatmap rendering
@@ -10,30 +10,33 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ComparePageClient from '../components/svelte/ComparePageClient.svelte';
 import countriesData from '../assets/data/countries.json';
-import type { CountryMeta } from '../lib/types';
+import statesData from '../assets/data/states.json';
+import type { CountryMeta, StateMeta } from '../lib/types';
 
 const countries = countriesData.countries as CountryMeta[];
+const states = statesData.states as StateMeta[];
 
-// Use default OG image
-const ogImageUrl = '/og/default.png';
+// Use default OG image (absolute URL required for social media crawlers)
+const site = Astro.site?.origin ?? 'https://birth-heatmaps.aaronjbecker.com';
+const ogImageUrl = `${site}/og/default.png`;
 ---
 
 <BaseLayout
-  title="Compare Countries - Birth Heatmaps"
-  description="Compare birth seasonality patterns across multiple countries side by side. Explore fertility rates, birth timing, and seasonal trends."
+  title="Compare Countries & States - Birth Heatmaps"
+  description="Compare birth seasonality patterns across multiple countries and US states side by side. Explore fertility rates, birth timing, and seasonal trends."
   canonicalPath="/compare"
   ogImage={ogImageUrl}
 >
   <div class="py-lg relative z-0">
     <header class="mb-xl">
-      <h1 class="m-0 mb-sm text-2xl font-bold text-text">Compare Countries</h1>
+      <h1 class="m-0 mb-sm text-2xl font-bold text-text">Compare Countries & States</h1>
       <p class="m-0 text-base text-text-muted leading-normal max-w-[600px]">
-        Select multiple countries to compare their birth patterns side by side.
+        Select multiple countries and US states to compare their birth patterns side by side.
         Toggle between unified and per-country color scales.
       </p>
     </header>
 
     <!-- Svelte controls and heatmaps: all-in-one client component -->
-    <ComparePageClient client:load countries={countries} />
+    <ComparePageClient client:load countries={countries} states={states} />
   </div>
 </BaseLayout>

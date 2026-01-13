@@ -19,6 +19,7 @@ describe('parseCompareParams', () => {
     const result = parseCompareParams(params);
 
     expect(result.countries).toEqual([]);
+    expect(result.states).toEqual([]);
     expect(result.metric).toBe('fertility');
     expect(result.scale).toBe('unified');
     expect(result.yearStart).toBeUndefined();
@@ -51,6 +52,20 @@ describe('parseCompareParams', () => {
     const result = parseCompareParams(params);
 
     expect(result.countries).toEqual(['usa', 'norway']);
+  });
+
+  it('parses single state', () => {
+    const params = new URLSearchParams('states=california');
+    const result = parseCompareParams(params);
+
+    expect(result.states).toEqual(['california']);
+  });
+
+  it('parses multiple comma-separated states', () => {
+    const params = new URLSearchParams('states=california,texas,new-york');
+    const result = parseCompareParams(params);
+
+    expect(result.states).toEqual(['california', 'texas', 'new-york']);
   });
 
   it('parses valid metric values', () => {
@@ -96,12 +111,13 @@ describe('parseCompareParams', () => {
 
   it('parses complete query string', () => {
     const params = new URLSearchParams(
-      'countries=usa,norway&metric=seasonality&scale=per-country&yearStart=2000&yearEnd=2020'
+      'countries=usa,norway&states=california,texas&metric=seasonality&scale=per-country&yearStart=2000&yearEnd=2020'
     );
     const result = parseCompareParams(params);
 
     expect(result).toEqual({
       countries: ['usa', 'norway'],
+      states: ['california', 'texas'],
       metric: 'seasonality',
       scale: 'per-country',
       yearStart: 2000,
@@ -114,6 +130,7 @@ describe('serializeCompareParams', () => {
   it('returns empty string for default params with no countries', () => {
     const params: CompareQueryParams = {
       countries: [],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -125,6 +142,7 @@ describe('serializeCompareParams', () => {
   it('includes countries when present', () => {
     const params: CompareQueryParams = {
       countries: ['usa', 'norway'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -133,9 +151,22 @@ describe('serializeCompareParams', () => {
     expect(result).toBe('countries=usa%2Cnorway');
   });
 
+  it('includes states when present', () => {
+    const params: CompareQueryParams = {
+      countries: [],
+      states: ['california', 'texas'],
+      metric: 'fertility',
+      scale: 'unified',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).toBe('states=california%2Ctexas');
+  });
+
   it('omits metric when it is the default', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -147,6 +178,7 @@ describe('serializeCompareParams', () => {
   it('includes metric when not default', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: [],
       metric: 'seasonality',
       scale: 'unified',
     };
@@ -158,6 +190,7 @@ describe('serializeCompareParams', () => {
   it('omits scale when it is the default', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -169,6 +202,7 @@ describe('serializeCompareParams', () => {
   it('includes scale when not default', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: [],
       metric: 'fertility',
       scale: 'per-country',
     };
@@ -180,6 +214,7 @@ describe('serializeCompareParams', () => {
   it('includes year range when specified', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
       yearStart: 2000,
@@ -191,9 +226,10 @@ describe('serializeCompareParams', () => {
     expect(result).toContain('yearEnd=2020');
   });
 
-  it('handles complete params', () => {
+  it('handles complete params with countries and states', () => {
     const params: CompareQueryParams = {
       countries: ['usa', 'norway', 'japan'],
+      states: ['california', 'texas'],
       metric: 'conception',
       scale: 'per-country',
       yearStart: 1990,
@@ -202,6 +238,7 @@ describe('serializeCompareParams', () => {
 
     const result = serializeCompareParams(params);
     expect(result).toContain('countries=usa%2Cnorway%2Cjapan');
+    expect(result).toContain('states=california%2Ctexas');
     expect(result).toContain('metric=conception');
     expect(result).toContain('scale=per-country');
     expect(result).toContain('yearStart=1990');
@@ -213,6 +250,7 @@ describe('parse/serialize round-trip', () => {
   it('preserves params through round-trip', () => {
     const original: CompareQueryParams = {
       countries: ['usa', 'norway'],
+      states: ['california', 'texas'],
       metric: 'seasonality',
       scale: 'per-country',
       yearStart: 1995,
@@ -228,6 +266,7 @@ describe('parse/serialize round-trip', () => {
   it('preserves default values through round-trip', () => {
     const original: CompareQueryParams = {
       countries: ['japan'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -236,6 +275,7 @@ describe('parse/serialize round-trip', () => {
     const parsed = parseCompareParams(new URLSearchParams(serialized));
 
     expect(parsed.countries).toEqual(['japan']);
+    expect(parsed.states).toEqual([]);
     expect(parsed.metric).toBe('fertility');
     expect(parsed.scale).toBe('unified');
   });
@@ -245,6 +285,7 @@ describe('buildCompareUrl', () => {
   it('returns bare path for default params with no countries', () => {
     const params: CompareQueryParams = {
       countries: [],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -256,6 +297,7 @@ describe('buildCompareUrl', () => {
   it('includes query string when params are non-default', () => {
     const params: CompareQueryParams = {
       countries: ['usa', 'norway'],
+      states: [],
       metric: 'fertility',
       scale: 'unified',
     };
@@ -264,9 +306,22 @@ describe('buildCompareUrl', () => {
     expect(result).toBe('/compare?countries=usa%2Cnorway');
   });
 
+  it('includes states in URL', () => {
+    const params: CompareQueryParams = {
+      countries: [],
+      states: ['california', 'texas'],
+      metric: 'fertility',
+      scale: 'unified',
+    };
+
+    const result = buildCompareUrl(params);
+    expect(result).toBe('/compare?states=california%2Ctexas');
+  });
+
   it('builds complete URL with all params', () => {
     const params: CompareQueryParams = {
       countries: ['usa'],
+      states: ['california'],
       metric: 'seasonality',
       scale: 'per-country',
       yearStart: 2000,
@@ -276,6 +331,7 @@ describe('buildCompareUrl', () => {
     const result = buildCompareUrl(params);
     expect(result.startsWith('/compare?')).toBe(true);
     expect(result).toContain('countries=usa');
+    expect(result).toContain('states=california');
     expect(result).toContain('metric=seasonality');
     expect(result).toContain('scale=per-country');
     expect(result).toContain('yearStart=2000');

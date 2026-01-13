@@ -1,88 +1,73 @@
-.PHONY: pipeline pipeline-json build dev jupyter clean help test smoke-test nginx copy-charts build-prod test-prod deploy tunnel
+.PHONY: pipeline pipeline-json pipeline-charts pipeline-states dev clean help test build-prod test-prod deploy tunnel
+
+# Conda environment for Python pipeline
+CONDA_ENV := hmd-pipeline
+
+# Environment variables for Python pipeline (matches VS Code launch.json)
+export PYTHONPATH := $(CURDIR)/data-pipeline/src
+export HMD_DATA_DIR := $(CURDIR)/hmd_data
+export UN_DATA_DIR := $(CURDIR)/data
+
+# Run Python in the conda environment
+PYTHON := conda run --no-capture-output -n $(CONDA_ENV) python
 
 help:
 	@echo "Available commands:"
 	@echo ""
 	@echo "  Development:"
-	@echo "    make dev          - Start frontend dev server"
-	@echo "    make jupyter      - Start Jupyter notebook server"
+	@echo "    make dev              - Start frontend dev server"
 	@echo ""
-	@echo "  Data Pipeline:"
-	@echo "    make pipeline     - Run full pipeline (JSON + charts)"
-	@echo "    make pipeline-json- Run pipeline (JSON only, faster)"
-	@echo "    make copy-charts  - Copy charts to frontend content"
+	@echo "  Data Pipeline (uses hmd-pipeline conda environment automatically):"
+	@echo "    make pipeline         - Run full pipeline (JSON + charts)"
+	@echo "    make pipeline-json    - Run pipeline (JSON only, faster)"
+	@echo "    make pipeline-charts  - Run pipeline (JSON + charts)"
+	@echo "    make pipeline-states  - Run US states only (JSON + charts)"
 	@echo ""
 	@echo "  Build & Deploy:"
-	@echo "    make build        - Build static frontend"
-	@echo "    make nginx        - Start nginx data server"
-	@echo "    make nginx-prod   - Build production nginx with data"
-	@echo "    make build-prod   - Build production Docker image"
-	@echo "    make test-prod    - Test production build locally"
-	@echo "    make deploy       - Deploy to production server"
-	@echo "    make tunnel       - SSH tunnel to private registry"
+	@echo "    make build-prod       - Build production Docker image"
+	@echo "    make test-prod        - Test production build locally"
+	@echo "    make deploy           - Deploy to production server"
+	@echo "    make tunnel           - SSH tunnel to private registry"
 	@echo ""
 	@echo "  Testing:"
-	@echo "    make test         - Run all tests"
-	@echo "    make smoke-test   - Run smoke tests against nginx"
+	@echo "    make test             - Run all tests"
+	@echo "    make test-frontend    - Run frontend tests only"
+	@echo "    make test-pipeline    - Run pipeline tests only"
 	@echo ""
 	@echo "  Cleanup:"
-	@echo "    make clean        - Remove generated files"
+	@echo "    make clean            - Remove generated files"
 
 # ============================================
 # Development
 # ============================================
 
-# Start development server
+# Start development server (local npm)
 dev:
-	docker compose up frontend-dev
-
-# Start Jupyter for exploration
-jupyter:
-	docker compose up jupyter
+	cd frontend && npm run dev
 
 # ============================================
-# Data Pipeline
+# Data Pipeline (uses conda environment automatically)
 # ============================================
 
-# Run full data pipeline (JSON + charts)
+# Run full data pipeline (JSON + charts for countries and states)
 pipeline:
-	docker compose run --rm pipeline
+	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json --charts --states
 
-# Run pipeline for JSON only (faster)
+# Run pipeline for JSON only (faster, no charts)
 pipeline-json:
-	docker compose run --rm pipeline-json
+	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json
 
-# Copy charts from pipeline output to frontend content
-copy-charts:
-	@echo "Copying charts to frontend assets..."
-	@mkdir -p frontend/src/assets/charts
-	@if [ -d "data-pipeline/output/charts" ]; then \
-		cp -r data-pipeline/output/charts/* frontend/src/assets/charts/; \
-		echo "Charts copied successfully."; \
-	else \
-		echo "No charts found. Run 'make pipeline' first."; \
-	fi
+# Run pipeline with charts (JSON + charts for countries)
+pipeline-charts:
+	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json --charts
+
+# Run US states only pipeline (JSON + charts, skips country data)
+pipeline-states:
+	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --states-only --json --charts
 
 # ============================================
 # Build & Deploy
 # ============================================
-
-# Build static site
-build: copy-charts
-	docker compose run --rm frontend-build
-
-# Start nginx data server (development, mounts output volume)
-nginx:
-	docker compose up nginx
-
-# Build production nginx with data baked in
-nginx-prod:
-	@if [ ! -d "data-pipeline/output" ]; then \
-		echo "Error: No output directory. Run 'make pipeline' first."; \
-		exit 1; \
-	fi
-	docker compose build nginx-prod
-	docker compose up nginx-prod
 
 # Build production frontend Docker image
 build-prod:
@@ -114,17 +99,9 @@ test: test-frontend test-pipeline
 test-frontend:
 	cd frontend && npm test
 
-# Run pipeline tests (requires conda environment)
+# Run pipeline tests (uses conda environment automatically)
 test-pipeline:
-	cd data-pipeline && python -m pytest -v
-
-# Run smoke tests against nginx
-smoke-test:
-	@echo "Starting nginx and running smoke tests..."
-	docker compose up -d nginx
-	@sleep 3
-	docker compose run --rm smoke-test
-	docker compose down nginx
+	cd data-pipeline && $(PYTHON) -m pytest -v
 
 # ============================================
 # Cleanup
@@ -134,6 +111,7 @@ smoke-test:
 clean:
 	rm -rf data-pipeline/output/
 	rm -rf frontend/src/assets/charts/
+	rm -rf frontend/src/assets/data/
 	rm -rf frontend/public/data/*.json
 	rm -rf frontend/public/data/fertility/*.json
 	rm -rf frontend/public/data/seasonality/*.json

@@ -1,0 +1,45 @@
+---
+import { getFlagCode } from '../lib/flag-codes';
+
+interface Props {
+  /** Country slug (e.g., "united-states-of-america") */
+  code: string;
+  /** Additional CSS classes */
+  class?: string;
+  /** Width in pixels (default: 24) */
+  width?: number;
+  /** Height in pixels (default: 18) */
+  height?: number;
+}
+
+const { code, class: className, width = 24, height = 18 } = Astro.props;
+
+// Import all flag SVGs at build time
+const flagModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/flags/*.svg',
+  { eager: true }
+);
+
+// Build lookup from ISO code to resolved image metadata
+const flags: Record<string, ImageMetadata> = {};
+for (const [path, mod] of Object.entries(flagModules)) {
+  const flagCode = path.split('/').pop()?.replace('.svg', '');
+  if (flagCode) flags[flagCode] = mod.default;
+}
+
+// Look up the flag for this country
+const flagCode = getFlagCode(code);
+const flag = flagCode ? flags[flagCode] : null;
+---
+
+{flag && (
+  <img
+    src={flag.src}
+    width={width}
+    height={height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+    class:list={['inline-block align-middle', className]}
+  />
+)}

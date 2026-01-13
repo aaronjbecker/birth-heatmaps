@@ -1,47 +1,6 @@
 version: "3.8"
 
 services:
-  # Data pipeline - generates JSON and chart files
-  pipeline:
-    build: ./data-pipeline
-    volumes:
-      - ./data-pipeline/raw_data:/app/raw_data:ro
-      - ./data-pipeline/output:/app/output
-      - ./hmd_data:/app/hmd_data:ro
-      - ./data:/app/data:ro
-      # Mount frontend src/assets/data for direct export (Vite import pattern)
-      - ./frontend/src/assets/data:/app/frontend-assets:rw
-    environment:
-      # Override frontend assets path for Docker environment
-      - FRONTEND_ASSETS_DATA_DIR=/app/frontend-assets
-    command: python scripts/run_pipeline.py --all
-
-  # Pipeline JSON only (faster, no charts)
-  pipeline-json:
-    build: ./data-pipeline
-    volumes:
-      - ./data-pipeline/raw_data:/app/raw_data:ro
-      - ./data-pipeline/output:/app/output
-      - ./hmd_data:/app/hmd_data:ro
-      - ./data:/app/data:ro
-      # Mount frontend src/assets/data for direct export (Vite import pattern)
-      - ./frontend/src/assets/data:/app/frontend-assets:rw
-    environment:
-      # Override frontend assets path for Docker environment
-      - FRONTEND_ASSETS_DATA_DIR=/app/frontend-assets
-    command: python scripts/run_pipeline.py --json
-
-  # Jupyter notebook server for development
-  jupyter:
-    build: ./data-pipeline
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./data-pipeline:/app
-      - ./hmd_data:/app/hmd_data:ro
-      - ./data:/app/data:ro
-    command: jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
-
   # Astro frontend development server
   frontend-dev:
     build: ./frontend
@@ -50,8 +9,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - DATA_API_URL=http://nginx/data
     command: npm run dev -- --host
 
   # Astro frontend production build
@@ -60,8 +17,6 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      # Data is now imported from src/assets/data (managed by pipeline)
-      # No need to mount to public/data for build
     command: npm run build
 
   # Nginx server for production data API
@@ -94,13 +49,3 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-
-  # Smoke test runner
-  smoke-test:
-    build: ./data-pipeline
-    depends_on:
-      nginx:
-        condition: service_healthy
-    volumes:
-      - ./scripts:/app/scripts:ro
-    command: python /app/scripts/smoke_test.py

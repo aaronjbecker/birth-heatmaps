@@ -38,6 +38,38 @@ export interface CountriesIndex {
   generatedAt: string;
 }
 
+// =====================================
+// US State Types
+// =====================================
+
+/** State metadata in the states index (mirrors CountryMeta structure) */
+export interface StateMeta {
+  code: string;
+  name: string;
+  sources: string[];
+  completeYears: number;
+  fertility: {
+    yearRange: [number, number];
+    hasData: boolean;
+  };
+  seasonality: {
+    yearRange: [number, number];
+    hasData: boolean;
+  };
+  conception: {
+    yearRange: [number, number];
+    hasData: boolean;
+  };
+}
+
+/** States index file structure */
+export interface StatesIndex {
+  states: StateMeta[];
+  dataSources: Record<string, DataSource>;
+  minYearsThreshold: number;
+  generatedAt: string;
+}
+
 /** Single data point in a heatmap */
 export interface HeatmapCell {
   year: number;
@@ -59,6 +91,23 @@ export interface ColorScaleConfig {
 /** Country heatmap data file structure */
 export interface CountryHeatmapData {
   country: {
+    code: string;
+    name: string;
+  };
+  metric: string;
+  title: string;
+  subtitle?: string;
+  colorScale: ColorScaleConfig;
+  years: number[];
+  months: string[];
+  data: HeatmapCell[];
+  sources: string[];
+  generatedAt: string;
+}
+
+/** State heatmap data file structure (uses 'state' key instead of 'country') */
+export interface StateHeatmapData {
+  state: {
     code: string;
     name: string;
   };
@@ -117,6 +166,7 @@ export type ScaleMode = 'unified' | 'per-country';
 /** Query parameters for compare page */
 export interface CompareQueryParams {
   countries: string[];
+  states: string[];
   metric: MetricSlug;
   scale: ScaleMode;
   yearStart?: number;

@@ -417,11 +417,16 @@ def build_heatmap_figure(
         
         axes.append(ax)
         
-        # Set axes face color to show through for null values
-        ax.set_facecolor('#a6a09b')
-        
+        # Set axes face color and colormap "bad" color for null/NaN values
+        missing_data_color = '#a6a09b'
+        ax.set_facecolor(missing_data_color)
+
+        # Create colormap with explicit "bad" color for NaN values
+        cmap = plt.get_cmap(colormap).copy()
+        cmap.set_bad(color=missing_data_color)
+
         # Create heatmap
-        im = ax.imshow(chunk_data.values, interpolation='nearest', cmap=colormap, aspect='auto', 
+        im = ax.imshow(chunk_data.values, interpolation='nearest', cmap=cmap, aspect='auto',
                     norm=color_norm)
         images.append(im)
         
