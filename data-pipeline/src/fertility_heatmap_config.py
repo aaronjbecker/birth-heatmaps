@@ -4,17 +4,8 @@ Configuration constants and helper functions for fertility heatmap plotting.
 import unicodedata
 import re
 
-
-# Month names for labels in charts
-MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
-               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-# Data sources for labels in charts
-DATA_SOURCE_LABELS = {
-    'HMD': 'Human Mortality Database (https://www.mortality.org/)',
-    'UN': 'United Nations (https://population.un.org/wpp/)',
-    'JPOP': 'Minato Nakazawa (fmsb R package)',
-}
+# Import from main config to avoid duplication
+from config import MONTH_NAMES, DATA_SOURCE_LABELS
 
 
 def normalize_country_name(country_name: str) -> str:

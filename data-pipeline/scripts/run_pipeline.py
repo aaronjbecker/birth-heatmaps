@@ -392,6 +392,7 @@ def main():
     parser.add_argument('--json', action='store_true', help='Export JSON files for frontend')
     parser.add_argument('--charts', action='store_true', help='Export PNG charts for frontend')
     parser.add_argument('--states', action='store_true', help='Include US state-level data')
+    parser.add_argument('--states-only', action='store_true', help='Process only US states (skip country data)')
     parser.add_argument('--all', action='store_true', help='Export CSV, JSON, and charts')
     parser.add_argument('--hmd-dir', type=Path, help='HMD data directory')
     parser.add_argument('--un-dir', type=Path, help='UN data directory')
@@ -402,9 +403,13 @@ def main():
                         help=f'Minimum births required in every month for country inclusion (default: {MIN_MONTHLY_BIRTHS})')
     args = parser.parse_args()
 
-    # Default to --all if no format specified
-    if not args.csv and not args.json and not args.charts and not args.all:
+    # Default to --all if no format specified (unless states-only mode)
+    if not args.csv and not args.json and not args.charts and not args.all and not args.states_only:
         args.all = True
+
+    # states-only implies states flag
+    if args.states_only:
+        args.states = True
 
     # Resolve filter thresholds
     min_years = args.min_years if args.min_years is not None else MIN_YEARS_DATA
@@ -416,38 +421,42 @@ def main():
     print(f"Minimum complete years threshold: {min_years}")
     print(f"Minimum monthly births threshold: {min_monthly_births}")
 
-    # Load data
-    births, population = load_all_data(args.hmd_dir, args.un_dir)
-
-    # Process data
-    births, population, stats = process_data(births, population)
-
-    # Validate
-    births, population, stats = validate_data(births, population, stats)
-
     # Track filtered countries for chart export
     filtered_countries = None
+    births = None
+    population = None
 
-    # Clear output directories before exporting (only for formats that will be generated)
-    if args.csv or args.all:
-        clear_csv_output(args.output_dir)
+    # Skip country data loading if states-only mode
+    if not args.states_only:
+        # Load data
+        births, population = load_all_data(args.hmd_dir, args.un_dir)
 
-    if args.json or args.all:
-        clear_json_output(args.output_dir)
+        # Process data
+        births, population, stats = process_data(births, population)
 
-    if args.charts or args.all:
-        clear_charts_output(args.output_dir)
+        # Validate
+        births, population, stats = validate_data(births, population, stats)
 
-    # Export
-    if args.csv or args.all:
-        export_csv(births, population, stats, args.output_dir)
+        # Clear output directories before exporting (only for formats that will be generated)
+        if args.csv or args.all:
+            clear_csv_output(args.output_dir)
 
-    if args.json or args.all:
-        filtered_countries = export_json(births, args.output_dir, min_years, min_monthly_births)
+        if args.json or args.all:
+            clear_json_output(args.output_dir)
 
-    if args.charts or args.all:
-        # Use filtered countries from JSON export if available
-        export_charts(births, population, args.output_dir, countries=filtered_countries)
+        if args.charts or args.all:
+            clear_charts_output(args.output_dir)
+
+        # Export
+        if args.csv or args.all:
+            export_csv(births, population, stats, args.output_dir)
+
+        if args.json or args.all:
+            filtered_countries = export_json(births, args.output_dir, min_years, min_monthly_births)
+
+        if args.charts or args.all:
+            # Use filtered countries from JSON export if available
+            export_charts(births, population, args.output_dir, countries=filtered_countries)
 
     # Process US state-level data if requested
     if args.states:
@@ -455,6 +464,14 @@ def main():
         if args.json or args.all:
             # States bypass filtering - include all 50 states + DC for completeness
             export_state_json(state_births, args.output_dir, min_years=0, min_monthly_births=0)
+
+        # Export state charts when charts flag is set
+        if args.charts or args.all:
+            from exporters import export_all_state_charts
+            export_all_state_charts(
+                state_births,
+                include_heatmaps=True
+            )
 
     print("\n" + "=" * 50)
     print("Pipeline complete!")

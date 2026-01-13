@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import Heatmap from '../../../components/svelte/Heatmap.svelte';
+import EntityHeatmapPage from '../../../components/EntityHeatmapPage.astro';
 import StateDropdown from '../../../components/svelte/StateDropdown.svelte';
 import ShareButtons from '../../../components/ShareButtons.astro';
 import type { StateMeta, StateHeatmapData, CountryHeatmapData } from '../../../lib/types';
@@ -69,13 +69,7 @@ const { state } = Astro.params;
 const { stateMeta, heatmapData, metric } = Astro.props;
 
 const metricConfig = METRICS[metric];
-
-// Access the metric-specific data from stateMeta
 const metricData = stateMeta[metric];
-
-function formatYearRange(range: [number, number]): string {
-  return `${range[0]}–${range[1]}`;
-}
 
 // SEO metadata
 const pageTitle = `${stateMeta.name} - ${metricConfig.label}`;
@@ -93,104 +87,39 @@ const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
   canonicalPath={canonicalPath}
   ogImage={ogImageUrl}
 >
-  <div class="flex justify-between items-center mb-lg flex-wrap gap-sm">
-    <nav class="text-sm text-text-muted">
-      <a href="/" class="text-text-muted hover:text-primary">Countries</a>
-      <span class="mx-1">/</span>
-      <a href="/#states" class="text-text-muted hover:text-primary">US States</a>
-      <span class="mx-1">/</span>
-      <StateDropdown
-        client:load
-        states={allStates}
-        currentState={state}
-        metric={metric}
-        variant="inline"
+  <EntityHeatmapPage
+    entityType="state"
+    entityCode={state!}
+    entityName={stateMeta.name}
+    sources={stateMeta.sources}
+    yearRange={metricData.yearRange}
+    metric={metric}
+    heatmapData={heatmapData}
+    compareUrl={`/compare?states=${state}&metric=${metric}`}
+    metricBaseUrl={`/${metric}/states`}
+    fallbackDataUrl={`/data/${metric}/states/${state}.json`}
+  >
+    <div slot="navigation" class="page-header flex justify-between items-center mb-lg flex-wrap gap-sm">
+      <nav class="breadcrumb text-sm text-text-muted">
+        <a href="/" class="text-text-muted hover:text-primary">Countries</a>
+        <span class="mx-1">/</span>
+        <a href="/#states" class="text-text-muted hover:text-primary">US States</a>
+        <span class="mx-1">/</span>
+        <StateDropdown
+          client:load
+          states={allStates}
+          currentState={state}
+          metric={metric}
+          variant="inline"
+        />
+      </nav>
+      <ShareButtons
+        url={`https://birth-heatmaps.aaronjbecker.com${canonicalPath}`}
+        title={pageTitle}
+        description={pageDescription}
       />
-    </nav>
-    <ShareButtons
-      url={`https://birth-heatmaps.aaronjbecker.com${canonicalPath}`}
-      title={pageTitle}
-      description={pageDescription}
-    />
-  </div>
+    </div>
 
-  <h1 class="mb-xs">{stateMeta.name}</h1>
-  <p class="text-text-muted mb-md">{metricConfig.subtitle}</p>
-
-  <div class="flex gap-lg mb-lg text-sm text-text-muted flex-wrap items-center">
-    <span>{formatYearRange(metricData.yearRange)}</span>
-    <span>Sources: {stateMeta.sources.join(', ')}</span>
-    <a href={`/compare?states=${state}&metric=${metric}`} class="text-primary hover:underline">
-      Compare with other states →
-    </a>
-  </div>
-
-  <div class="flex gap-xs mb-lg border-b border-border">
-    {METRIC_SLUGS.map((m) => (
-      <a
-        href={`/${m}/states/${state}`}
-        class:list={[
-          'py-sm px-lg border-b-2 text-text-muted transition-all duration-150',
-          m === metric
-            ? 'border-primary text-primary'
-            : 'border-transparent hover:text-text hover:no-underline'
-        ]}
-      >
-        {METRICS[m].label}
-      </a>
-    ))}
-  </div>
-
-  <div class="mb-xl">
-    {heatmapData ? (
-      <Heatmap
-        client:load
-        data={heatmapData}
-        height={500}
-        showLegend={true}
-        showYearFilter={true}
-        showControls={true}
-      />
-    ) : (
-      <div id="heatmap-container" class="min-h-[500px] flex items-center justify-center bg-bg border border-border rounded" data-state={state} data-metric={metric}>
-        <p class="p-xl text-center text-text-muted">Loading heatmap data...</p>
-      </div>
-    )}
-  </div>
+    <h1 slot="header" class="mb-xs">{stateMeta.name}</h1>
+  </EntityHeatmapPage>
 </BaseLayout>
-
-{!heatmapData && (
-  <script>
-    // Client-side fallback for when data isn't available at build time
-    const container = document.getElementById('heatmap-container');
-    const state = container?.dataset.state;
-    const metric = container?.dataset.metric;
-
-    if (state && container) {
-      fetch(`/data/${metric}/states/${state}.json`)
-        .then(res => {
-          if (!res.ok) throw new Error('Data not found');
-          return res.json();
-        })
-        .then(data => {
-          container.innerHTML = `
-            <p class="text-center p-xl">
-              Heatmap data loaded: ${data.data.length} cells, ${data.years.length} years<br>
-              <small class="text-text-muted">
-                Note: Full D3 visualization requires data at build time.<br>
-                Run the data pipeline and rebuild the site.
-              </small>
-            </p>
-          `;
-        })
-        .catch(() => {
-          container.innerHTML = `
-            <p class="text-center p-xl text-text-muted">
-              No data available for this state yet.<br>
-              <small>Run the data pipeline to generate JSON files.</small>
-            </p>
-          `;
-        });
-    }
-  </script>
-)}

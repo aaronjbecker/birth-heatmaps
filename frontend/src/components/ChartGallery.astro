@@ -11,10 +11,15 @@ import ChartImage from './ChartImage.astro';
 import { type ChartType } from '../lib/chart-config';
 
 export interface Props {
-  countrySlug: string;
+  countrySlug?: string;
+  stateSlug?: string;
 }
 
-const { countrySlug } = Astro.props;
+const { countrySlug, stateSlug } = Astro.props;
+
+if (!countrySlug && !stateSlug) {
+  throw new Error('ChartGallery requires either countrySlug or stateSlug prop');
+}
 
 interface ChartSection {
   title: string;
@@ -56,6 +61,7 @@ const sections: ChartSection[] = [
         {section.charts.map((chartType) => (
           <ChartImage
             countrySlug={countrySlug}
+            stateSlug={stateSlug}
             chartType={chartType}
           />
         ))}

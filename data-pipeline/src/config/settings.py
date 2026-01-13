@@ -96,6 +96,9 @@ STATES_CONCEPTION_OUTPUT_DIR = CONCEPTION_OUTPUT_DIR / 'states'
 # Chart output directory
 CHARTS_OUTPUT_DIR = OUTPUT_DIR / 'charts'
 
+# State chart output directories (nested under charts/)
+STATES_CHARTS_OUTPUT_DIR = CHARTS_OUTPUT_DIR / 'states'
+
 # Frontend assets data (for Vite imports with cache-busting)
 # This is the PREFERRED location for JSON data - allows proper imports in Astro/Vite
 # Can be overridden via FRONTEND_ASSETS_DATA_DIR environment variable for Docker
@@ -113,6 +116,9 @@ FRONTEND_ASSETS_STATES_CONCEPTION_DIR = FRONTEND_ASSETS_CONCEPTION_DIR / 'states
 # Charts are imported using import.meta.glob() for optimization
 # Can be overridden via FRONTEND_CONTENT_CHARTS_DIR environment variable for Docker
 FRONTEND_CONTENT_CHARTS_DIR = Path(os.environ.get('FRONTEND_CONTENT_CHARTS_DIR', PROJECT_ROOT / 'frontend' / 'src' / 'assets' / 'charts'))
+
+# Frontend charts for states (nested under existing dir)
+FRONTEND_CONTENT_STATES_CHARTS_DIR = FRONTEND_CONTENT_CHARTS_DIR / 'states'
 
 # Frontend public data (for client-side fetch() in Compare page and similar dynamic features)
 # Data is served directly by the web server without Vite processing
@@ -159,9 +165,16 @@ MONTH_NAME_TO_NUMBER = {name: i + 1 for i, name in enumerate(MONTH_NAMES_FULL)}
 # ===============================
 
 DATA_SOURCE_LABELS = {
+    # Country data sources
     'HMD': 'Human Mortality Database (https://www.mortality.org/)',
     'UN': 'United Nations (https://population.un.org/wpp/)',
     'JPOP': 'Minato Nakazawa (fmsb R package)',
+    # State data sources
+    'CDC': 'CDC WONDER (https://wonder.cdc.gov/)',
+    'CDC/Historical': 'CDC WONDER + Historical Records',
+    'Historical': 'Historical Records (DataDryad)',
+    'Census': 'US Census Bureau',
+    'NHGIS': 'NHGIS (https://www.nhgis.org/)',
 }
 
 DATA_SOURCE_URLS = {
@@ -205,3 +218,6 @@ def ensure_output_dirs() -> None:
     FRONTEND_PUBLIC_STATES_FERTILITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_STATES_SEASONALITY_DIR.mkdir(parents=True, exist_ok=True)
     FRONTEND_PUBLIC_STATES_CONCEPTION_DIR.mkdir(parents=True, exist_ok=True)
+    # State chart directories
+    STATES_CHARTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    FRONTEND_CONTENT_STATES_CHARTS_DIR.mkdir(parents=True, exist_ok=True)

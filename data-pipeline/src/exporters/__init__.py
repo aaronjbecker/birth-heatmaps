@@ -17,6 +17,7 @@ from .states_exporter import (
 from .chart_exporter import (
     export_country_charts,
     export_all_charts,
+    export_all_state_charts,
     CHART_FILENAMES,
 )
 
@@ -37,5 +38,6 @@ __all__ = [
     # Chart exports
     'export_country_charts',
     'export_all_charts',
+    'export_all_state_charts',
     'CHART_FILENAMES',
 ]

@@ -9,12 +9,21 @@ import { Image } from 'astro:assets';
 import { CHART_METADATA, type ChartType, getChartFilename } from '../lib/chart-config';
 
 export interface Props {
-  countrySlug: string;
+  countrySlug?: string;
+  stateSlug?: string;
   chartType: ChartType;
   class?: string;
 }
 
-const { countrySlug, chartType, class: className } = Astro.props;
+const { countrySlug, stateSlug, chartType, class: className } = Astro.props;
+
+// Determine if this is for a country or state
+const isState = !!stateSlug;
+const slug = stateSlug || countrySlug;
+
+if (!slug) {
+  throw new Error('ChartImage requires either countrySlug or stateSlug prop');
+}
 
 const metadata = CHART_METADATA[chartType];
 const filename = getChartFilename(chartType);
@@ -29,7 +38,11 @@ try {
     { eager: true }
   );
 
-  const imagePath = `../assets/charts/${countrySlug}/${filename}`;
+  // Build path: states use states/{slug}/, countries use {slug}/
+  const imagePath = isState
+    ? `../assets/charts/states/${slug}/${filename}`
+    : `../assets/charts/${slug}/${filename}`;
+
   if (images[imagePath]) {
     chartImage = images[imagePath].default;
   }
@@ -55,7 +68,7 @@ try {
       >
         <Image
           src={chartImage}
-          alt={`${metadata.label} for ${countrySlug}`}
+          alt={`${metadata.label} for ${slug}`}
           width={800}
           quality={85}
           loading="lazy"

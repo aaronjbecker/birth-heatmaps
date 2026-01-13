@@ -14,28 +14,78 @@ Interactive visualization of birth seasonality patterns using Human Mortality Da
 1. **Python Data Pipeline** (`data-pipeline/`) - Loads, processes, and exports birth/population data
 2. **Astro Frontend** (`frontend/`) - Static site with D3 interactive heatmaps
 
+
+## Python Environment Setup
+
+**IMPORTANT:** All local Python development and testing must use the `hmd-pipeline` conda environment defined in `data-pipeline/environment.yml`.
+
+**Initial Setup:**
+```bash
+conda env create -f data-pipeline/environment.yml
+```
+
+**Finding the Environment:**
+```bash
+# List all conda environments and their paths
+conda env list
+
+# The hmd-pipeline environment will show its Python executable path
+# Example output: /usr/local/miniconda3/envs/hmd-pipeline
+```
+
+**Activation Methods (in order of preference):**
+
+1. **Direct activation (recommended if shell supports it):**
+   ```bash
+   conda activate hmd-pipeline
+   python scripts/run_pipeline.py --json --charts
+   ```
+
+2. **Using environment's Python executable directly (if activation is finicky):**
+   ```bash
+   # Get the path from: conda env list | grep hmd-pipeline
+   /usr/local/miniconda3/envs/hmd-pipeline/bin/python scripts/run_pipeline.py --json --charts
+   ```
+
+**Verification:**
+```bash
+# After activation, verify correct Python
+which python
+python -c "import polars; print('OK')"  # Should not error
+
+# Or use executable path directly
+/usr/local/miniconda3/envs/hmd-pipeline/bin/python -c "import polars; print('OK')"
+```
+
+**Do NOT use:**
+- System Python `python3` (missing dependencies)
+- Other conda environments (will cause import errors)
+
 ## Essential Commands
 
 ### Data Pipeline (Python)
 
+The Makefile automatically activates the `hmd-pipeline` conda environment:
+
 ```bash
-# Development (recommended): Generate JSON + charts
-python data-pipeline/scripts/run_pipeline.py --json --charts
+# Full pipeline: countries + states with JSON + charts
+make pipeline
 
 # JSON only (fastest, for frontend development)
-python data-pipeline/scripts/run_pipeline.py --json
+make pipeline-json
 
-# Include countries with fewer years of data (default: 25)
-python data-pipeline/scripts/run_pipeline.py --json --min-years 10
+# Countries with charts (no states)
+make pipeline-charts
+
+# US states only (skip country data)
+make pipeline-states
 
 # Run tests
-cd data-pipeline && pytest
-cd data-pipeline && pytest --cov=src
+make test-pipeline
 
-# Via Docker
-docker compose run pipeline              # Full pipeline
-docker compose run pipeline-json         # JSON only (faster)
-docker compose up jupyter                # Explore data in notebooks
+# Include countries with fewer years of data (default: 25)
+# (run directly with conda env active)
+python data-pipeline/scripts/run_pipeline.py --json --min-years 10
 ```
 
 ### Frontend (Astro + TypeScript)
@@ -54,15 +104,14 @@ npm run test:watch          # Watch mode
 npm run test:e2e            # Playwright E2E tests
 npm run test:e2e:ui         # E2E with UI
 npm run test:all            # All tests
-
-# Via Docker
-docker compose up frontend-dev
 ```
 
 ### VSCode Debugging
 
 Available debug configurations in `.vscode/launch.json`:
-- **"Python: Run Pipeline (JSON + Charts)"** - Recommended for development
+- **"Python: Run Pipeline"** - JSON only (fastest)
+- **"Python: Run Pipeline (JSON + Charts)"** - Countries with charts
+- **"Python: Run Pipeline (States + Charts)"** - US states with charts
 - **"Python: pytest"** - Debug Python tests
 - **"Astro: Dev Server"** - Debug frontend
 - **"Vitest: Run Tests"** - Debug frontend tests
@@ -256,7 +305,7 @@ See README.md "Data Loading Pattern" section for complete details.
 
 ### Pipeline (Python)
 
-Set in `.vscode/launch.json` for local development, `docker-compose.yml` for Docker:
+Set in `.vscode/launch.json` for VS Code debugging, or via `Makefile` for command-line usage:
 
 ```bash
 PYTHONPATH=/path/to/data-pipeline/src
