@@ -9,8 +9,8 @@ import { line, type Line } from 'd3-shape';
 // ViewBox dimensions - fixed coordinate system for responsive scaling
 export const VIEWBOX = { width: 1000, height: 500 } as const;
 
-// Chart margins in viewBox units
-export const CHART_MARGIN = { top: 40, right: 80, bottom: 50, left: 60 } as const;
+// Chart margins in viewBox units (tightened for efficient screen use)
+export const CHART_MARGIN = { top: 20, right: 20, bottom: 35, left: 50 } as const;
 
 // Derived layout constants
 export const CHART_TOP = CHART_MARGIN.top;

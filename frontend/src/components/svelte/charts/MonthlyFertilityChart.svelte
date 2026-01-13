@@ -20,6 +20,10 @@
     getMonthColor,
   } from '../../../lib/charts/monthly-fertility-utils';
 
+  // Calculate legend padding to align with chart area right edge
+  const legendRightPadding = `${(CHART_MARGIN.right / VIEWBOX.width) * 100}%`;
+  const legendLeftPadding = `${(CHART_MARGIN.left / VIEWBOX.width) * 100}%`;
+
   import ChartGrid from './chart/ChartGrid.svelte';
   import ChartAxes from './chart/ChartAxes.svelte';
   import ChartAxisLabels from './chart/ChartAxisLabels.svelte';
@@ -139,8 +143,16 @@
 
     if (closestYear !== undefined) {
       hoveredYear = closestYear;
-      crosshairX = xScale(closestYear) + CHART_MARGIN.left;
-      tooltipPosition = { x: event.clientX, y: event.clientY };
+      const viewBoxX = xScale(closestYear) + CHART_MARGIN.left;
+      crosshairX = viewBoxX;
+      // Convert crosshair viewBox X to screen coordinates for tooltip positioning
+      const crosshairScreenX = svgRect.left + (viewBoxX / VIEWBOX.width) * svgRect.width;
+
+      // Position tooltip Y at chart area vertical midpoint
+      const chartCenterY = CHART_TOP + CHART_HEIGHT / 2;
+      const tooltipScreenY = svgRect.top + (chartCenterY / VIEWBOX.height) * svgRect.height;
+
+      tooltipPosition = { x: crosshairScreenX, y: tooltipScreenY };
     }
   }
 
@@ -272,7 +284,10 @@
   />
 </div>
 
-<ChartLegend
-  highestMonth={data.monthRanking.highestAvg}
-  lowestMonth={data.monthRanking.lowestAvg}
-/>
+<!-- Legend aligned with chart area edges -->
+<div style="padding-left: {legendLeftPadding}; padding-right: {legendRightPadding};">
+  <ChartLegend
+    highestMonth={data.monthRanking.highestAvg}
+    lowestMonth={data.monthRanking.lowestAvg}
+  />
+</div>

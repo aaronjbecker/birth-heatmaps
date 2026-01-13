@@ -54,8 +54,8 @@
     }))
   );
 
-  // Compute Y-axis title position
-  let yTitlePos = $derived(viewBoxToPercent(15, chartTop + chartHeight / 2));
+  // Compute Y-axis title position (centered in left margin)
+  let yTitlePos = $derived(viewBoxToPercent(chartMarginLeft * 0.35, chartTop + chartHeight / 2));
 </script>
 
 <div class="axis-labels pointer-events-none">
@@ -72,7 +72,7 @@
 
   <!-- X-axis labels (bottom) -->
   {#each xLabels as label (label.year)}
-    {@const pos = viewBoxToPercent(label.viewBoxX, chartTop + chartHeight + 20)}
+    {@const pos = viewBoxToPercent(label.viewBoxX, chartTop + chartHeight + 10)}
     <div
       class="absolute text-xs text-text-muted"
       style="left: {pos.left}; top: {pos.top}; transform: translate(-50%, 0);"

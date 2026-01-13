@@ -20,33 +20,45 @@
     if (!position) return '';
 
     const padding = 16;
-    const tooltipWidth = 200;
-    const tooltipHeight = 420; // Estimate for 13 rows
+    const tooltipWidthEstimate = 200; // Used only for flip detection
+    const tooltipHeight = 340; // Estimate: header ~32 + annual row ~28 + 12 months ~240 + padding ~24
+    const offset = 12; // Gap between tooltip edge and crosshair
 
-    let left = position.x + 20;
+    // Use clientWidth to exclude scrollbar
+    const viewportWidth = typeof document !== 'undefined'
+      ? document.documentElement.clientWidth
+      : (typeof window !== 'undefined' ? window.innerWidth : 0);
+
+    // Check if tooltip should flip to the left
+    const normalLeft = position.x + offset;
+    const shouldFlip = viewportWidth > 0 &&
+      normalLeft + tooltipWidthEstimate > viewportWidth - padding;
+
+    // Vertical positioning
     let top = position.y - tooltipHeight / 2;
-
-    // Adjust if near right edge
     if (typeof window !== 'undefined') {
-      if (left + tooltipWidth > window.innerWidth - padding) {
-        left = position.x - tooltipWidth - 20;
-      }
-
-      // Adjust if near top/bottom
       if (top < padding) top = padding;
       if (top + tooltipHeight > window.innerHeight - padding) {
         top = window.innerHeight - tooltipHeight - padding;
       }
     }
 
-    return `left: ${left}px; top: ${top}px;`;
+    if (shouldFlip) {
+      // Use 'right' positioning so tooltip's right edge anchors near crosshair
+      // Use smaller offset when flipped to match visual appearance
+      const flippedOffset = 6;
+      const right = viewportWidth - position.x + flippedOffset;
+      return `right: ${right}px; top: ${top}px;`;
+    } else {
+      return `left: ${normalLeft}px; top: ${top}px;`;
+    }
   });
 
-  // Sort month values by value descending
-  let sortedMonthValues = $derived(
+  // Keep months in calendar order
+  let orderedMonthValues = $derived(
     data?.monthValues
       .slice()
-      .sort((a, b) => (b.value ?? 0) - (a.value ?? 0)) ?? []
+      .sort((a, b) => a.month - b.month) ?? []
   );
 </script>
 
@@ -60,9 +72,20 @@
       {data.year}
     </div>
 
-    <!-- Month values -->
+    <!-- Annual average (on top) -->
+    <div class="flex justify-between items-center gap-3 text-xs pb-2 border-b border-border mb-2">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-text flex-shrink-0"></span>
+        <span class="font-medium text-text">Annual Avg</span>
+      </span>
+      <span class="font-mono font-bold text-text">
+        {data.annualValue !== null ? data.annualValue.toFixed(1) : '—'}
+      </span>
+    </div>
+
+    <!-- Month values in calendar order -->
     <div class="space-y-1 text-xs">
-      {#each sortedMonthValues as mv (mv.month)}
+      {#each orderedMonthValues as mv (mv.month)}
         <div class="flex justify-between items-center gap-3">
           <span class="flex items-center gap-1.5">
             <span
@@ -76,17 +99,6 @@
           </span>
         </div>
       {/each}
-
-      <!-- Annual average -->
-      <div class="flex justify-between items-center gap-3 pt-2 border-t border-border mt-2">
-        <span class="flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-text flex-shrink-0"></span>
-          <span class="font-medium text-text">Annual Avg</span>
-        </span>
-        <span class="font-mono font-bold text-text">
-          {data.annualValue !== null ? data.annualValue.toFixed(1) : '—'}
-        </span>
-      </div>
     </div>
   </div>
 {/if}
