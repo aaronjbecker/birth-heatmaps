@@ -5,15 +5,17 @@
    * Mobile: Shows logo and hamburger button; menu slides down when opened.
    */
   import { slide } from 'svelte/transition';
-  import type { CountryMeta } from '../../lib/types';
+  import type { CountryMeta, StateMeta } from '../../lib/types';
   import CountryDropdown from './CountryDropdown.svelte';
+  import StateDropdown from './StateDropdown.svelte';
 
   interface Props {
     countries: CountryMeta[];
+    states: StateMeta[];
     currentPath?: string;
   }
 
-  const { countries, currentPath = '' }: Props = $props();
+  const { countries, states, currentPath = '' }: Props = $props();
 
   let isMenuOpen = $state(false);
   let menuButtonRef = $state<HTMLButtonElement | null>(null);
@@ -23,6 +25,7 @@
   // Navigation items
   const navItems = [
     { href: '/', label: 'Countries' },
+    { href: '/#states', label: 'States' },
     { href: '/compare', label: 'Compare' },
     { href: '/about', label: 'About' },
   ];
@@ -133,6 +136,7 @@
         </a>
       {/each}
       <CountryDropdown {countries} metric="fertility" variant="header" />
+      <StateDropdown {states} metric="fertility" variant="header" />
     </div>
     <!-- Theme toggle for desktop (hidden on mobile via parent) -->
     <slot name="theme-toggle" />
@@ -228,6 +232,10 @@
       <div class="py-sm px-md">
         <span class="text-sm text-text-muted mb-xs block">Go to country:</span>
         <CountryDropdown {countries} metric="fertility" variant="inline" />
+      </div>
+      <div class="py-sm px-md">
+        <span class="text-sm text-text-muted mb-xs block">Go to state:</span>
+        <StateDropdown {states} metric="fertility" variant="inline" />
       </div>
     </div>
   </div>

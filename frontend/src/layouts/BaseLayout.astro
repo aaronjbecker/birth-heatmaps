@@ -5,7 +5,8 @@ import Logo from '../components/Logo.astro';
 import SiteLogo from '../components/SiteLogo.astro';
 import Navigation from '../components/svelte/Navigation.svelte';
 import countriesData from '../assets/data/countries.json';
-import type { CountryMeta } from '../lib/types';
+import statesData from '../assets/data/states.json';
+import type { CountryMeta, StateMeta } from '../lib/types';
 import '../styles/global.css';
 
 interface Props {
@@ -19,6 +20,7 @@ interface Props {
 
 const { title, description, canonicalPath, ogType, ogImage, noindex } = Astro.props;
 const countries = countriesData.countries as CountryMeta[];
+const states = statesData.states as StateMeta[];
 const currentPath = Astro.url.pathname;
 ---
 
@@ -52,7 +54,7 @@ const currentPath = Astro.url.pathname;
   <body class="min-h-screen flex flex-col bg-bg text-text">
     <header class="h-header border-b border-border bg-bg-alt relative">
       <div class="max-w-container mx-auto px-md h-full flex items-center w-full">
-        <Navigation client:load countries={countries} currentPath={currentPath}>
+        <Navigation client:load countries={countries} states={states} currentPath={currentPath}>
           <SiteLogo slot="logo" size={28} />
           <ThemeToggle slot="theme-toggle" />
           <ThemeToggle slot="theme-toggle-mobile" />
