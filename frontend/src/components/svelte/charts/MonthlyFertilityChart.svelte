@@ -124,7 +124,20 @@
   });
 
   // Event handlers
+  function handlePointerDown(event: PointerEvent) {
+    // Track touch interactions for proper dismissal handling
+    if (event.pointerType === 'touch') {
+      isTouchActive = true;
+    }
+    // Show tooltip on tap (same logic as move)
+    updateHoverFromPointer(event);
+  }
+
   function handlePointerMove(event: PointerEvent) {
+    updateHoverFromPointer(event);
+  }
+
+  function updateHoverFromPointer(event: PointerEvent) {
     if (!svgElement) return;
 
     const svgRect = svgElement.getBoundingClientRect();
@@ -145,14 +158,13 @@
       hoveredYear = closestYear;
       const viewBoxX = xScale(closestYear) + CHART_MARGIN.left;
       crosshairX = viewBoxX;
-      // Convert crosshair viewBox X to screen coordinates for tooltip positioning
-      const crosshairScreenX = svgRect.left + (viewBoxX / VIEWBOX.width) * svgRect.width;
 
-      // Position tooltip Y at chart area vertical midpoint
+      // Calculate position as percentage of container (for absolute positioning within container)
+      const xPercent = (viewBoxX / VIEWBOX.width) * 100;
       const chartCenterY = CHART_TOP + CHART_HEIGHT / 2;
-      const tooltipScreenY = svgRect.top + (chartCenterY / VIEWBOX.height) * svgRect.height;
+      const yPercent = (chartCenterY / VIEWBOX.height) * 100;
 
-      tooltipPosition = { x: crosshairScreenX, y: tooltipScreenY };
+      tooltipPosition = { x: xPercent, y: yPercent };
     }
   }
 
@@ -163,40 +175,27 @@
     }
   }
 
-  function handleTouchStart() {
-    isTouchActive = true;
-  }
-
-  function handleClick(event: MouseEvent) {
-    // On touch devices, clicking outside the chart clears the tooltip
-    if (isTouchActive) {
-      const target = event.target as HTMLElement;
-      if (!target.closest('svg')) {
-        clearHover();
-        isTouchActive = false;
-      }
-    }
-  }
-
   function clearHover() {
     hoveredYear = null;
     crosshairX = null;
     tooltipPosition = null;
   }
 
-  // Handle click outside to dismiss tooltip on touch devices
+  // Handle tap outside to dismiss tooltip on touch devices
   $effect(() => {
     if (typeof document === 'undefined') return;
+    // Only attach listener when touch interaction is active
+    if (!isTouchActive) return;
 
-    function handleDocumentClick(event: MouseEvent) {
-      if (isTouchActive && svgElement && !svgElement.contains(event.target as Node)) {
+    function handleOutsideInteraction(event: PointerEvent) {
+      if (svgElement && !svgElement.contains(event.target as Node)) {
         clearHover();
         isTouchActive = false;
       }
     }
 
-    document.addEventListener('click', handleDocumentClick);
-    return () => document.removeEventListener('click', handleDocumentClick);
+    document.addEventListener('pointerdown', handleOutsideInteraction);
+    return () => document.removeEventListener('pointerdown', handleOutsideInteraction);
   });
 </script>
 
@@ -212,10 +211,10 @@
     preserveAspectRatio="none"
     role="img"
     aria-label="Monthly fertility rate time series chart for {data.country?.name || data.state?.name}"
+    onpointerdown={handlePointerDown}
     onpointermove={handlePointerMove}
     onpointerleave={handlePointerLeave}
-    ontouchstart={handleTouchStart}
-    style="cursor: crosshair;"
+    style="cursor: crosshair; touch-action: pan-y;"
   >
     <ChartGrid
       {yTickValues}

@@ -1,12 +1,13 @@
 <script lang="ts">
   /**
    * ChartTooltip - Displays all month values for hovered year
-   * Fixed positioned HTML overlay with edge detection
+   * Absolutely positioned within parent container with edge detection
    */
   import type { MonthlyFertilityTooltipData } from '../../../../lib/types';
 
   interface Props {
     data: MonthlyFertilityTooltipData | null;
+    /** Position as percentage of container (x%, y%) */
     position: { x: number; y: number } | null;
   }
 
@@ -15,42 +16,28 @@
     position,
   }: Props = $props();
 
-  // Calculate tooltip position with viewport edge detection
+  // Tooltip ref for measuring actual width
+  let tooltipRef: HTMLDivElement | null = $state(null);
+
+  // Calculate tooltip position with container edge detection
+  // Position values are percentages of the container
   let tooltipStyle = $derived.by(() => {
     if (!position) return '';
 
-    const padding = 16;
-    const tooltipWidthEstimate = 200; // Used only for flip detection
-    const tooltipHeight = 340; // Estimate: header ~32 + annual row ~28 + 12 months ~240 + padding ~24
-    const offset = 12; // Gap between tooltip edge and crosshair
+    const offsetPercent = 1.5; // Gap between tooltip and crosshair as % of container width
 
-    // Use clientWidth to exclude scrollbar
-    const viewportWidth = typeof document !== 'undefined'
-      ? document.documentElement.clientWidth
-      : (typeof window !== 'undefined' ? window.innerWidth : 0);
-
-    // Check if tooltip should flip to the left
-    const normalLeft = position.x + offset;
-    const shouldFlip = viewportWidth > 0 &&
-      normalLeft + tooltipWidthEstimate > viewportWidth - padding;
-
-    // Vertical positioning
-    let top = position.y - tooltipHeight / 2;
-    if (typeof window !== 'undefined') {
-      if (top < padding) top = padding;
-      if (top + tooltipHeight > window.innerHeight - padding) {
-        top = window.innerHeight - tooltipHeight - padding;
-      }
-    }
+    // Check if tooltip would overflow right edge (estimate: tooltip ~25% of container width)
+    const tooltipWidthPercent = 25;
+    const shouldFlip = position.x + offsetPercent + tooltipWidthPercent > 100;
 
     if (shouldFlip) {
-      // Use 'right' positioning so tooltip's right edge anchors near crosshair
-      // Use smaller offset when flipped to match visual appearance
-      const flippedOffset = 6;
-      const right = viewportWidth - position.x + flippedOffset;
-      return `right: ${right}px; top: ${top}px;`;
+      // Position from right edge
+      const rightPercent = 100 - position.x + offsetPercent;
+      return `right: ${rightPercent}%; top: 50%; transform: translateY(-50%);`;
     } else {
-      return `left: ${normalLeft}px; top: ${top}px;`;
+      // Position from left edge
+      const leftPercent = position.x + offsetPercent;
+      return `left: ${leftPercent}%; top: 50%; transform: translateY(-50%);`;
     }
   });
 
@@ -64,7 +51,8 @@
 
 {#if data && position}
   <div
-    class="fixed z-50 bg-bg border border-border rounded-lg shadow-lg p-3 pointer-events-none"
+    bind:this={tooltipRef}
+    class="absolute z-50 bg-bg border border-border rounded-lg shadow-lg p-3 pointer-events-none"
     style={tooltipStyle}
   >
     <!-- Year header -->
