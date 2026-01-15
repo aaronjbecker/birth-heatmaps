@@ -9,3 +9,6 @@ census-scripts/.env
 # Python cache
 __pycache__/
 *.pyc
+
+# Generated output
+anomalies.csv
