@@ -56,7 +56,10 @@ export function createTooltip(container: HTMLElement): TooltipInstance {
   function updateContent(cell: HeatmapCell, metric: string): void {
     const monthName = getMonthName(cell.month);
     const formattedValue = formatValue(cell.value, metric);
-    const sourceName = getSourceDisplayName(cell.source);
+
+    // Handle both unified source (country data) and dual sources (state data)
+    const effectiveSource = cell.source || cell.birthSource || cell.populationSource || 'Unknown';
+    const sourceName = getSourceDisplayName(effectiveSource);
 
     let html = `
       <div style="font-weight: 600; margin-bottom: 4px; color: var(--color-text);">

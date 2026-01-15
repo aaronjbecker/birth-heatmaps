@@ -49,6 +49,7 @@ from .settings import (
     DATA_SOURCE_LABELS,
     DATA_SOURCE_URLS,
     STATES_DATA_SOURCE_URLS,
+    STATES_DATA_SOURCE_CITATIONS,
     ensure_output_dirs,
     find_latest_hmd_bulk_dir,
 )
@@ -112,6 +113,7 @@ __all__ = [
     'DATA_SOURCE_LABELS',
     'DATA_SOURCE_URLS',
     'STATES_DATA_SOURCE_URLS',
+    'STATES_DATA_SOURCE_CITATIONS',
     'ensure_output_dirs',
     'find_latest_hmd_bulk_dir',
     'Country',

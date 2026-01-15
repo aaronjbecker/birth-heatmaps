@@ -765,6 +765,18 @@ def export_state_charts(
     # Filter data for this state (uses 'Country' column which holds state name)
     state_births = births.filter(pl.col('Country') == state_name)
 
+    # State data uses BirthSource/PopulationSource, create unified Source for chart functions
+    # Use BirthSource since charts are primarily about birth/fertility data
+    if 'Source' not in state_births.columns:
+        if 'BirthSource' in state_births.columns:
+            state_births = state_births.with_columns(
+                pl.col('BirthSource').alias('Source')
+            )
+        elif 'PopulationSource' in state_births.columns:
+            state_births = state_births.with_columns(
+                pl.col('PopulationSource').alias('Source')
+            )
+
     # Extract population data from births (state data has childbearing_population in births df)
     state_population = state_births.select(
         'Country', 'Year', 'Month', 'Date', 'childbearing_population', 'Source'

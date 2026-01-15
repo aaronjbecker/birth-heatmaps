@@ -175,12 +175,13 @@ DATA_SOURCE_LABELS = {
     'HMD': 'Human Mortality Database (https://www.mortality.org/)',
     'UN': 'United Nations (https://population.un.org/wpp/)',
     'JPOP': 'Minato Nakazawa (fmsb R package)',
-    # State data sources
-    'CDC': 'CDC WONDER (https://wonder.cdc.gov/)',
-    'CDC/Historical': 'CDC WONDER + Historical Records',
-    'Historical': 'Historical Records (DataDryad)',
-    'Census': 'US Census Bureau',
-    'NHGIS': 'NHGIS (https://www.nhgis.org/)',
+    # State birth data sources
+    'CDC': 'CDC WONDER Natality Database',
+    'Martinez-Bakker': 'Martinez-Bakker et al. (2018) via Dryad',
+    # State population data sources
+    'Census': 'U.S. Census Bureau Population Estimates',
+    'NHGIS': 'IPUMS NHGIS',
+    'interpolated': 'Interpolated from census data',
 }
 
 DATA_SOURCE_URLS = {
@@ -191,10 +192,44 @@ DATA_SOURCE_URLS = {
 
 # State data source URLs (for US state-level data)
 STATES_DATA_SOURCE_URLS = {
-    'CDC': 'https://wonder.cdc.gov/',
-    'Historical': 'https://datadryad.org/dataset/doi:10.5061/dryad.3p008p4',
-    'Census': 'https://www.census.gov/programs-surveys/popest.html',
-    'NHGIS': 'https://www.nhgis.org/',
+    # Birth data sources
+    'CDC': 'https://wonder.cdc.gov/natality-current.html',
+    'Martinez-Bakker': 'https://doi.org/10.5061/dryad.3p008p4',
+    # Population data sources (Census Bureau variants)
+    'census_1980s': 'https://www.census.gov/programs-surveys/popest.html',
+    'census_2000s': 'https://www.census.gov/programs-surveys/popest.html',
+    'census_2010s': 'https://www.census.gov/programs-surveys/popest.html',
+    'census_2020s': 'https://www.census.gov/programs-surveys/popest.html',
+    'census_pe19': 'https://www.census.gov/programs-surveys/popest.html',
+    'census_sasrh': 'https://www.census.gov/programs-surveys/popest.html',
+    'nhgis': 'https://www.nhgis.org/',
+    'interpolated': None,
+}
+
+# Full citations for state data sources
+STATES_DATA_SOURCE_CITATIONS = {
+    'CDC': (
+        'Centers for Disease Control and Prevention, National Center for Health Statistics. '
+        'National Vital Statistics System, Natality on CDC WONDER Online Database. '
+        'http://wonder.cdc.gov/natality-current.html'
+    ),
+    'Martinez-Bakker': (
+        'Martinez-Bakker M, Bakker KM, King AA, Rohani P (2018) Data from: Human birth seasonality: '
+        'latitudinal gradient and interplay with childhood disease dynamics. Dryad Digital Repository. '
+        'https://doi.org/10.5061/dryad.3p008p4'
+    ),
+    'census_1980s': 'U.S. Census Bureau, 1980 Population Estimates.',
+    'census_2000s': 'U.S. Census Bureau, 2000 Population Estimates.',
+    'census_2010s': 'U.S. Census Bureau, 2010 Population Estimates.',
+    'census_2020s': 'U.S. Census Bureau, 2020 Population Estimates.',
+    'census_pe19': 'U.S. Census Bureau, Population Estimates Program (2019).',
+    'census_sasrh': 'U.S. Census Bureau, Surveillance, Epidemiology, and End Results (SEER) Program.',
+    'nhgis': (
+        'Steven Manson, Jonathan Schroeder, David Van Riper, Katherine Knowles, Tracy Kugler, '
+        'Finn Roberts, and Steven Ruggles. IPUMS National Historical Geographic Information System: '
+        'Version 18.0. Minneapolis, MN: IPUMS. 2023. http://doi.org/10.18128/D050.V18.0'
+    ),
+    'interpolated': 'Linear interpolation between census data points.',
 }
 
 

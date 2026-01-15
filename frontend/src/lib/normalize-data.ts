@@ -14,10 +14,27 @@ import type { CountryHeatmapData, StateHeatmapData } from './types';
  * This allows reusing existing components (Heatmap, OG image renderer, etc.)
  * that expect CountryHeatmapData without modification.
  *
+ * State data uses separate birthSources/populationSources and per-cell
+ * birthSource/populationSource fields. This function combines them into
+ * the unified sources format expected by country components.
+ *
  * @param stateData - State heatmap data with 'state' key
  * @returns Equivalent CountryHeatmapData with 'country' key
  */
 export function stateToCountryFormat(stateData: StateHeatmapData): CountryHeatmapData {
+  // Combine birth and population sources into unified sources array
+  const allSources = [...new Set([
+    ...stateData.birthSources,
+    ...stateData.populationSources
+  ])];
+
+  // Transform per-cell data to add unified source field
+  const normalizedData = stateData.data.map(cell => ({
+    ...cell,
+    // Combine birthSource and populationSource into single source for display
+    source: cell.birthSource || cell.populationSource || 'Unknown',
+  }));
+
   return {
     country: {
       code: stateData.state.code,
@@ -29,8 +46,8 @@ export function stateToCountryFormat(stateData: StateHeatmapData): CountryHeatma
     colorScale: stateData.colorScale,
     years: stateData.years,
     months: stateData.months,
-    data: stateData.data,
-    sources: stateData.sources,
+    data: normalizedData,
+    sources: allSources,
     generatedAt: stateData.generatedAt,
   };
 }

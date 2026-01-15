@@ -16,7 +16,9 @@ import polars as pl
 from config import (
     MONTH_NAMES,
     MONTH_NAMES_FULL,
+    DATA_SOURCE_LABELS,
     STATES_DATA_SOURCE_URLS,
+    STATES_DATA_SOURCE_CITATIONS,
     get_country_slug,
     JSON_OUTPUT_DIR,
     STATES_FERTILITY_OUTPUT_DIR,
@@ -180,6 +182,10 @@ def export_states_index(
         for state_name, min_births in excluded_by_births:
             print(f"  - {state_name}: minimum {min_births} births in a month")
 
+    # Collect all unique sources across all states for dataSources metadata
+    all_birth_sources = set()
+    all_pop_sources = set()
+
     states = []
     for state_name in included_states:
         state_data = births.filter(pl.col('Country') == state_name)
@@ -188,8 +194,13 @@ def export_states_index(
         min_year = int(state_data['Year'].min())
         max_year = int(state_data['Year'].max())
 
-        # Get sources used
-        sources = state_data['Source'].unique().to_list()
+        # Get birth and population sources used (separate provenance)
+        birth_sources = state_data['BirthSource'].unique().to_list()
+        birth_sources = [s for s in birth_sources if s is not None]
+        pop_sources = state_data['PopulationSource'].unique().to_list()
+        pop_sources = [s for s in pop_sources if s is not None]
+        all_birth_sources.update(birth_sources)
+        all_pop_sources.update(pop_sources)
 
         # Get complete years count
         complete_years = compute_complete_years(births, state_name)
@@ -208,7 +219,8 @@ def export_states_index(
         states.append({
             'code': get_state_slug(state_name),
             'name': state_name,
-            'sources': sources,
+            'birthSources': birth_sources,
+            'populationSources': pop_sources,
             'completeYears': complete_years,
             'fertility': {
                 'yearRange': [min_year, max_year],
@@ -224,14 +236,18 @@ def export_states_index(
             }
         })
 
+    # Build dataSources from all discovered sources (exclude 'interpolated' as it's derived)
+    all_sources = sorted(set(all_birth_sources | all_pop_sources) - {'interpolated'})
+
     output = {
         'states': states,
         'dataSources': {
             source: {
-                'name': source,
-                'url': STATES_DATA_SOURCE_URLS.get(source)
+                'name': DATA_SOURCE_LABELS.get(source, source),
+                'url': STATES_DATA_SOURCE_URLS.get(source),
+                'citation': STATES_DATA_SOURCE_CITATIONS.get(source)
             }
-            for source in ['CDC', 'Historical', 'Census', 'NHGIS']
+            for source in all_sources
         },
         'minYearsThreshold': min_years,
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
@@ -274,7 +290,8 @@ def _export_state_json(args: tuple) -> str:
 
     # Get metadata
     years = sorted(state_data['Year'].unique().to_list())
-    sources = state_data['Source'].unique().to_list()
+    birth_sources = state_data['BirthSource'].unique().to_list()
+    pop_sources = state_data['PopulationSource'].unique().to_list()
     state_slug = get_state_slug(state_name)
 
     # --- Export fertility data ---
@@ -296,7 +313,8 @@ def _export_state_json(args: tuple) -> str:
             'value': round(value, 2) if value is not None else None,
             'births': int(row['Births']) if row['Births'] is not None else None,
             'population': int(row['childbearing_population']) if row['childbearing_population'] is not None else None,
-            'source': row['Source']
+            'birthSource': row['BirthSource'],
+            'populationSource': row['PopulationSource']
         })
 
     fertility_data = trim_leading_trailing_nulls(fertility_data, 'value')
@@ -310,7 +328,8 @@ def _export_state_json(args: tuple) -> str:
         'years': [int(y) for y in fertility_years],
         'months': MONTH_NAMES,
         'data': fertility_data,
-        'sources': sources,
+        'birthSources': birth_sources,
+        'populationSources': pop_sources,
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
     }
 
@@ -349,7 +368,8 @@ def _export_state_json(args: tuple) -> str:
             'month': int(row['Month']),
             'value': round(value, 4) if value is not None else None,
             'formattedValue': f"{value * 100:.1f}%" if value is not None else None,
-            'source': row['Source']
+            'birthSource': row['BirthSource'],
+            'populationSource': row['PopulationSource']
         })
 
     seasonality_data = trim_leading_trailing_nulls(seasonality_data, 'value')
@@ -372,7 +392,8 @@ def _export_state_json(args: tuple) -> str:
         'years': [int(y) for y in seasonality_years],
         'months': MONTH_NAMES,
         'data': seasonality_data,
-        'sources': sources,
+        'birthSources': birth_sources,
+        'populationSources': pop_sources,
         'generatedAt': datetime.utcnow().isoformat() + 'Z'
     }
 
@@ -407,7 +428,8 @@ def _export_state_json(args: tuple) -> str:
                 'value': round(value, 2) if value is not None else None,
                 'futureBirths': int(row['future_births']) if row['future_births'] is not None else None,
                 'population': int(row['childbearing_population']) if row['childbearing_population'] is not None else None,
-                'source': row['Source']
+                'birthSource': row['BirthSource'],
+                'populationSource': row['PopulationSource']
             })
 
         conception_output = {
@@ -423,7 +445,8 @@ def _export_state_json(args: tuple) -> str:
             'years': [int(y) for y in conception_years],
             'months': MONTH_NAMES,
             'data': conception_data,
-            'sources': sources,
+            'birthSources': birth_sources,
+            'populationSources': pop_sources,
             'generatedAt': datetime.utcnow().isoformat() + 'Z'
         }
 
@@ -510,7 +533,8 @@ def _export_state_json(args: tuple) -> str:
             'monthlySeries': monthly_series,
             'annualAverageSeries': annual_average_series,
             'yDomain': y_domain,
-            'sources': sources,
+            'birthSources': birth_sources,
+            'populationSources': pop_sources,
             'generatedAt': datetime.utcnow().isoformat() + 'Z'
         }
 

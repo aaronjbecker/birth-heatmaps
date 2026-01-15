@@ -46,7 +46,8 @@ export interface CountriesIndex {
 export interface StateMeta {
   code: string;
   name: string;
-  sources: string[];
+  birthSources: string[];
+  populationSources: string[];
   completeYears: number;
   fertility: {
     yearRange: [number, number];
@@ -78,7 +79,11 @@ export interface HeatmapCell {
   births?: number | null;
   population?: number | null;
   formattedValue?: string | null;
-  source: string;
+  /** Country data uses single source field */
+  source?: string;
+  /** State data uses separate birth and population sources */
+  birthSource?: string;
+  populationSource?: string;
 }
 
 /** Color scale configuration */
@@ -118,7 +123,8 @@ export interface StateHeatmapData {
   years: number[];
   months: string[];
   data: HeatmapCell[];
-  sources: string[];
+  birthSources: string[];
+  populationSources: string[];
   generatedAt: string;
 }
 

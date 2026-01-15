@@ -6,6 +6,7 @@ import ShareButtons from '../../../components/ShareButtons.astro';
 import type { StateMeta, StateHeatmapData, CountryHeatmapData, MonthlyFertilityTimeSeriesData } from '../../../lib/types';
 import { stateToCountryFormat } from '../../../lib/normalize-data';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../../lib/metrics';
+import { getConsolidatedDisplaySources } from '../../../lib/data';
 
 // Import states data at module level for use in page
 const statesData = await import('../../../assets/data/states.json');
@@ -88,7 +89,9 @@ const metricData = stateMeta[metric];
 
 // SEO metadata
 const pageTitle = `${stateMeta.name} - ${metricConfig.label}`;
-const pageDescription = `${metricConfig.label} data for ${stateMeta.name} from ${metricData.yearRange[0]} to ${metricData.yearRange[1]}. ${metricConfig.subtitle} Data sources: ${stateMeta.sources.join(', ')}.`;
+// Get consolidated, human-readable source names for display
+const displaySources = getConsolidatedDisplaySources(stateMeta.birthSources, stateMeta.populationSources);
+const pageDescription = `${metricConfig.label} data for ${stateMeta.name} from ${metricData.yearRange[0]} to ${metricData.yearRange[1]}. ${metricConfig.subtitle} Data sources: ${displaySources.join(', ')}.`;
 const canonicalPath = `/${metric}/states/${state}`;
 
 // Build full OG image URL (must be absolute for social media crawlers)
@@ -106,7 +109,7 @@ const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
     entityType="state"
     entityCode={state!}
     entityName={stateMeta.name}
-    sources={stateMeta.sources}
+    sources={displaySources}
     yearRange={metricData.yearRange}
     metric={metric}
     heatmapData={heatmapData}

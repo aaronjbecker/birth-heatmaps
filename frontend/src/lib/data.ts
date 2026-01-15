@@ -50,9 +50,69 @@ export function formatYearRange(range: [number, number]): string {
  */
 export function getSourceDisplayName(source: string): string {
   const names: Record<string, string> = {
+    // Country sources
     HMD: 'Human Mortality Database',
     UN: 'United Nations',
     JPOP: 'Japan Statistics Bureau',
+    // State birth sources
+    CDC: 'CDC WONDER',
+    'Martinez-Bakker': 'Martinez-Bakker et al.',
+    // State population sources - all Census variants map to Census Bureau
+    Census: 'U.S. Census Bureau',
+    census_1980s: 'U.S. Census Bureau',
+    census_2000s: 'U.S. Census Bureau',
+    census_2010s: 'U.S. Census Bureau',
+    census_2020s: 'U.S. Census Bureau',
+    census_pe19: 'U.S. Census Bureau',
+    census_sasrh: 'U.S. Census Bureau',
+    nhgis: 'NHGIS',
+    interpolated: 'Interpolated',
   };
   return names[source] || source;
+}
+
+/**
+ * Get consolidated display sources from raw source arrays.
+ * Combines similar sources (e.g., all census_* variants become "U.S. Census Bureau").
+ * Returns human-readable display names.
+ */
+export function getConsolidatedDisplaySources(
+  birthSources: string[],
+  populationSources: string[]
+): string[] {
+  // Census-related source keys that should consolidate to "U.S. Census Bureau"
+  const censusKeys = new Set([
+    'Census',
+    'census_1980s',
+    'census_2000s',
+    'census_2010s',
+    'census_2020s',
+    'census_pe19',
+    'census_sasrh',
+  ]);
+
+  const displaySources = new Set<string>();
+
+  // Process birth sources
+  for (const source of birthSources) {
+    displaySources.add(getSourceDisplayName(source));
+  }
+
+  // Process population sources with consolidation
+  let hasCensus = false;
+  for (const source of populationSources) {
+    if (censusKeys.has(source)) {
+      hasCensus = true;
+    } else if (source !== 'interpolated') {
+      // Skip 'interpolated' as it's not a primary source
+      displaySources.add(getSourceDisplayName(source));
+    }
+  }
+
+  // Add consolidated Census Bureau if any census sources were present
+  if (hasCensus) {
+    displaySources.add('U.S. Census Bureau');
+  }
+
+  return Array.from(displaySources).sort();
 }

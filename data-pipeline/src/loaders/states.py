@@ -3,12 +3,17 @@ US state-level birth and population data loaders.
 
 Data sources:
 - CDC WONDER: Monthly births by state (2003-2024)
-- Historical: US births by state (1915-2008)
-- Census Bureau/NHGIS: Female population 15-44 by state (1920-2024)
+- Martinez-Bakker et al. (2018): US births by state (1915-2008) via Dryad
+- Census Bureau: Female population 15-44 by state (1970-2024)
+- NHGIS: Female population 15-44 by state (1920-1960, decennial)
 
 Note: This loader produces a separate dataset from country-level data.
 The 'Country' column contains US state names for format consistency,
 but states should not be intermingled with countries in downstream processing.
+
+Provenance tracking:
+- BirthSource: 'CDC' or 'Martinez-Bakker' per record
+- PopulationSource: 'Census', 'NHGIS', or 'interpolated' per record
 """
 import polars as pl
 import numpy as np
@@ -55,12 +60,13 @@ def _load_cdc_wonder_file(file_path: Path) -> pl.DataFrame:
     # Filter rows where Month Code is not null (excludes aggregate rows)
     df = df.filter(pl.col('Month Code').is_not_null())
 
-    # Select and rename columns
+    # Select and rename columns, add birth source
     df = df.select(
         pl.col('State').alias('Country'),
         pl.col('Year').cast(pl.Int64),
         pl.col('Month Code').cast(pl.Int64).alias('Month'),
         pl.col('Births').cast(pl.Float64),
+        pl.lit('CDC').alias('BirthSource'),
     )
 
     return df
@@ -86,12 +92,13 @@ def _load_historical_file(file_path: Path) -> pl.DataFrame:
     # Filter out rows with "na" births
     df = df.filter(pl.col('births') != 'na')
 
-    # Select and rename columns
+    # Select and rename columns, add birth source
     df = df.select(
         pl.col('state').alias('Country'),
         pl.col('year').cast(pl.Int64).alias('Year'),
         pl.col('mo').cast(pl.Int64).alias('Month'),
         pl.col('births').cast(pl.Float64).alias('Births'),
+        pl.lit('Martinez-Bakker').alias('BirthSource'),
     )
 
     return df
@@ -104,7 +111,7 @@ def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:
     Combines three data files:
     - CDC WONDER 2003-2006
     - CDC WONDER 2007-2024
-    - Historical 1915-2008
+    - Martinez-Bakker et al. (2018) 1915-2008
 
     For overlapping years (2003-2008), CDC WONDER data is preferred.
 
@@ -112,7 +119,7 @@ def load_births(data_dir: Optional[Path] = None) -> pl.DataFrame:
         data_dir: Directory containing the data files. Defaults to STATES_DATA_DIR.
 
     Returns:
-        DataFrame with columns: Country (state name), Year, Month, Births
+        DataFrame with columns: Country (state name), Year, Month, Births, BirthSource
         Sorted by Country, Year, Month.
     """
     if data_dir is None:
@@ -158,11 +165,11 @@ def _ensure_continuous_births_index(births: pl.DataFrame) -> pl.DataFrame:
     filling gaps with null Births values.
 
     Args:
-        births: DataFrame with Country, Year, Month, Births
+        births: DataFrame with Country, Year, Month, Births, BirthSource
 
     Returns:
         DataFrame with continuous monthly coverage per state.
-        Missing months have null Births values.
+        Missing months have null Births and BirthSource values.
     """
     # Create Date column for range calculation
     births_with_date = births.with_columns(
@@ -208,7 +215,7 @@ def load_population(data_dir: Optional[Path] = None) -> pl.DataFrame:
         data_dir: Directory containing census-scripts/data/. Defaults to STATES_DATA_DIR.
 
     Returns:
-        DataFrame with columns: Country (state name), Year, female_15_44, Source
+        DataFrame with columns: Country (state name), Year, childbearing_population, PopulationSource
         Sorted by Country, Year.
     """
     if data_dir is None:
@@ -229,7 +236,7 @@ def load_population(data_dir: Optional[Path] = None) -> pl.DataFrame:
         pl.col('state_name').alias('Country'),
         pl.col('year').cast(pl.Int64).alias('Year'),
         pl.col('female_15_44').cast(pl.Float64).alias('childbearing_population'),
-        pl.col('source').alias('Source'),
+        pl.col('source').alias('PopulationSource'),
         pl.col('note').alias('Note'),
     )
 
@@ -244,7 +251,7 @@ def interpolate_population(population: pl.DataFrame) -> pl.DataFrame:
     census years. For 1970+ data (annual), fills any minor gaps.
 
     Args:
-        population: DataFrame with Country, Year, childbearing_population, Source
+        population: DataFrame with Country, Year, childbearing_population, PopulationSource
 
     Returns:
         DataFrame with interpolated annual population estimates.
@@ -267,7 +274,7 @@ def interpolate_population(population: pl.DataFrame) -> pl.DataFrame:
 
     # Join with actual data
     interpolated = year_index.join(
-        population.select('Country', 'Year', 'childbearing_population', 'Source'),
+        population.select('Country', 'Year', 'childbearing_population', 'PopulationSource'),
         on=['Country', 'Year'],
         how='left'
     )
@@ -285,7 +292,7 @@ def interpolate_population(population: pl.DataFrame) -> pl.DataFrame:
             pl.col('childbearing_population')
             .interpolate(method='linear')
             .over('Country'),
-            pl.col('Source')
+            pl.col('PopulationSource')
             .fill_null(strategy='forward')
             .fill_null(strategy='backward')
             .over('Country'),
@@ -296,8 +303,8 @@ def interpolate_population(population: pl.DataFrame) -> pl.DataFrame:
     interpolated = interpolated.with_columns(
         pl.when(pl.col('interpolated'))
         .then(pl.lit('interpolated'))
-        .otherwise(pl.col('Source'))
-        .alias('Source')
+        .otherwise(pl.col('PopulationSource'))
+        .alias('PopulationSource')
     )
 
     return interpolated.sort(['Country', 'Year'])
@@ -310,10 +317,10 @@ def expand_population_to_monthly(population: pl.DataFrame) -> pl.DataFrame:
     Uses linear interpolation between years to create monthly values.
 
     Args:
-        population: DataFrame with Country, Year, childbearing_population, Source
+        population: DataFrame with Country, Year, childbearing_population, PopulationSource
 
     Returns:
-        DataFrame with columns: Country, Year, Month, childbearing_population, Source
+        DataFrame with columns: Country, Year, Month, childbearing_population, PopulationSource
     """
     # Create monthly index for each state-year
     monthly = (
@@ -350,7 +357,7 @@ def load_population_monthly(data_dir: Optional[Path] = None) -> pl.DataFrame:
         data_dir: Directory containing census-scripts/data/. Defaults to STATES_DATA_DIR.
 
     Returns:
-        DataFrame with columns: Country, Year, Month, childbearing_population, Source
+        DataFrame with columns: Country, Year, Month, childbearing_population, PopulationSource
         Ready for joining with births data for fertility rate computation.
     """
     # Load raw population data
@@ -375,20 +382,20 @@ def compute_state_fertility_rates(
     Daily fertility rate = (births per day) / (childbearing population) * 100,000
 
     Args:
-        births: DataFrame with Country (state), Year, Month, Births
-        population: DataFrame with Country (state), Year, Month, childbearing_population
+        births: DataFrame with Country (state), Year, Month, Births, BirthSource
+        population: DataFrame with Country (state), Year, Month, childbearing_population, PopulationSource
 
     Returns:
-        DataFrame with births_per_day and daily_fertility_rate added
+        DataFrame with births_per_day, daily_fertility_rate, BirthSource, PopulationSource
     """
     # Add days_in_month to births
     births = births.with_columns(
         pl.date(pl.col('Year'), pl.col('Month'), 1).dt.days_in_month().alias('days_in_month')
     )
 
-    # Join births with population
+    # Join births with population (include PopulationSource)
     combined = births.join(
-        population.select('Country', 'Year', 'Month', 'childbearing_population'),
+        population.select('Country', 'Year', 'Month', 'childbearing_population', 'PopulationSource'),
         on=['Country', 'Year', 'Month'],
         how='left'
     )
@@ -431,20 +438,16 @@ def load_births_with_fertility(data_dir: Optional[Path] = None) -> pl.DataFrame:
         - days_in_month
         - births_per_day
         - daily_fertility_rate
-        - Source
+        - BirthSource ('CDC' or 'Martinez-Bakker')
+        - PopulationSource ('Census', 'NHGIS', or 'interpolated')
     """
-    # Load births
+    # Load births (includes BirthSource)
     births = load_births(data_dir)
 
-    # Load and prepare population
+    # Load and prepare population (includes PopulationSource)
     population = load_population_monthly(data_dir)
 
-    # Compute fertility rates
+    # Compute fertility rates (preserves both source columns)
     result = compute_state_fertility_rates(births, population)
-
-    # Add Source column for processor/exporter compatibility
-    result = result.with_columns(
-        pl.lit('CDC/Historical').alias('Source')
-    )
 
     return result
