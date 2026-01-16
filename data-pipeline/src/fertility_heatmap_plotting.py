@@ -303,9 +303,10 @@ def build_heatmap_figure(
 
     # Define margins and spacing for GridSpec (GridSpec will handle the rest)
     left_margin = 0.1
-    right_margin = 0.1
+    # Increase right margin for multi-row to prevent colorbar truncation
+    right_margin = 0.18 if num_rows > 1 else 0.1
     top_margin = 0.15
-    bottom_margin = 0.08
+    bottom_margin = 0.1 if num_rows > 1 else 0.08
     hspace = 0.05 * num_rows + 0.1    
     # wspace is the horizontal space between subplots; needs to increase if the heatmaps are less wide?
     # since we're manually adjusting the colorbar location, we can probably dispense with gridspec spacing.
@@ -571,10 +572,12 @@ def build_heatmap_figure(
     if source_labels:
         fig.text(x, y, 'Source: ' + '\n    '.join(source_labels), fontsize=font_tick_labels, color='black', ha='left', va='top', style='italic', transform=t)
     # Website link: relative to last colorbar
+    # For multi-row heatmaps, position below the source citation to avoid overlap
     last_cbar = fig.axes[-1]
     ex = last_cbar.get_window_extent()
     x, y = ex._bbox.x1, ex._bbox.y0
-    t = transforms.offset_copy(fig.transFigure, fig=fig, y=space_from_bottom, x=10, units='points')
+    website_y_offset = space_from_bottom - (font_tick_labels * 1.5 if num_rows > 1 else 0)
+    t = transforms.offset_copy(fig.transFigure, fig=fig, y=website_y_offset, x=10, units='points')
     fig.text(x, y, website_label, fontsize=font_subtitle, weight='bold', color='black', ha='right', va='top', transform=t)
     
     if num_rows == 1:

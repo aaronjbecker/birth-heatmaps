@@ -21,27 +21,45 @@ if (!countrySlug && !stateSlug) {
   throw new Error('ChartGallery requires either countrySlug or stateSlug prop');
 }
 
+interface ChartConfig {
+  type: ChartType;
+  /** If true, hide entirely when chart is missing (for optional charts like stacked heatmaps) */
+  optional?: boolean;
+}
+
 interface ChartSection {
   title: string;
   description: string;
-  charts: ChartType[];
+  charts: ChartConfig[];
 }
 
 const sections: ChartSection[] = [
   {
     title: 'Heatmap Visualizations',
     description: 'Monthly patterns across years shown as heatmaps',
-    charts: ['fertility_heatmap', 'seasonality_heatmap'],
+    charts: [
+      { type: 'fertility_heatmap' },
+      { type: 'fertility_heatmap_stacked', optional: true },
+      { type: 'seasonality_heatmap' },
+      { type: 'seasonality_heatmap_stacked', optional: true },
+    ],
   },
   {
     title: 'Monthly Patterns',
     description: 'Analysis of which months have higher or lower birth rates',
-    charts: ['monthly_fertility_chart', 'monthly_fertility_boxplot'],
+    charts: [
+      { type: 'monthly_fertility_chart' },
+      { type: 'monthly_fertility_boxplot' },
+    ],
   },
   {
     title: 'Time Series',
     description: 'Long-term trends in population, births, and fertility',
-    charts: ['births_chart', 'daily_fertility_rate_chart', 'population_chart',],
+    charts: [
+      { type: 'births_chart' },
+      { type: 'daily_fertility_rate_chart' },
+      { type: 'population_chart' },
+    ],
   },
 ];
 ---
@@ -58,11 +76,12 @@ const sections: ChartSection[] = [
         'grid gap-lg',
         index === 0 ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'
       ]}>
-        {section.charts.map((chartType) => (
+        {section.charts.map((chart) => (
           <ChartImage
             countrySlug={countrySlug}
             stateSlug={stateSlug}
-            chartType={chartType}
+            chartType={chart.type}
+            optional={chart.optional}
           />
         ))}
       </div>

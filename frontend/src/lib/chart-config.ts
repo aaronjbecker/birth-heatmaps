@@ -5,6 +5,8 @@
  * src/assets/charts/{country-slug}/
  *   - fertility_heatmap.png
  *   - seasonality_heatmap.png
+ *   - fertility_heatmap_stacked.png (optional, for 60+ years of data)
+ *   - seasonality_heatmap_stacked.png (optional, for 60+ years of data)
  *   - monthly_fertility_chart.png
  *   - monthly_fertility_boxplot.png
  *   - population_chart.png
@@ -25,6 +27,8 @@
 export const CHART_TYPES = [
   'fertility_heatmap',
   'seasonality_heatmap',
+  'fertility_heatmap_stacked',
+  'seasonality_heatmap_stacked',
   'monthly_fertility_chart',
   'monthly_fertility_boxplot',
   'population_chart',
@@ -45,6 +49,14 @@ export const CHART_METADATA: Record<ChartType, { label: string; description: str
   seasonality_heatmap: {
     label: 'Seasonality Heatmap',
     description: 'Birth seasonality as percentage of annual births normalized to 30-day months',
+  },
+  fertility_heatmap_stacked: {
+    label: 'Fertility Heatmap (Detailed)',
+    description: 'Multi-row fertility heatmap for detailed comparison across decades',
+  },
+  seasonality_heatmap_stacked: {
+    label: 'Seasonality Heatmap (Detailed)',
+    description: 'Multi-row seasonality heatmap for detailed comparison across decades',
   },
   monthly_fertility_chart: {
     label: 'Monthly Fertility Trends',

@@ -1,4 +1,4 @@
-.PHONY: pipeline pipeline-json pipeline-charts pipeline-states dev clean help test build-prod test-prod deploy tunnel
+.PHONY: pipeline pipeline-json pipeline-charts dev clean help test build-prod test-prod deploy tunnel
 
 # Conda environment for Python pipeline
 CONDA_ENV := hmd-pipeline
@@ -18,10 +18,9 @@ help:
 	@echo "    make dev              - Start frontend dev server"
 	@echo ""
 	@echo "  Data Pipeline (uses hmd-pipeline conda environment automatically):"
-	@echo "    make pipeline         - Run full pipeline (JSON + charts)"
-	@echo "    make pipeline-json    - Run pipeline (JSON only, faster)"
-	@echo "    make pipeline-charts  - Run pipeline (JSON + charts)"
-	@echo "    make pipeline-states  - Run US states only (JSON + charts)"
+	@echo "    make pipeline         - Run full pipeline (JSON + charts for countries + states)"
+	@echo "    make pipeline-json    - Run pipeline JSON only (faster, no charts)"
+	@echo "    make pipeline-charts  - Run pipeline with charts (JSON + charts)"
 	@echo ""
 	@echo "  Build & Deploy:"
 	@echo "    make build-prod       - Build production Docker image"
@@ -51,19 +50,15 @@ dev:
 
 # Run full data pipeline (JSON + charts for countries and states)
 pipeline:
-	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json --charts --states
+	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json --charts
 
 # Run pipeline for JSON only (faster, no charts)
 pipeline-json:
 	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json
 
-# Run pipeline with charts (JSON + charts for countries)
+# Run pipeline with charts (JSON + charts for countries and states)
 pipeline-charts:
 	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --json --charts
-
-# Run US states only pipeline (JSON + charts, skips country data)
-pipeline-states:
-	cd data-pipeline && $(PYTHON) scripts/run_pipeline.py --states-only --json --charts
 
 # ============================================
 # Build & Deploy

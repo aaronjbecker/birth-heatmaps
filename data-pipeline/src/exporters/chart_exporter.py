@@ -60,12 +60,35 @@ except ImportError:
 CHART_FILENAMES = {
     'fertility_heatmap': 'fertility_heatmap.png',
     'seasonality_heatmap': 'seasonality_heatmap.png',
+    'fertility_heatmap_stacked': 'fertility_heatmap_stacked.png',
+    'seasonality_heatmap_stacked': 'seasonality_heatmap_stacked.png',
     'monthly_fertility_chart': 'monthly_fertility_chart.png',
     'monthly_fertility_boxplot': 'monthly_fertility_boxplot.png',
     'population_chart': 'population_chart.png',
     'births_chart': 'births_chart.png',
     'daily_fertility_rate_chart': 'daily_fertility_rate_chart.png',
 }
+
+# Threshold for generating stacked (multi-row) heatmaps
+STACKED_HEATMAP_THRESHOLD = 60  # Minimum years of data
+
+
+def calculate_num_rows_for_stacked(num_years: int) -> int:
+    """
+    Calculate number of rows for stacked heatmap targeting ~30 years per row.
+
+    Args:
+        num_years: Number of years in the dataset
+
+    Returns:
+        Number of rows (2-4)
+    """
+    if num_years < 90:
+        return 2  # 60-89 years -> 2 rows (~30-45 years each)
+    elif num_years < 120:
+        return 3  # 90-119 years -> 3 rows (~30-40 years each)
+    else:
+        return 4  # 120+ years -> 4 rows (~30+ years each)
 
 
 def get_country_output_dir(country_name: str, base_dir: Optional[Path] = None) -> Path:
@@ -571,7 +594,7 @@ def export_country_charts(
 
     # Optionally generate heatmaps (these are supplementary to D3 interactive heatmaps)
     if include_heatmaps and HEATMAP_FUNCTIONS_AVAILABLE:
-        # Fertility heatmap
+        # Single-row fertility heatmap
         build_fertility_heatmap_figure(
             country_births, country_name, country_output_dir,
             num_rows=1,
@@ -579,13 +602,38 @@ def export_country_charts(
         )
         generated_paths.append(country_output_dir / CHART_FILENAMES['fertility_heatmap'])
 
-        # Seasonality heatmap
+        # Single-row seasonality heatmap
         build_seasonality_heatmap_figure(
             country_births, country_name, country_output_dir,
             num_rows=1,
             filename_fn=lambda c: country_output_dir / CHART_FILENAMES['seasonality_heatmap']
         )
         generated_paths.append(country_output_dir / CHART_FILENAMES['seasonality_heatmap'])
+
+        # Generate stacked (multi-row) heatmaps for long time series
+        num_years = country_births.select(pl.col('Year').n_unique()).item()
+
+        if num_years >= STACKED_HEATMAP_THRESHOLD:
+            num_rows = calculate_num_rows_for_stacked(num_years)
+
+            # Stacked fertility heatmap
+            build_fertility_heatmap_figure(
+                country_births, country_name, country_output_dir,
+                num_rows=num_rows,
+                min_years_per_row=20,
+                filename_fn=lambda c: country_output_dir / CHART_FILENAMES['fertility_heatmap_stacked']
+            )
+            generated_paths.append(country_output_dir / CHART_FILENAMES['fertility_heatmap_stacked'])
+
+            # Stacked seasonality heatmap
+            build_seasonality_heatmap_figure(
+                country_births, country_name, country_output_dir,
+                num_rows=num_rows,
+                min_years_per_row=20,
+                filename_fn=lambda c: country_output_dir / CHART_FILENAMES['seasonality_heatmap_stacked']
+            )
+            generated_paths.append(country_output_dir / CHART_FILENAMES['seasonality_heatmap_stacked'])
+
     elif include_heatmaps and not HEATMAP_FUNCTIONS_AVAILABLE:
         print(f"  Warning: Heatmap functions not available, skipping heatmaps for {country_name}")
 
@@ -810,6 +858,7 @@ def export_state_charts(
 
     # Optionally generate heatmaps
     if include_heatmaps and HEATMAP_FUNCTIONS_AVAILABLE:
+        # Single-row fertility heatmap
         build_fertility_heatmap_figure(
             state_births, state_name, state_output_dir,
             num_rows=1,
@@ -817,12 +866,38 @@ def export_state_charts(
         )
         generated_paths.append(state_output_dir / CHART_FILENAMES['fertility_heatmap'])
 
+        # Single-row seasonality heatmap
         build_seasonality_heatmap_figure(
             state_births, state_name, state_output_dir,
             num_rows=1,
             filename_fn=lambda c: state_output_dir / CHART_FILENAMES['seasonality_heatmap']
         )
         generated_paths.append(state_output_dir / CHART_FILENAMES['seasonality_heatmap'])
+
+        # Generate stacked (multi-row) heatmaps for long time series
+        num_years = state_births.select(pl.col('Year').n_unique()).item()
+
+        if num_years >= STACKED_HEATMAP_THRESHOLD:
+            num_rows = calculate_num_rows_for_stacked(num_years)
+
+            # Stacked fertility heatmap
+            build_fertility_heatmap_figure(
+                state_births, state_name, state_output_dir,
+                num_rows=num_rows,
+                min_years_per_row=20,
+                filename_fn=lambda c: state_output_dir / CHART_FILENAMES['fertility_heatmap_stacked']
+            )
+            generated_paths.append(state_output_dir / CHART_FILENAMES['fertility_heatmap_stacked'])
+
+            # Stacked seasonality heatmap
+            build_seasonality_heatmap_figure(
+                state_births, state_name, state_output_dir,
+                num_rows=num_rows,
+                min_years_per_row=20,
+                filename_fn=lambda c: state_output_dir / CHART_FILENAMES['seasonality_heatmap_stacked']
+            )
+            generated_paths.append(state_output_dir / CHART_FILENAMES['seasonality_heatmap_stacked'])
+
     elif include_heatmaps and not HEATMAP_FUNCTIONS_AVAILABLE:
         print(f"  Warning: Heatmap functions not available, skipping heatmaps for {state_name}")
 

@@ -13,9 +13,11 @@ export interface Props {
   stateSlug?: string;
   chartType: ChartType;
   class?: string;
+  /** If true, render nothing when chart is missing (instead of placeholder) */
+  optional?: boolean;
 }
 
-const { countrySlug, stateSlug, chartType, class: className } = Astro.props;
+const { countrySlug, stateSlug, chartType, class: className, optional = false } = Astro.props;
 
 // Determine if this is for a country or state
 const isState = !!stateSlug;
@@ -49,37 +51,42 @@ try {
 } catch {
   // Image not available, chartImage remains null
 }
+
+// For optional charts, render nothing if image is missing
+const shouldRender = chartImage || !optional;
 ---
 
-<figure class:list={['chart-image', 'm-0 mb-xl', className]}>
-  <figcaption class="mb-sm">
-    <h3 class="m-0 mb-xs text-lg font-semibold text-text">{metadata.label}</h3>
-    <p class="m-0 text-sm text-text-muted">{metadata.description}</p>
-  </figcaption>
+{shouldRender && (
+  <figure class:list={['chart-image', 'm-0 mb-xl', className]}>
+    <figcaption class="mb-sm">
+      <h3 class="m-0 mb-xs text-lg font-semibold text-text">{metadata.label}</h3>
+      <p class="m-0 text-sm text-text-muted">{metadata.description}</p>
+    </figcaption>
 
-  <div class="bg-bg border border-border rounded overflow-hidden">
-    {chartImage ? (
-      <a
-        href={chartImage.src}
-        data-pswp-width={chartImage.width}
-        data-pswp-height={chartImage.height}
-        class="lightbox-trigger block cursor-zoom-in no-underline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
-        aria-label={`View full size: ${metadata.label}`}
-      >
-        <Image
-          src={chartImage}
-          alt={`${metadata.label} for ${slug}`}
-          width={800}
-          quality={85}
-          loading="lazy"
-          class="w-full h-auto block transition-transform duration-200 ease-in-out hover:scale-[1.02] focus-visible:rounded"
-        />
-      </a>
-    ) : (
-      <div class="p-xl text-center text-text-muted min-h-[200px] flex flex-col items-center justify-center">
-        <p class="m-0 mb-xs">Chart not available</p>
-        <small class="text-xs opacity-70">Run the data pipeline to generate charts</small>
-      </div>
-    )}
-  </div>
-</figure>
+    <div class="bg-bg border border-border rounded overflow-hidden">
+      {chartImage ? (
+        <a
+          href={chartImage.src}
+          data-pswp-width={chartImage.width}
+          data-pswp-height={chartImage.height}
+          class="lightbox-trigger block cursor-zoom-in no-underline focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+          aria-label={`View full size: ${metadata.label}`}
+        >
+          <Image
+            src={chartImage}
+            alt={`${metadata.label} for ${slug}`}
+            width={800}
+            quality={85}
+            loading="lazy"
+            class="w-full h-auto block transition-transform duration-200 ease-in-out hover:scale-[1.02] focus-visible:rounded"
+          />
+        </a>
+      ) : (
+        <div class="p-xl text-center text-text-muted min-h-[200px] flex flex-col items-center justify-center">
+          <p class="m-0 mb-xs">Chart not available</p>
+          <small class="text-xs opacity-70">Run the data pipeline to generate charts</small>
+        </div>
+      )}
+    </div>
+  </figure>
+)}
