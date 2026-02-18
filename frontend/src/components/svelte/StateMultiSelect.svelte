@@ -4,6 +4,8 @@
    * Adapted from CountryMultiSelect.svelte for US state selection.
    */
   import type { StateMeta } from '../../lib/types';
+  import { getStateFlagUrl } from '../../lib/state-flags';
+  import CountryFlag from './CountryFlag.svelte';
 
   interface Props {
     states: StateMeta[];
@@ -204,6 +206,7 @@
                 onchange={() => handleSelect(state.code)}
                 onclick={(e) => e.stopPropagation()}
               />
+              <CountryFlag url={getStateFlagUrl(state.code)} class="mr-1" />
               <span>{state.name}</span>
             </li>
           {/each}

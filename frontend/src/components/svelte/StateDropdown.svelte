@@ -5,6 +5,8 @@
    */
   import type { StateMeta } from '../../lib/types';
   import type { MetricSlug } from '../../lib/metrics';
+  import { getStateFlagUrl } from '../../lib/state-flags';
+  import CountryFlag from './CountryFlag.svelte';
 
   interface Props {
     states: StateMeta[];
@@ -150,6 +152,9 @@
     aria-haspopup="listbox"
     data-testid="state-dropdown-trigger"
   >
+    {#if currentState}
+      <CountryFlag url={getStateFlagUrl(currentState)} />
+    {/if}
     <span>{currentStateName ?? 'Go to state...'}</span>
     <span
       class="text-[0.625rem] ml-0.5 transition-transform duration-150"
@@ -202,6 +207,7 @@
               tabindex="-1"
               data-testid="state-option-{state.code}"
             >
+              <CountryFlag url={getStateFlagUrl(state.code)} class="mr-1" />
               {state.name}
               {#if isCurrent}
                 {' (current)'}

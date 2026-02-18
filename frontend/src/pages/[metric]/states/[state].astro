@@ -7,6 +7,7 @@ import type { StateMeta, StateHeatmapData, CountryHeatmapData, MonthlyFertilityT
 import { stateToCountryFormat } from '../../../lib/normalize-data';
 import { METRICS, METRIC_SLUGS, type MetricSlug } from '../../../lib/metrics';
 import { getConsolidatedDisplaySources } from '../../../lib/data';
+import StateFlag from '../../../components/StateFlag.astro';
 
 // Import states data at module level for use in page
 const statesData = await import('../../../assets/data/states.json');
@@ -139,6 +140,9 @@ const ogImageUrl = `${site}/og/${metric}/states/${state}.png`;
       />
     </div>
 
-    <h1 slot="header" class="mb-xs">{stateMeta.name}</h1>
+    <h1 slot="header" class="mb-xs">
+      <StateFlag code={state!} width={40} height={30} class="mr-2" />
+      {stateMeta.name}
+    </h1>
   </EntityHeatmapPage>
 </BaseLayout>

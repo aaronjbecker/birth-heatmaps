@@ -1,0 +1,41 @@
+---
+interface Props {
+  /** State slug (e.g., "california", "new-york") */
+  code: string;
+  /** Additional CSS classes */
+  class?: string;
+  /** Width in pixels (default: 24) */
+  width?: number;
+  /** Height in pixels (default: 18) */
+  height?: number;
+}
+
+const { code, class: className, width = 24, height = 18 } = Astro.props;
+
+// Import all state flag PNGs at build time
+const flagModules = import.meta.glob<{ default: ImageMetadata }>(
+  '../assets/state-flags/*.png',
+  { eager: true }
+);
+
+// Build lookup from state slug to resolved image metadata
+const flags: Record<string, ImageMetadata> = {};
+for (const [path, mod] of Object.entries(flagModules)) {
+  const slug = path.split('/').pop()?.replace('.png', '');
+  if (slug) flags[slug] = mod.default;
+}
+
+const flag = flags[code] ?? null;
+---
+
+{flag && (
+  <img
+    src={flag.src}
+    width={width}
+    height={height}
+    alt=""
+    loading="lazy"
+    decoding="async"
+    class:list={['inline-block align-middle', className]}
+  />
+)}
