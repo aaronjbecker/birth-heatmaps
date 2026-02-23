@@ -77,6 +77,8 @@ export interface HeatmapCell {
   month: number;
   value: number | null;
   births?: number | null;
+  /** Conception metric uses futureBirths instead of births */
+  futureBirths?: number | null;
   population?: number | null;
   formattedValue?: string | null;
   /** Country data uses single source field */
@@ -169,12 +171,20 @@ export interface ScrollInfo {
 /** Scale mode for comparison view */
 export type ScaleMode = 'unified' | 'per-country';
 
+/** View mode for compare page visualizations */
+export type ViewMode = 'heatmap' | 'line' | 'wide';
+
+/** Granularity for line chart time series */
+export type LineGranularity = 'annual' | 'monthly';
+
 /** Query parameters for compare page */
 export interface CompareQueryParams {
   countries: string[];
   states: string[];
   metric: MetricSlug;
   scale: ScaleMode;
+  view?: ViewMode;
+  granularity?: LineGranularity;
   yearStart?: number;
   yearEnd?: number;
 }

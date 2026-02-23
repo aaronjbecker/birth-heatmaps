@@ -7,9 +7,12 @@
  * - Building shareable compare URLs
  */
 
-import type { CompareQueryParams, ScaleMode } from './types';
+import type { CompareQueryParams, ScaleMode, ViewMode, LineGranularity } from './types';
 import type { MetricSlug } from './metrics';
 import { METRIC_SLUGS } from './metrics';
+
+const VALID_VIEW_MODES: ViewMode[] = ['heatmap', 'line', 'wide'];
+const VALID_GRANULARITIES: LineGranularity[] = ['annual', 'monthly'];
 
 /**
  * Parse compare page query parameters from URL.
@@ -38,6 +41,18 @@ export function parseCompareParams(searchParams: URLSearchParams): CompareQueryP
   const scaleParam = searchParams.get('scale') || 'unified';
   const scale: ScaleMode = scaleParam === 'per-country' ? 'per-country' : 'unified';
 
+  // Parse view mode with validation
+  const viewParam = searchParams.get('view') || 'heatmap';
+  const view: ViewMode = VALID_VIEW_MODES.includes(viewParam as ViewMode)
+    ? (viewParam as ViewMode)
+    : 'heatmap';
+
+  // Parse granularity with validation
+  const granularityParam = searchParams.get('granularity') || 'annual';
+  const granularity: LineGranularity = VALID_GRANULARITIES.includes(granularityParam as LineGranularity)
+    ? (granularityParam as LineGranularity)
+    : 'annual';
+
   // Parse optional year range
   const yearStartParam = searchParams.get('yearStart');
   const yearEndParam = searchParams.get('yearEnd');
@@ -50,6 +65,8 @@ export function parseCompareParams(searchParams: URLSearchParams): CompareQueryP
     states,
     metric,
     scale,
+    view: view !== 'heatmap' ? view : undefined,
+    granularity: granularity !== 'annual' ? granularity : undefined,
     yearStart: yearStart && !isNaN(yearStart) ? yearStart : undefined,
     yearEnd: yearEnd && !isNaN(yearEnd) ? yearEnd : undefined,
   };
@@ -80,6 +97,16 @@ export function serializeCompareParams(params: CompareQueryParams): string {
   // Only include scale if not the default
   if (params.scale !== 'unified') {
     searchParams.set('scale', params.scale);
+  }
+
+  // Only include view when not default
+  if (params.view && params.view !== 'heatmap') {
+    searchParams.set('view', params.view);
+  }
+
+  // Only include granularity when not default
+  if (params.granularity && params.granularity !== 'annual') {
+    searchParams.set('granularity', params.granularity);
   }
 
   // Include year range if specified

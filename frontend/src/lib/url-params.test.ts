@@ -109,6 +109,29 @@ describe('parseCompareParams', () => {
     expect(result.yearEnd).toBeUndefined();
   });
 
+  it('parses view mode', () => {
+    expect(parseCompareParams(new URLSearchParams('view=heatmap')).view).toBeUndefined();
+    expect(parseCompareParams(new URLSearchParams('view=line')).view).toBe('line');
+    expect(parseCompareParams(new URLSearchParams('view=wide')).view).toBe('wide');
+  });
+
+  it('defaults to heatmap (undefined) for invalid view', () => {
+    const params = new URLSearchParams('view=invalid');
+    const result = parseCompareParams(params);
+    expect(result.view).toBeUndefined();
+  });
+
+  it('parses granularity', () => {
+    expect(parseCompareParams(new URLSearchParams('granularity=annual')).granularity).toBeUndefined();
+    expect(parseCompareParams(new URLSearchParams('granularity=monthly')).granularity).toBe('monthly');
+  });
+
+  it('defaults to annual (undefined) for invalid granularity', () => {
+    const params = new URLSearchParams('granularity=invalid');
+    const result = parseCompareParams(params);
+    expect(result.granularity).toBeUndefined();
+  });
+
   it('parses complete query string', () => {
     const params = new URLSearchParams(
       'countries=usa,norway&states=california,texas&metric=seasonality&scale=per-country&yearStart=2000&yearEnd=2020'
@@ -123,6 +146,17 @@ describe('parseCompareParams', () => {
       yearStart: 2000,
       yearEnd: 2020,
     });
+  });
+
+  it('parses complete query string with view and granularity', () => {
+    const params = new URLSearchParams(
+      'countries=usa&view=line&granularity=monthly'
+    );
+    const result = parseCompareParams(params);
+
+    expect(result.countries).toEqual(['usa']);
+    expect(result.view).toBe('line');
+    expect(result.granularity).toBe('monthly');
   });
 });
 
@@ -226,6 +260,70 @@ describe('serializeCompareParams', () => {
     expect(result).toContain('yearEnd=2020');
   });
 
+  it('omits view when it is the default (heatmap)', () => {
+    const params: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+      view: 'heatmap',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).not.toContain('view');
+  });
+
+  it('omits view when undefined', () => {
+    const params: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).not.toContain('view');
+  });
+
+  it('includes view when not default', () => {
+    const params: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+      view: 'line',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).toContain('view=line');
+  });
+
+  it('omits granularity when it is the default (annual)', () => {
+    const params: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+      granularity: 'annual',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).not.toContain('granularity');
+  });
+
+  it('includes granularity when not default', () => {
+    const params: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+      granularity: 'monthly',
+    };
+
+    const result = serializeCompareParams(params);
+    expect(result).toContain('granularity=monthly');
+  });
+
   it('handles complete params with countries and states', () => {
     const params: CompareQueryParams = {
       countries: ['usa', 'norway', 'japan'],
@@ -278,6 +376,39 @@ describe('parse/serialize round-trip', () => {
     expect(parsed.states).toEqual([]);
     expect(parsed.metric).toBe('fertility');
     expect(parsed.scale).toBe('unified');
+  });
+
+  it('preserves view and granularity through round-trip', () => {
+    const original: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+      view: 'line',
+      granularity: 'monthly',
+    };
+
+    const serialized = serializeCompareParams(original);
+    const parsed = parseCompareParams(new URLSearchParams(serialized));
+
+    expect(parsed.view).toBe('line');
+    expect(parsed.granularity).toBe('monthly');
+  });
+
+  it('preserves default view/granularity through round-trip', () => {
+    const original: CompareQueryParams = {
+      countries: ['usa'],
+      states: [],
+      metric: 'fertility',
+      scale: 'unified',
+    };
+
+    const serialized = serializeCompareParams(original);
+    const parsed = parseCompareParams(new URLSearchParams(serialized));
+
+    // Default values are omitted from URL, so they parse as undefined
+    expect(parsed.view).toBeUndefined();
+    expect(parsed.granularity).toBeUndefined();
   });
 });
 

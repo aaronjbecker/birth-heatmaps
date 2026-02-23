@@ -6,16 +6,20 @@
    * Svelte 5 port that consolidates ComparePageClient.tsx and ComparePageHeatmaps.svelte
    * into a single component, eliminating the need for nanostores.
    */
-  import type { CountryMeta, StateMeta, CountryHeatmapData, ScaleMode } from '../../lib/types';
+  import type { CountryMeta, StateMeta, CountryHeatmapData, ScaleMode, ViewMode, LineGranularity } from '../../lib/types';
   import type { MetricSlug } from '../../lib/metrics';
   import { METRICS, METRIC_SLUGS } from '../../lib/metrics';
   import { loadMultipleCountries, loadMultipleStates } from '../../lib/compare-data';
   import { parseCompareParams, updateBrowserUrl, buildCompareUrl } from '../../lib/url-params';
+  import { assignCountryColors } from '../../lib/compare-colors';
   import CountryMultiSelect from './CountryMultiSelect.svelte';
   import StateMultiSelect from './StateMultiSelect.svelte';
   import ScaleModeToggle from './ScaleModeToggle.svelte';
+  import ViewModeToggle from './ViewModeToggle.svelte';
   import CompareShareButtons from './CompareShareButtons.svelte';
   import CompareHeatmapStack from './CompareHeatmapStack.svelte';
+  import CompareLineChart from './CompareLineChart.svelte';
+  import CompareWideHeatmap from './CompareWideHeatmap.svelte';
 
   interface Props {
     countries: CountryMeta[];
@@ -29,6 +33,8 @@
   let selectedStates = $state<string[]>([]);
   let scaleMode = $state<ScaleMode>('unified');
   let metric = $state<MetricSlug>('fertility');
+  let viewMode = $state<ViewMode>('heatmap');
+  let granularity = $state<LineGranularity>('annual');
   let loading = $state(false);
   let error = $state<string | null>(null);
   let loadedCountryData = $state<Record<string, CountryHeatmapData>>({});
@@ -48,13 +54,25 @@
     return [...countryData, ...stateData];
   });
 
+  // Color map for line chart / wide heatmap labels
+  const countryColorMap = $derived(
+    assignCountryColors(orderedData.map(d => d.country.code))
+  );
+
   // Total selections
   const totalSelected = $derived(selectedCountries.length + selectedStates.length);
 
   // Current share URL
   const shareUrl = $derived.by(() => {
     const base = typeof window !== 'undefined' ? window.location.origin : '';
-    return base + buildCompareUrl({ countries: selectedCountries, states: selectedStates, metric, scale: scaleMode });
+    return base + buildCompareUrl({
+      countries: selectedCountries,
+      states: selectedStates,
+      metric,
+      scale: scaleMode,
+      view: viewMode !== 'heatmap' ? viewMode : undefined,
+      granularity: granularity !== 'annual' ? granularity : undefined,
+    });
   });
 
   // Parse URL on mount
@@ -70,6 +88,8 @@
     }
     metric = params.metric;
     scaleMode = params.scale;
+    viewMode = params.view || 'heatmap';
+    granularity = params.granularity || 'annual';
     initialized = true;
   });
 
@@ -82,12 +102,16 @@
     const currentStates = selectedStates;
     const currentMetric = metric;
     const currentScale = scaleMode;
+    const currentView = viewMode;
+    const currentGranularity = granularity;
 
     updateBrowserUrl({
       countries: currentCountries,
       states: currentStates,
       metric: currentMetric,
       scale: currentScale,
+      view: currentView !== 'heatmap' ? currentView : undefined,
+      granularity: currentGranularity !== 'annual' ? currentGranularity : undefined,
     });
   });
 
@@ -205,6 +229,14 @@
   function handleScaleModeChange(mode: ScaleMode) {
     scaleMode = mode;
   }
+
+  function handleViewModeChange(mode: ViewMode) {
+    viewMode = mode;
+  }
+
+  function handleGranularityChange(g: LineGranularity) {
+    granularity = g;
+  }
 </script>
 
 <div class="flex flex-col gap-0 w-full">
@@ -258,15 +290,26 @@
         </div>
       </div>
 
-      <!-- Scale mode toggle -->
+      <!-- View mode toggle -->
       <div class="flex flex-col gap-2.5">
-        <label class="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">Display</label>
-        <ScaleModeToggle
-          mode={scaleMode}
-          onChange={handleScaleModeChange}
-          disabled={totalSelected < 2}
+        <label class="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">View</label>
+        <ViewModeToggle
+          mode={viewMode}
+          onChange={handleViewModeChange}
         />
       </div>
+
+      <!-- Scale mode toggle (hidden for line chart view) -->
+      {#if viewMode !== 'line'}
+        <div class="flex flex-col gap-2.5">
+          <label class="text-[0.8125rem] font-medium text-text-muted uppercase tracking-wider">Display</label>
+          <ScaleModeToggle
+            mode={scaleMode}
+            onChange={handleScaleModeChange}
+            disabled={totalSelected < 2}
+          />
+        </div>
+      {/if}
     </div>
 
     <!-- Share buttons -->
@@ -277,15 +320,30 @@
     {/if}
   </div>
 
-  <!-- Heatmaps -->
+  <!-- Visualization -->
   {#if loading}
     <div class="flex items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border mt-4">
-      <span class="text-sm text-text-muted">Loading heatmap data...</span>
+      <span class="text-sm text-text-muted">Loading data...</span>
     </div>
   {:else if error}
     <div class="flex flex-col items-center justify-center px-6 py-12 bg-bg-alt rounded border border-border mt-4">
       <span class="text-sm text-red-500">{error}</span>
     </div>
+  {:else if viewMode === 'line'}
+    <CompareLineChart
+      countries={orderedData}
+      colorMap={countryColorMap}
+      metric={metric}
+      {granularity}
+      onGranularityChange={handleGranularityChange}
+    />
+  {:else if viewMode === 'wide'}
+    <CompareWideHeatmap
+      countries={orderedData}
+      colorMap={countryColorMap}
+      {scaleMode}
+      metric={metric}
+    />
   {:else}
     <CompareHeatmapStack
       countries={orderedData}
